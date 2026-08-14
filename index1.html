@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perjuangan — Road to Merdeka</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ===================== SPLASH / ENTRANCE 1 ===================== -->
+  <section id="entrance-1" class="screen active">
+    <div class="flag-container">
+      <div class="flag">
+        <div class="flag-red"></div>
+        <div class="flag-white"></div>
+      </div>
+      <div class="flag-pole"></div>
+    </div>
+
+    <div class="entrance-content">
+      <p class="small-label">Sebuah perjalanan mengingat</p>
+      <h1 class="main-title">SEMANGAT<br>PERJUANGAN</h1>
+      <p class="subtitle">Bangsa Indonesia</p>
+      <div class="divider"></div>
+      <p class="press-hint">Tekan spasi atau klik untuk melanjutkan</p>
+    </div>
+
+    <div class="particles" id="particles-1"></div>
+  </section>
+
+  <!-- ===================== ENTRANCE 2 — CREDITS ===================== -->
+  <section id="entrance-2" class="screen">
+    <div class="credits-box">
+      <p class="credits-label">Dibuat dengan penuh semangat</p>
+      <h2 class="credits-title">PERJUANGAN</h2>
+      <p class="credits-sub">Road to Merdeka</p>
+      <div class="credits-line"></div>
+      <p class="credits-by">Karya</p>
+      <h3 class="creator-name" id="creator-name">[ Nama Pembuat ]</h3>
+      <p class="credits-note">Hackathon Edition · 2026</p>
+      <button class="btn-continue" id="btn-to-dashboard">Masuk ke Dashboard</button>
+    </div>
+  </section>
+
+  <!-- ===================== MAIN DASHBOARD ===================== -->
+  <section id="dashboard" class="screen">
+    <header class="dash-header">
+      <div class="logo-area">
+        <div class="mini-flag"></div>
+        <div>
+          <h1>PERJUANGAN</h1>
+          <p>Road to Merdeka</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="player-label">Pemuda Pejuang</span>
+      </div>
+    </header>
+
+    <main class="dash-main">
+      <div class="intro-text">
+        <h2>Pilih Babak Perjuangan</h2>
+        <p>Setiap tahap menceritakan kisah penting dalam sejarah kemerdekaan Indonesia. Pilih salah satu untuk memulai perjalananmu.</p>
+      </div>
+
+      <div class="stages-grid" id="stages-grid">
+        <!-- Stage cards will be injected by JS -->
+      </div>
+    </main>
+
+    <footer class="dash-footer">
+      <p>© 2026 · Dibuat untuk Hackathon · Semangat Pantang Menyerah</p>
+    </footer>
+  </section>
+
+  <!-- ===================== STAGE PLACEHOLDER (sementara) ===================== -->
+  <section id="stage-placeholder" class="screen">
+    <div class="placeholder-content">
+      <div class="back-btn" id="btn-back">← Kembali ke Dashboard</div>
+      <h2 id="stage-title">Nama Stage</h2>
+      <p id="stage-desc">Deskripsi singkat akan muncul di sini.</p>
+      <div class="coming-soon">
+        <span>COMING SOON</span>
+        <p>Stage ini sedang dalam pengembangan.<br>Nanti kita isi dengan story + mini-game.</p>
+      </div>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
