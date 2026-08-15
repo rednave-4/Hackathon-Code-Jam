@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>1945: Ketikan Terakhir — The Final Type</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Noto+Serif:ital,wght@0,400;0,600;1,400&family=Inter:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+    <style>
+        /* ===== root & reset ===== */
+        :root {
+            --paper: #EAE0C8;
+            --paper-dark: #D9CBA6;
+            --paper-line: #c9b98d;
+            --ink: #2a2118;
+            --body-dark: #151109;
+            --body-mid: #211a12;
+            --body-light: #332821;
+            --brass: #a9843f;
+            --brass-light: #d3ac66;
+            --red: #a32126;
+            --red-dark: #711619;
+            --cream: #f3ead3;
+            --muted: #9c8f74;
+            --shadow: rgba(0, 0, 0, .55);
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html,
+        body {
+            height: 100%;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(ellipse at 50% -10%, #3a2c1c 0%, var(--body-dark) 55%), var(--body-dark);
+            color: var(--cream);
+            font-family: 'Noto Serif', serif;
+            overflow-x: hidden;
+            cursor: default;
+        }
+        body.has-follower {
+            cursor: none;
+        }
+        .en {
+            font-family: 'Inter', sans-serif;
+            font-style: italic;
+            font-weight: 400;
+            color: var(--muted);
+            display: block;
+        }
+
+        /* grain overlay */
+        .grain {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 999;
+            opacity: .05;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* cursor follower */
+        #follower {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 1.5px solid var(--brass-light);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+            transition: width .15s ease, height .15s ease, border-color .15s ease, opacity .2s ease;
+            opacity: 0;
+        }
+        #follower.active {
+            opacity: .85;
+        }
+        #follower.press {
+            width: 16px;
+            height: 16px;
+            border-color: var(--red);
+            background: rgba(163, 33, 38, .25);
+        }
+
+        /* screens */
+        .screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 24px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(18px);
+            transition: opacity .6s cubic-bezier(.4, 0, .2, 1), transform .6s cubic-bezier(.4, 0, .2, 1);
+            z-index: 10;
+        }
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* splash screen khusus */
+        #screen-splash {
+            z-index: 10000;
+            background: #000;
+            color: #fff;
+            opacity: 1;
+            transform: none;
+            pointer-events: auto;
+            transition: opacity 0.9s ease;
+        }
+        #screen-splash.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #screen-splash .splash-inner {
+            text-align: center;
+            font-family: 'Special Elite', monospace;
+            font-size: clamp(26px, 5.5vw, 52px);
+            letter-spacing: .08em;
+            line-height: 1.3;
+        }
+        #screen-splash .splash-inner .caret {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: #fff;
+            vertical-align: text-bottom;
+            animation: blink 1s step-start infinite;
+            margin-left: 2px;
+        }
+        @keyframes blink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+        }
+        #screen-splash .splash-sub {
+            margin-top: 18px;
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(11px, 1.4vw, 16px);
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            color: #777;
+            opacity: 0;
+            transition: opacity .6s ease;
+        }
+        #screen-splash .splash-sub.show {
+            opacity: 1;
+        }
+
+        /* shared bits */
+        .eyebrow {
+            font-family: 'Inter', sans-serif;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            font-size: 11px;
+            color: var(--brass-light);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        h1.display {
+            font-family: 'Special Elite', monospace;
+            font-weight: 400;
+            font-size: clamp(28px, 6vw, 54px);
+            letter-spacing: .06em;
+            color: var(--cream);
+            text-align: center;
+            margin: 0 0 8px;
+            text-shadow: 0 2px 0 rgba(0, 0, 0, .5);
+        }
+        .btn {
+            font-family: 'Special Elite', monospace;
+            background: linear-gradient(180deg, #c0311f 0%, var(--red) 55%, var(--red-dark) 100%);
+            color: var(--cream);
+            border: none;
+            border-radius: 3px;
+            padding: 14px 30px;
+            font-size: 16px;
+            letter-spacing: .05em;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #4c0f11, 0 8px 14px rgba(0, 0, 0, .4);
+            transition: transform .12s ease, box-shadow .12s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #4c0f11, 0 4px 8px rgba(0, 0, 0, .4);
+        }
+        .btn.ghost {
+            background: transparent;
+            border: 1.5px solid var(--brass);
+            color: var(--brass-light);
+            box-shadow: none;
+        }
+        .btn.ghost:active {
+            transform: translateY(1px);
+        }
+        .btn:disabled {
+            opacity: .35;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== TITLE ===== */
+        #screen-title .typewriter-art {
+            width: min(360px, 70vw);
+            margin-bottom: 18px;
+            opacity: .95;
+            filter: drop-shadow(0 12px 20px rgba(0, 0, 0, .5));
+        }
+        #screen-title p.lede {
+            max-width: 560px;
+            text-align: center;
+            font-size: 16px;
+            line-height: 1.65;
+            color: var(--paper);
+            margin: 6px 0 4px;
+        }
+        #screen-title .lede .en {
+            font-size: 13px;
+            margin-top: 2px;
+        }
+        .timer-note {
+            margin-top: 22px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            color: var(--muted);
+            text-align: center;
+            max-width: 480px;
+            line-height: 1.6;
+        }
+        .timer-note .en {
+            font-size: 11.5px;
+        }
+
+        /* ===== FACTS ===== */
+        .fact-card {
+            max-width: 640px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .fact-index {
+            font-family: 'Special Elite', monospace;
+            color: var(--brass-light);
+            font-size: 13px;
+            letter-spacing: .15em;
+            margin-bottom: 14px;
+            position: relative;
+            z-index: 2;
+        }
+        .fact-text {
+            position: relative;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 1;
+            overflow: visible;
+        }
+        .fact-slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(14px);
+            transition: opacity .7s cubic-bezier(.4, 0, .2, 1), transform .7s cubic-bezier(.4, 0, .2, 1);
+            pointer-events: none;
+            width: 100%;
+            padding: 0 20px;
+        }
+        .fact-slide.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            position: relative;
+        }
+        .fact-slide p {
+            font-size: clamp(16px, 2.6vw, 20px);
+            line-height: 1.7;
+            color: var(--cream);
+            margin: 0 0 10px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .fact-slide p.en {
+            font-size: clamp(13px, 2vw, 15px);
+            line-height: 1.6;
+        }
+        .fact-controls {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 26px;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .dots {
+            display: flex;
+            gap: 8px;
+            margin-top: 22px;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--body-light);
+            border: 1px solid var(--brass);
+        }
+        .dot.on {
+            background: var(--brass-light);
+        }
+
+        /* ===== QUIZ ===== */
+        #screen-quiz .quiz-wrap {
+            max-width: 640px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        .quiz-context {
+            background: rgba(0, 0, 0, .25);
+            border-left: 3px solid var(--brass);
+            padding: 14px 18px;
+            border-radius: 2px;
+            margin-bottom: 20px;
+            font-size: 14.5px;
+            line-height: 1.6;
+            position: relative;
+            z-index: 2;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .quiz-context .en {
+            font-size: 12.5px;
+            margin-top: 4px;
+        }
+        .quiz-q {
+            text-align: center;
+            font-family: 'Special Elite', monospace;
+            font-size: 17px;
+            margin-bottom: 4px;
+            color: var(--cream);
+            position: relative;
+            z-index: 2;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .quiz-q+.en {
+            text-align: center;
+            font-size: 12.5px;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 2;
+        }
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+            position: relative;
+            z-index: 2;
+        }
+        .opt {
+            background: var(--paper);
+            color: var(--ink);
+            border: 2px solid var(--paper-dark);
+            border-radius: 4px;
+            padding: 13px 16px;
+            font-family: 'Special Elite', monospace;
+            font-size: 15px;
+            cursor: pointer;
+            text-align: left;
+            transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .opt:hover:not(:disabled) {
+            transform: translateX(3px);
+            border-color: var(--brass);
+        }
+        .opt.correct {
+            background: #dcead8;
+            border-color: #3f7a42;
+        }
+        .opt.wrong {
+            background: #f0d7d3;
+            border-color: var(--red);
+        }
+        .opt:disabled {
+            cursor: default;
+        }
+        .quiz-feedback {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 3px;
+            font-size: 13.5px;
+            line-height: 1.6;
+            background: rgba(0, 0, 0, .3);
+            border-left: 3px solid var(--brass-light);
+            display: none;
+            position: relative;
+            z-index: 2;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .quiz-feedback.show {
+            display: block;
+        }
+        .quiz-feedback .en {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .quiz-next {
+            display: flex;
+            justify-content: center;
+            margin-top: 22px;
+            position: relative;
+            z-index: 2;
+        }
+        .quiz-progress {
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            letter-spacing: .15em;
+            color: var(--muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ===== COUNTDOWN ===== */
+        #screen-countdown .count-num {
+            font-family: 'Special Elite', monospace;
+            font-size: min(30vw, 180px);
+            color: var(--red);
+            text-shadow: 0 6px 0 rgba(0, 0, 0, .5);
+        }
+        #screen-countdown p {
+            font-family: 'Inter', sans-serif;
+            color: var(--muted);
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        /* ===== TYPING GAME ===== */
+        #screen-typing {
+            padding: 14px;
+        }
+        .typing-stage {
+            width: 100%;
+            max-width: 820px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .hud {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 6px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .clock {
+            font-family: 'Special Elite', monospace;
+            font-size: clamp(22px, 4vw, 32px);
+            color: var(--brass-light);
+            background: var(--body-mid);
+            border: 1px solid var(--brass);
+            border-radius: 30px;
+            padding: 6px 20px;
+            letter-spacing: .05em;
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, .6);
+        }
+        .clock.low {
+            color: #fff;
+            background: var(--red-dark);
+            border-color: var(--red);
+            animation: pulse .5s infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        .hud-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 10.5px;
+            color: var(--muted);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+        .hud .en {
+            font-size: 9.5px;
+        }
+
+        .carriage-wrap {
+            width: 100%;
+            max-width: 640px;
+            background: linear-gradient(180deg, #3a2f22, #241c14);
+            border-radius: 6px 6px 0 0;
+            padding: 14px 14px 0;
+            box-shadow: 0 -6px 14px rgba(0, 0, 0, .4) inset, 0 8px 18px rgba(0, 0, 0, .5);
+            position: relative;
+            overflow: hidden;
+        }
+        .roller {
+            height: 16px;
+            border-radius: 10px;
+            margin: 0 -4px 10px;
+            background: repeating-linear-gradient(90deg, #14100a 0 4px, #221b12 4px 10px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .6) inset;
+        }
+        .paper-window {
+            position: relative;
+            overflow: hidden;
+            height: min(46vh, 300px);
+            border-radius: 2px 2px 0 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, .35), transparent 30px);
+        }
+        .paper {
+            position: absolute;
+            left: 6%;
+            right: 6%;
+            top: 0;
+            background: var(--paper);
+            background-image: repeating-linear-gradient(rgba(0, 0, 0, 0) 0 27px, rgba(0, 0, 0, .03) 27px 28px);
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, .45), 0 4px 18px rgba(0, 0, 0, .5);
+            border-top: 2px solid var(--paper-dark);
+            padding: 20px 22px 40px;
+            min-height: 100%;
+            transition: transform .25s cubic-bezier(.4, 0, .2, 1);
+            font-family: 'Special Elite', monospace;
+            color: var(--ink);
+            white-space: pre-wrap;
+            font-size: clamp(11px, 1.7vw, 15px);
+            line-height: 1.85;
+            letter-spacing: .02em;
+            transform: translateY(0);
+            will-change: transform;
+        }
+        .paper.tear {
+            animation: tearOut .5s ease forwards;
+        }
+        @keyframes tearOut {
+            0% {
+                transform: translateY(0) rotate(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-60px) rotate(-8deg) translateX(60px);
+                opacity: 0;
+            }
+        }
+        .paper.fresh {
+            animation: freshIn .4s ease;
+        }
+        @keyframes freshIn {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .ch {
+            color: var(--ink);
+        }
+        .ch-pending {
+            color: rgba(42, 33, 24, .28);
+        }
+        .caret {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: var(--red);
+            vertical-align: text-bottom;
+            animation: blink 1s step-start infinite;
+            margin-left: -1px;
+        }
+
+        .stamp {
+            position: absolute;
+            top: 14%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-14deg) scale(0);
+            font-family: 'Special Elite', monospace;
+            font-size: clamp(28px, 6vw, 52px);
+            color: var(--red);
+            border: 5px solid var(--red);
+            border-radius: 8px;
+            padding: 6px 22px;
+            opacity: 0;
+            letter-spacing: .08em;
+            pointer-events: none;
+            z-index: 20;
+        }
+        .stamp.show {
+            animation: stampDown .5s cubic-bezier(.2, 1.4, .4, 1) forwards;
+        }
+        @keyframes stampDown {
+            0% {
+                transform: translate(-50%, -50%) rotate(-14deg) scale(2.6);
+                opacity: 0;
+            }
+            60% {
+                opacity: .9;
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(-10deg) scale(1);
+                opacity: .9;
+            }
+        }
+
+        .mistake-toast {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--red-dark);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 11.5px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity .3s ease;
+            white-space: nowrap;
+            z-index: 15;
+        }
+        .mistake-toast.show {
+            opacity: 1;
+        }
+
+        /* keyboard */
+        .kbd {
+            width: 100%;
+            max-width: 760px;
+            margin-top: 16px;
+            background: linear-gradient(180deg, #241c14, #171009);
+            border-radius: 10px;
+            padding: 14px 10px 18px;
+            box-shadow: 0 14px 26px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .05);
+        }
+        .kbd-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 6px;
+            flex-wrap: nowrap;
+        }
+        .key {
+            font-family: 'Special Elite', monospace;
+            background: radial-gradient(circle at 35% 30%, #3c3226, #17120c 78%);
+            color: var(--brass-light);
+            border: 1px solid #4a3c26;
+            border-radius: 50%;
+            width: clamp(24px, 7.6vw, 42px);
+            height: clamp(24px, 7.6vw, 42px);
+            font-size: clamp(10px, 2.6vw, 15px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 3px 0 #0a0704, 0 5px 8px rgba(0, 0, 0, .5);
+            transition: transform .06s ease, box-shadow .06s ease;
+            flex: 0 0 auto;
+        }
+        .key:active,
+        .key.hit {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #0a0704, 0 2px 4px rgba(0, 0, 0, .5);
+            background: radial-gradient(circle at 35% 30%, #55442c, #221a10 78%);
+        }
+        .key.wide {
+            width: auto;
+            border-radius: 22px;
+            padding: 0 22px;
+        }
+        .key.space {
+            width: min(46vw, 280px);
+            border-radius: 22px;
+        }
+        .key.enter {
+            background: radial-gradient(circle at 35% 30%, #5a2224, #2a1112 78%);
+            color: #f0d9d5;
+        }
+
+        /* ===== GAME OVER / WIN ===== */
+        #screen-over .over-art,
+        #screen-win .win-art {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+        #screen-over h1,
+        #screen-win h1 {
+            margin-bottom: 14px;
+        }
+        .result-copy {
+            max-width: 520px;
+            text-align: center;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--paper);
+            margin-bottom: 26px;
+        }
+        .result-copy .en {
+            font-size: 13px;
+            margin-top: 3px;
+        }
+        .result-actions {
+            display: flex;
+            gap: 14px;
+        }
+        .crack {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 500;
+        }
+        .crack.flash {
+            animation: flash .5s ease;
+        }
+        @keyframes flash {
+            0% {
+                opacity: 0;
+            }
+            15% {
+                opacity: .85;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .confetti {
+            position: fixed;
+            top: -20px;
+            width: 8px;
+            height: 14px;
+            z-index: 600;
+            opacity: .9;
+            pointer-events: none;
+        }
+
+        @media (max-width: 520px) {
+            .kbd-row {
+                gap: 3px;
+            }
+            .key {
+                width: clamp(20px, 7.4vw, 30px);
+                height: clamp(20px, 7.4vw, 30px);
+                font-size: 10px;
+            }
+            .key.space {
+                width: 44vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grain"></div>
+    <div id="follower"></div>
+    <div class="crack" id="crack"></div>
+
+    <!-- ============ SPLASH (animasi masuk) ============ -->
+    <section class="screen active" id="screen-splash">
+        <div class="splash-inner">
+            <span id="splash-text"></span><span class="caret"></span>
+        </div>
+        <div class="splash-sub" id="splash-sub">Mengetik sejarah · Typing history</div>
+    </section>
+
+    <!-- ============ TITLE ============ -->
+    <section class="screen" id="screen-title">
+        <div class="eyebrow">17 Agustus 1945 · Menjelang Proklamasi</div>
+        <svg class="typewriter-art" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="20" width="160" height="14" rx="3" fill="#c9b98d"/>
+            <rect x="10" y="55" width="180" height="55" rx="8" fill="#241c14" stroke="#a9843f" stroke-width="1.5"/>
+            <rect x="10" y="102" width="180" height="14" rx="4" fill="#17120c"/>
+            <circle cx="30" cy="82" r="8" fill="#a32126"/>
+            <circle cx="170" cy="82" r="8" fill="#a32126"/>
+            <g fill="#d3ac66">
+                <circle cx="55" cy="90" r="5"/><circle cx="68" cy="90" r="5"/><circle cx="81" cy="90" r="5"/>
+                <circle cx="94" cy="90" r="5"/><circle cx="107" cy="90" r="5"/><circle cx="120" cy="90" r="5"/>
+                <circle cx="133" cy="90" r="5"/><circle cx="146" cy="90" r="5"/>
+            </g>
+        </svg>
+        <h1 class="display">1945: Ketikan Terakhir<span class="en" style="font-size:15px;margin-top:2px;">The Final Type</span></h1>
+        <p class="lede">Pinjam mesin tik. Kejar waktu. Ketik naskah yang akan mengubah sejarah.
+            <span class="en">Borrow a typewriter. Race the clock. Type the text that will change history.</span>
+        </p>
+        <button class="btn" id="btn-start" style="margin-top:22px;">MULAI · START</button>
+        <p class="timer-note">Kamu akan diberi 1 menit 30 detik — merepresentasikan sekitar 1 jam 30 menit persiapan naskah proklamasi sebelum dibacakan di depan umum.
+            <span class="en">You'll get 1 minute 30 seconds — representing roughly 1.5 hours of preparing the proclamation text before it was read aloud in public.</span>
+        </p>
+    </section>
+
+    <!-- ============ FACTS ============ -->
+    <section class="screen" id="screen-facts">
+        <div class="fact-card">
+            <div class="fact-index" id="fact-index">FAKTA 1 / 4</div>
+            <div class="fact-text" id="fact-text"></div>
+            <div class="dots" id="fact-dots"></div>
+            <div class="fact-controls">
+                <button class="btn ghost" id="btn-fact-skip">LEWATI · SKIP</button>
+                <button class="btn" id="btn-fact-next">LANJUT · NEXT</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ QUIZ ============ -->
+    <section class="screen" id="screen-quiz">
+        <div class="quiz-wrap">
+            <div class="quiz-progress" id="quiz-progress">PERTANYAAN 1 / 2 · QUESTION 1 / 2</div>
+            <div class="quiz-context" id="quiz-context"></div>
+            <div class="quiz-q" id="quiz-q"></div>
+            <div class="en" id="quiz-q-en" style="text-align:center;font-size:12.5px;margin-bottom:14px;"></div>
+            <div class="quiz-options" id="quiz-options"></div>
+            <div class="quiz-feedback" id="quiz-feedback"></div>
+            <div class="quiz-next">
+                <button class="btn" id="btn-quiz-next" disabled>LANJUT · NEXT</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ COUNTDOWN ============ -->
+    <section class="screen" id="screen-countdown">
+        <div class="count-num" id="count-num">3</div>
+        <p>Bersiap mengetik · Get ready to type</p>
+    </section>
+
+    <!-- ============ TYPING GAME ============ -->
+    <section class="screen" id="screen-typing">
+        <div class="typing-stage">
+            <div class="hud">
+                <div>
+                    <div class="hud-label">Kertas ke- · Paper no.</div>
+                    <div style="font-family:'Special Elite',monospace;font-size:20px;" id="paper-count">1</div>
+                </div>
+                <div class="clock" id="clock">01:30</div>
+                <div style="text-align:right;">
+                    <div class="hud-label">Karakter · Characters</div>
+                    <div style="font-family:'Special Elite',monospace;font-size:20px;" id="char-count">0 / 0</div>
+                </div>
+            </div>
+            <div class="carriage-wrap">
+                <div class="roller"></div>
+                <div class="paper-window">
+                    <div class="paper" id="paper">
+                        <div class="stamp" id="stamp">MERDEKA</div>
+                        <span id="paper-content"></span>
+                    </div>
+                    <div class="mistake-toast" id="mistake-toast"></div>
+                </div>
+            </div>
+            <div class="kbd" id="kbd"></div>
+            <p class="timer-note" style="margin-top:12px;max-width:640px;">
+                Laptop/PC: ketik langsung dari keyboard · HP: pakai tombol di layar
+                <span class="en">Laptop/PC: type on your keyboard · Mobile: use on-screen keys</span>
+            </p>
+        </div>
+    </section>
+
+    <!-- ============ GAME OVER ============ -->
+    <section class="screen" id="screen-over">
+        <div class="over-art">⏱</div>
+        <h1 class="display">Waktu Habis<span class="en" style="font-size:15px;">Time's Up</span></h1>
+        <p class="result-copy">Ketukan terakhir belum sempat selesai. Sayuti Melik sendiri mengetik di bawah tekanan waktu yang nyata sebelum upacara dimulai — coba lagi dan rasakan ketegangannya.
+            <span class="en">The final keystrokes weren't finished in time. Sayuti Melik himself typed under real time pressure before the ceremony began — try again and feel the tension.</span>
+        </p>
+        <div class="result-actions">
+            <button class="btn" id="btn-retry-over">COBA LAGI · RETRY</button>
+            <button class="btn ghost" id="btn-menu-over">MENU</button>
+        </div>
+    </section>
+
+    <!-- ============ WIN ============ -->
+    <section class="screen" id="screen-win">
+        <div class="win-art">🇮🇩</div>
+        <h1 class="display">Naskah Selesai<span class="en" style="font-size:15px;">The Text Is Done</span></h1>
+        <p class="result-copy" id="win-copy"></p>
+        <div class="result-actions">
+            <button class="btn" id="btn-retry-win">KETIK LAGI · TYPE AGAIN</button>
+            <button class="btn ghost" id="btn-menu-win">DASHBOARD</button>
+        </div>
+    </section>
+
+    <script>
+        (function() {
+            "use strict";
+
+            /* ---------- cursor follower ---------- */
+            var follower = document.getElementById('follower');
+            var canFollow = window.matchMedia('(pointer: fine)').matches && window.matchMedia('(hover: hover)')
+            .matches;
+            if (canFollow) {
+                document.body.classList.add('has-follower');
+                var fx = 0,
+                    fy = 0,
+                    tx = 0,
+                    ty = 0;
+                window.addEventListener('mousemove', function(e) {
+                    tx = e.clientX;
+                    ty = e.clientY;
+                    follower.classList.add('active');
+                });
+                document.addEventListener('mousedown', function() { follower.classList.add('press'); });
+                document.addEventListener('mouseup', function() { follower.classList.remove('press'); });
+                (function loop() {
+                    fx += (tx - fx) * 0.18;
+                    fy += (ty - fy) * 0.18;
+                    follower.style.transform = 'translate(' + fx + 'px,' + fy + 'px) translate(-50%,-50%)';
+                    requestAnimationFrame(loop);
+                })();
+            } else {
+                follower.style.display = 'none';
+            }
+
+            /* ---------- audio ---------- */
+            var ACtx = window.AudioContext || window.webkitAudioContext;
+            var actx = null;
+
+            function audio() {
+                if (!actx) actx = new ACtx();
+                if (actx.state === 'suspended') actx.resume();
+                return actx;
+            }
+
+            function noiseBuffer(ctx, dur) {
+                var n = ctx.sampleRate * dur;
+                var buf = ctx.createBuffer(1, n, ctx.sampleRate);
+                var d = buf.getChannelData(0);
+                for (var i = 0; i < n; i++) { d[i] = (Math.random() * 2 - 1); }
+                return buf;
+            }
+
+            function playClack() {
+                try {
+                    var ctx = audio();
+                    var t = ctx.currentTime;
+                    var src = ctx.createBufferSource();
+                    src.buffer = noiseBuffer(ctx, 0.045);
+                    var bp = ctx.createBiquadFilter();
+                    bp.type = 'bandpass';
+                    bp.frequency.value = 2600 + Math.random() * 800;
+                    bp.Q.value = 1.1;
+                    var g = ctx.createGain();
+                    g.gain.setValueAtTime(0.5, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+                    src.connect(bp);
+                    bp.connect(g);
+                    g.connect(ctx.destination);
+                    src.start(t);
+                    src.stop(t + 0.05);
+                    var osc = ctx.createOscillator();
+                    osc.type = 'square';
+                    osc.frequency.value = 140;
+                    var g2 = ctx.createGain();
+                    g2.gain.setValueAtTime(0.12, t);
+                    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+                    osc.connect(g2);
+                    g2.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.04);
+                } catch (e) {}
+            }
+
+            function playBell() {
+                try {
+                    var ctx = audio();
+                    var t = ctx.currentTime;
+                    var osc = ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1600, t);
+                    osc.frequency.exponentialRampToValueAtTime(1200, t + 0.35);
+                    var g = ctx.createGain();
+                    g.gain.setValueAtTime(0.25, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+                    osc.connect(g);
+                    g.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.5);
+                } catch (e) {}
+            }
+
+            function playTear() {
+                try {
+                    var ctx = audio();
+                    var t = ctx.currentTime;
+                    var src = ctx.createBufferSource();
+                    src.buffer = noiseBuffer(ctx, 0.4);
+                    var lp = ctx.createBiquadFilter();
+                    lp.type = 'lowpass';
+                    lp.frequency.setValueAtTime(3500, t);
+                    lp.frequency.exponentialRampToValueAtTime(300, t + 0.4);
+                    var g = ctx.createGain();
+                    g.gain.setValueAtTime(0.35, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                    src.connect(lp);
+                    lp.connect(g);
+                    g.connect(ctx.destination);
+                    src.start(t);
+                    src.stop(t + 0.4);
+                } catch (e) {}
+            }
+
+            function playFanfare() {
+                try {
+                    var ctx = audio();
+                    var t = ctx.currentTime;
+                    var notes = [523.25, 659.25, 783.99, 1046.5];
+                    notes.forEach(function(f, i) {
+                        var osc = ctx.createOscillator();
+                        osc.type = 'triangle';
+                        osc.frequency.value = f;
+                        var g = ctx.createGain();
+                        var start = t + i * 0.13;
+                        g.gain.setValueAtTime(0.0001, start);
+                        g.gain.exponentialRampToValueAtTime(0.22, start + 0.03);
+                        g.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
+                        osc.connect(g);
+                        g.connect(ctx.destination);
+                        osc.start(start);
+                        osc.stop(start + 0.45);
+                    });
+                } catch (e) {}
+            }
+
+            function playBuzzer() {
+                try {
+                    var ctx = audio();
+                    var t = ctx.currentTime;
+                    var osc = ctx.createOscillator();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, t);
+                    osc.frequency.exponentialRampToValueAtTime(70, t + 0.9);
+                    var g = ctx.createGain();
+                    g.gain.setValueAtTime(0.25, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+                    osc.connect(g);
+                    g.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.9);
+                } catch (e) {}
+            }
+
+            /* ---------- screen manager ---------- */
+            var screens = {};
+            ['title', 'facts', 'quiz', 'countdown', 'typing', 'over', 'win'].forEach(function(id) {
+                screens[id] = document.getElementById('screen-' + id);
+            });
+
+            function show(id) {
+                Object.keys(screens).forEach(function(k) {
+                    screens[k].classList.toggle('active', k === id);
+                });
+            }
+
+            /* ---------- SPLASH ANIMATION (masuk pertama) ---------- */
+            var splashText = "1945: Ketikan Terakhir";
+            var splashEl = document.getElementById('splash-text');
+            var splashIdx = 0;
+            var splashDone = false;
+
+            function runSplash() {
+                var sub = document.getElementById('splash-sub');
+                var iv = setInterval(function() {
+                    if (splashIdx < splashText.length) {
+                        splashEl.textContent += splashText[splashIdx];
+                        playClack();
+                        splashIdx++;
+                    } else {
+                        clearInterval(iv);
+                        sub.classList.add('show');
+                        // tunggu sebentar lalu transisi ke title
+                        setTimeout(function() {
+                            var splash = document.getElementById('screen-splash');
+                            splash.classList.add('fade-out');
+                            setTimeout(function() {
+                                splash.style.display = 'none';
+                                show('title');
+                                splashDone = true;
+                            }, 900);
+                        }, 700);
+                    }
+                }, 140);
+            }
+
+            // jalankan splash segera
+            runSplash();
+
+            /* ---------- FACTS ---------- */
+            var FACTS = [{
+                id: "Menjelang dini hari 17 Agustus 1945, naskah proklamasi yang ditulis tangan oleh Bung Karno harus segera diketik ulang agar bisa dibacakan dan disebarluaskan ke seluruh negeri.",
+                en: "Just before dawn on August 17, 1945, Bung Karno's handwritten proclamation draft had to be retyped so it could be read aloud and distributed across the country."
+            }, {
+                id: "Mesin tik yang dipakai bukan milik pribadi atau kantor berita. Sayuti Melik meminjamnya dari Kolonel Kandeler, seorang perwira Angkatan Laut Jerman (Kriegsmarine) yang berkantor tak jauh dari lokasi perumusan naskah.",
+                en: "The typewriter used wasn't personal property or a news office's. Sayuti Melik borrowed it from Colonel Kandeler, a German Navy (Kriegsmarine) officer stationed not far from where the text was drafted."
+            }, {
+                id: "Sambil mengetik ulang tulisan tangan Bung Karno, Sayuti Melik menghaluskan beberapa hal — ejaan, sapaan, dan cara penulisan tanggal — agar naskah terdengar lebih tegas sebagai pernyataan resmi sebuah bangsa.",
+                en: "While retyping Bung Karno's handwriting, Sayuti Melik smoothed out a few things — spelling, wording, and how the date was written — so the text read more firmly as a nation's official declaration."
+            }, {
+                id: "'Tempoh' diubah menjadi 'tempo'. Frasa 'wakil-wakil bangsa Indonesia' diubah menjadi 'Atas nama bangsa Indonesia'. Dan tanggal ditulis 'Djakarta, hari 17 boelan 8 tahoen '05' — merujuk pada tahun Jepang 2605.",
+                en: "'Tempoh' became 'tempo'. The phrase 'wakil-wakil bangsa Indonesia' (representatives of the Indonesian people) became 'Atas nama bangsa Indonesia' (on behalf of the Indonesian people). And the date was written 'Djakarta, hari 17 boelan 8 tahoen '05' — referencing the Japanese year 2605."
+            }];
+            var factIdx = 0;
+
+            function renderFacts() {
+                var wrap = document.getElementById('fact-text');
+                wrap.innerHTML = '';
+                FACTS.forEach(function(f, i) {
+                    var div = document.createElement('div');
+                    div.className = 'fact-slide' + (i === factIdx ? ' show' : '');
+                    div.innerHTML = '<p>' + f.id + '</p><p class="en">' + f.en + '</p>';
+                    wrap.appendChild(div);
+                });
+                document.getElementById('fact-index').textContent = 'FAKTA ' + (factIdx + 1) + ' / ' + FACTS.length;
+                var dots = document.getElementById('fact-dots');
+                dots.innerHTML = '';
+                FACTS.forEach(function(_, i) {
+                    var d = document.createElement('div');
+                    d.className = 'dot' + (i === factIdx ? ' on' : '');
+                    dots.appendChild(d);
+                });
+                document.getElementById('btn-fact-next').textContent = (factIdx === FACTS.length - 1) ? 'MULAI KUIS · START QUIZ' :
+                    'LANJUT · NEXT';
+            }
+            document.getElementById('btn-fact-next').addEventListener('click', function() {
+                if (factIdx < FACTS.length - 1) { factIdx++;
+                    renderFacts(); } else { startQuiz(); }
+            });
+            document.getElementById('btn-fact-skip').addEventListener('click', startQuiz);
+
+            /* ---------- QUIZ ---------- */
+            var QUIZ = [{
+                context: {
+                    id: "Tulisan tangan asli Bung Karno memakai kata ini untuk menjelaskan seberapa cepat kekuasaan harus dipindahkan.",
+                    en: "Bung Karno's original handwriting used this word to describe how quickly power had to be transferred."
+                },
+                q: { id: "Kata manakah yang benar dalam Bahasa Indonesia baku, dan akhirnya diketik oleh Sayuti Melik?",
+                    en: "Which word is correct standard Indonesian, and is what Sayuti Melik ultimately typed?" },
+                options: [
+                    { text: "tempo", correct: true },
+                    { text: "tempoh", correct: false },
+                    { text: "waktoe", correct: false }
+                ],
+                feedback: {
+                    id: "Kata yang benar adalah 'tempo'. 'Tempoh' bukan ejaan baku Bahasa Indonesia, sehingga Sayuti Melik meluruskannya saat mengetik.",
+                    en: "The correct word is 'tempo'. 'Tempoh' is not standard Indonesian spelling, so Sayuti Melik corrected it while typing."
+                }
+            }, {
+                context: {
+                    id: "Bagian penutup naskah tulisan tangan menyebut siapa yang menyatakan kemerdekaan ini.",
+                    en: "The closing line of the handwritten draft named who was declaring this independence."
+                },
+                q: { id: "Frasa apa yang akhirnya dipakai Sayuti Melik untuk menggantikan 'wakil-wakil bangsa Indonesia'?",
+                    en: "What phrase did Sayuti Melik ultimately use to replace 'wakil-wakil bangsa Indonesia' (representatives of the Indonesian people)?" },
+                options: [
+                    { text: "Atas nama bangsa Indonesia", correct: true },
+                    { text: "Wakil-wakil bangsa Indonesia", correct: false },
+                    { text: "Perwakilan rakyat Indonesia", correct: false }
+                ],
+                feedback: {
+                    id: "Frasa yang benar adalah 'Atas nama bangsa Indonesia'. Perubahan ini membuat naskah terdengar mewakili seluruh bangsa secara langsung, bukan sekadar 'wakil-wakil'.",
+                    en: "The correct phrase is 'Atas nama bangsa Indonesia' (on behalf of the Indonesian people). This change made the text speak directly for the whole nation, rather than just its 'representatives'."
+                }
+            }];
+            var quizIdx = 0;
+            var quizAnswered = false;
+
+            function startQuiz() { quizIdx = 0;
+                show('quiz');
+                renderQuiz(); }
+
+            function renderQuiz() {
+                quizAnswered = false;
+                var item = QUIZ[quizIdx];
+                document.getElementById('quiz-progress').textContent = 'PERTANYAAN ' + (quizIdx + 1) + ' / ' + QUIZ.length +
+                    ' · QUESTION ' + (quizIdx + 1) + ' / ' + QUIZ.length;
+                document.getElementById('quiz-context').innerHTML = item.context.id + '<span class="en">' + item.context
+                    .en + '</span>';
+                document.getElementById('quiz-q').textContent = item.q.id;
+                document.getElementById('quiz-q-en').textContent = item.q.en;
+                var optWrap = document.getElementById('quiz-options');
+                optWrap.innerHTML = '';
+                item.options.forEach(function(opt) {
+                    var b = document.createElement('button');
+                    b.className = 'opt';
+                    b.textContent = opt.text;
+                    b.addEventListener('click', function() { handleQuizAnswer(opt, b); });
+                    optWrap.appendChild(b);
+                });
+                var fb = document.getElementById('quiz-feedback');
+                fb.classList.remove('show');
+                fb.innerHTML = '';
+                document.getElementById('btn-quiz-next').disabled = true;
+                document.getElementById('btn-quiz-next').textContent = (quizIdx === QUIZ.length - 1) ?
+                    'MULAI MENGETIK · START TYPING' : 'LANJUT · NEXT';
+            }
+
+            function handleQuizAnswer(opt, btnEl) {
+                if (quizAnswered) return;
+                quizAnswered = true;
+                var item = QUIZ[quizIdx];
+                var buttons = document.querySelectorAll('#quiz-options .opt');
+                buttons.forEach(function(b) { b.disabled = true; });
+                if (opt.correct) {
+                    btnEl.classList.add('correct');
+                    playClack();
+                } else {
+                    btnEl.classList.add('wrong');
+                    buttons.forEach(function(b, i) { if (item.options[i].correct) b.classList.add('correct'); });
+                    playTear();
+                }
+                var fb = document.getElementById('quiz-feedback');
+                fb.innerHTML = item.feedback.id + '<span class="en">' + item.feedback.en + '</span>';
+                fb.classList.add('show');
+                document.getElementById('btn-quiz-next').disabled = false;
+            }
+            document.getElementById('btn-quiz-next').addEventListener('click', function() {
+                if (quizIdx < QUIZ.length - 1) { quizIdx++;
+                    renderQuiz(); } else { runCountdown(); }
+            });
+
+            /* ---------- COUNTDOWN ---------- */
+            function runCountdown() {
+                show('countdown');
+                var n = 3;
+                var el = document.getElementById('count-num');
+                el.textContent = n;
+                playClack();
+                var iv = setInterval(function() {
+                    n--;
+                    if (n <= 0) {
+                        clearInterval(iv);
+                        startTyping();
+                        return;
+                    }
+                    el.textContent = n;
+                    el.style.animation = 'none';
+                    void el.offsetWidth;
+                    el.style.animation = '';
+                    playClack();
+                }, 700);
+            }
+
+            /* ---------- TYPING GAME ---------- */
+            var TARGET =
+                "PROKLAMASI\n\n" +
+                "Kami bangsa Indonesia dengan ini menjatakan kemerdekaan Indonesia.\n" +
+                "Hal-hal jang mengenai pemindahan kekoeasaan d.l.l., diselenggarakan dengan tjara saksama dan dalam tempo jang sesingkat-singkatnya.\n\n" +
+                "                    Djakarta, hari 17 boelan 8 tahoen '05\n" +
+                "                    Atas nama bangsa Indonesia.\n\n" +
+                "                    Soekarno/Hatta.";
+
+            var typed = 0;
+            var timeLeft = 90;
+            var timerIv = null;
+            var paperCount = 1;
+            var gameActive = false;
+
+            var KEY_ROWS = [
+                ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-"],
+                ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+                ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+                ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "'"]
+            ];
+
+            function buildKeyboard() {
+                var kbd = document.getElementById('kbd');
+                kbd.innerHTML = '';
+                KEY_ROWS.forEach(function(row) {
+                    var r = document.createElement('div');
+                    r.className = 'kbd-row';
+                    row.forEach(function(k) {
+                        var b = document.createElement('div');
+                        b.className = 'key';
+                        b.textContent = k;
+                        b.addEventListener('click', function() { pressKey(k);
+                            flashKey(b); });
+                        r.appendChild(b);
+                    });
+                    kbd.appendChild(r);
+                });
+                var lastRow = document.createElement('div');
+                lastRow.className = 'kbd-row';
+                var space = document.createElement('div');
+                space.className = 'key space';
+                space.textContent = 'SPASI · SPACE';
+                space.addEventListener('click', function() { pressKey(' ');
+                    flashKey(space); });
+                var enter = document.createElement('div');
+                enter.className = 'key wide enter';
+                enter.textContent = 'ENTER \u21B5';
+                enter.addEventListener('click', function() { pressKey('\n');
+                    flashKey(enter); });
+                lastRow.appendChild(space);
+                lastRow.appendChild(enter);
+                kbd.appendChild(lastRow);
+            }
+
+            function flashKey(el) {
+                el.classList.add('hit');
+                setTimeout(function() { el.classList.remove('hit'); }, 90);
+            }
+
+            /* ---------- PAPER POSITION (gulungan kertas) ---------- */
+            var paperEl = document.getElementById('paper');
+            var paperContent = document.getElementById('paper-content');
+
+            function getLineHeight() {
+                var style = window.getComputedStyle(paperEl);
+                var lh = parseFloat(style.lineHeight);
+                if (isNaN(lh) || lh <= 0) lh = 28;
+                return lh;
+            }
+
+            function getCharsPerLine() {
+                var style = window.getComputedStyle(paperEl);
+                var fs = parseFloat(style.fontSize);
+                if (isNaN(fs) || fs <= 0) fs = 14;
+                var pw = paperEl.clientWidth - 44;
+                if (pw <= 0) pw = 400;
+                var cw = fs * 0.58;
+                return Math.max(15, Math.floor(pw / cw));
+            }
+
+            function countLines(text) {
+                var parts = text.split('\n');
+                var total = 0;
+                var cpl = getCharsPerLine();
+                for (var i = 0; i < parts.length; i++) {
+                    var len = parts[i].length;
+                    if (len === 0) {
+                        total += 1;
+                    } else {
+                        total += Math.ceil(len / cpl);
+                    }
+                }
+                return total;
+            }
+
+            function updatePaperPosition() {
+                if (!paperEl) return;
+                // jika sedang animasi tear/fresh, jangan ganggu
+                if (paperEl.classList.contains('tear') || paperEl.classList.contains('fresh')) return;
+                var textSoFar = TARGET.substring(0, typed);
+                var lines = countLines(textSoFar);
+                var lh = getLineHeight();
+                // offset: baris yang sudah diketik (kecuali baris terakhir) naik ke atas
+                var offset = Math.max(0, (lines - 1) * lh * 0.92);
+                paperEl.style.transform = 'translateY(-' + offset + 'px)';
+            }
+
+            /* ---------- RENDER PAPER ---------- */
+            function renderPaper() {
+                var html = '';
+                for (var i = 0; i < TARGET.length; i++) {
+                    var c = TARGET[i];
+                    var display = c === '\n' ? '\n' : (c === ' ' ? ' ' : c);
+                    if (i < typed) {
+                        html += '<span class="ch">' + escapeHtml(display) + '</span>';
+                    } else if (i === typed) {
+                        html += '<span class="caret"></span><span class="ch-pending">' + escapeHtml(display) +
+                        '</span>';
+                    } else {
+                        html += '<span class="ch-pending">' + escapeHtml(display) + '</span>';
+                    }
+                }
+                paperContent.innerHTML = html;
+                document.getElementById('char-count').textContent = typed + ' / ' + TARGET.length;
+                updatePaperPosition();
+            }
+
+            function escapeHtml(s) {
+                return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+
+            /* ---------- KEY PRESS ---------- */
+            function pressKey(k) {
+                if (!gameActive) return;
+                var expected = TARGET[typed];
+                var match = false;
+                if (expected === '\n') { match = (k === '\n'); } else if (expected === ' ') { match = (k === ' '); } else if (
+                    /[a-zA-Z]/.test(expected)) { match = k.toLowerCase() === expected.toLowerCase(); } else { match = k ===
+                        expected; }
+
+                if (match) {
+                    typed++;
+                    renderPaper();
+                    if (expected === '\n') { playBell(); } else { playClack(); }
+                    if (typed >= TARGET.length) { winGame(); }
+                } else {
+                    mistake();
+                }
+            }
+
+
+            /* ---------- PHYSICAL KEYBOARD (laptop/PC) ---------- */
+            function flashKeyByChar(ch) {
+                var keys = document.querySelectorAll('#kbd .key');
+                var target = null;
+                if (ch === ' ') {
+                    target = document.querySelector('#kbd .key.space');
+                } else if (ch === '\n') {
+                    target = document.querySelector('#kbd .key.enter');
+                } else {
+                    var up = String(ch).toUpperCase();
+                    keys.forEach(function(k) {
+                        if (k.textContent.trim().toUpperCase() === up) target = k;
+                    });
+                }
+                if (target) flashKey(target);
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (!gameActive) return;
+                // ignore when modifier combos (except shift for symbols handled as key)
+                if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+                var k = null;
+                if (e.key === 'Enter') {
+                    k = '\n';
+                } else if (e.key === ' ') {
+                    k = ' ';
+                } else if (e.key.length === 1) {
+                    // letters, digits, punctuation as typed
+                    k = e.key;
+                } else {
+                    return; // ignore Tab, Escape, arrows, etc.
+                }
+
+                e.preventDefault();
+                flashKeyByChar(k === '\n' ? '\n' : k);
+                pressKey(k);
+            });
+
+            /* ---------- MISTAKE (ganti kertas) ---------- */
+            function mistake() {
+                playTear();
+                var toast = document.getElementById('mistake-toast');
+                toast.textContent = 'Salah ketik — kertas baru · Mistyped — new paper';
+                toast.classList.add('show');
+                paperEl.classList.add('tear');
+                setTimeout(function() {
+                    typed = 0;
+                    paperCount++;
+                    document.getElementById('paper-count').textContent = paperCount;
+                    renderPaper();
+                    paperEl.classList.remove('tear');
+                    paperEl.classList.add('fresh');
+                    toast.classList.remove('show');
+                    setTimeout(function() {
+                        paperEl.classList.remove('fresh');
+                        updatePaperPosition();
+                    }, 420);
+                }, 480);
+            }
+
+            /* ---------- START TYPING ---------- */
+            function startTyping() {
+                show('typing');
+                buildKeyboard();
+                typed = 0;
+                timeLeft = 90;
+                paperCount = 1;
+                document.getElementById('paper-count').textContent = paperCount;
+                document.getElementById('stamp').classList.remove('show');
+                updateClock();
+                renderPaper();
+                gameActive = true;
+                clearInterval(timerIv);
+                timerIv = setInterval(function() {
+                    timeLeft--;
+                    updateClock();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerIv);
+                        gameActive = false;
+                        loseGame();
+                    }
+                }, 1000);
+            }
+
+            function updateClock() {
+                var m = Math.floor(Math.max(timeLeft, 0) / 60);
+                var s = Math.max(timeLeft, 0) % 60;
+                var el = document.getElementById('clock');
+                el.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                el.classList.toggle('low', timeLeft <= 15);
+            }
+
+            /* ---------- LOSE ---------- */
+            function loseGame() {
+                var crack = document.getElementById('crack');
+                crack.classList.add('flash');
+                playBuzzer();
+                setTimeout(function() {
+                    crack.classList.remove('flash');
+                    show('over');
+                }, 450);
+            }
+
+            /* ---------- WIN ---------- */
+            function winGame() {
+                gameActive = false;
+                clearInterval(timerIv);
+                document.getElementById('stamp').classList.add('show');
+                playFanfare();
+                var elapsed = 90 - Math.max(timeLeft, 0);
+                var m = Math.floor(elapsed / 60),
+                    s = elapsed % 60;
+                var timeStr = (m > 0 ? m + ' menit ' : '') + s + ' detik';
+                var timeStrEn = (m > 0 ? m + 'm ' : '') + s + 's';
+                document.getElementById('win-copy').innerHTML =
+                    'Naskah proklamasi berhasil diketik dalam ' + timeStr + ', menggunakan ' + paperCount +
+                    ' lembar kertas. Seperti Sayuti Melik pada dini hari itu, kamu baru saja mengetik ulang kalimat yang akan dibacakan Soekarno-Hatta di depan bangsa Indonesia.' +
+                    '<span class="en">The proclamation was typed successfully in ' + timeStrEn + ', using ' +
+                    paperCount +
+                    ' sheet(s) of paper. Like Sayuti Melik that early morning, you just retyped the words that Soekarno-Hatta would read aloud before the Indonesian nation.</span>';
+                setTimeout(function() { launchConfetti(); }, 200);
+                setTimeout(function() { show('win'); }, 650);
+            }
+
+            function launchConfetti() {
+                var colors = ['#a32126', '#f3ead3', '#d3ac66'];
+                for (var i = 0; i < 50; i++) {
+                    (function() {
+                        var el = document.createElement('div');
+                        el.className = 'confetti';
+                        el.style.left = Math.random() * 100 + 'vw';
+                        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+                        el.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+                        document.body.appendChild(el);
+                        var duration = 2200 + Math.random() * 1400;
+                        var drift = (Math.random() - 0.5) * 200;
+                        el.animate([
+                            { transform: el.style.transform + ' translate(0,0)', opacity: 1 },
+                            { transform: 'rotate(' + (Math.random() * 720) + 'deg) translate(' + drift +
+                                    'px,110vh)', opacity: .9 }
+                        ], { duration: duration, easing: 'ease-in' });
+                        setTimeout(function() { el.remove(); }, duration + 50);
+                    })();
+                }
+            }
+
+            /* ---------- NAV BUTTONS ---------- */
+            document.getElementById('btn-start').addEventListener('click', function() {
+                audio(); // unlock
+                factIdx = 0;
+                renderFacts();
+                show('facts');
+            });
+            document.getElementById('btn-retry-over').addEventListener('click', runCountdown);
+            document.getElementById('btn-menu-over').addEventListener('click', function() { window.location.href = 'index.html'; });
+            document.getElementById('btn-retry-win').addEventListener('click', runCountdown);
+            var btnMenuWin = document.getElementById('btn-menu-win');
+            if (btnMenuWin) btnMenuWin.addEventListener('click', function() { window.location.href = 'index.html'; });
+            var btnMenuOver = document.getElementById('btn-menu-over');
+            if (btnMenuOver) {
+              // already has menu - redirect to index
+            }
+
+
+            /* ---------- handle resize untuk update posisi kertas ---------- */
+            var resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    if (gameActive || typed > 0) updatePaperPosition();
+                }, 150);
+            });
+
+        })();
+    </script>
+</body>
+</html>
