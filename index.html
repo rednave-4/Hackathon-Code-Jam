@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>PERJUANGAN — Peta Perjuangan</title>
+  <meta name="description" content="Road to Merdeka — sebuah perjalanan mengingat semangat perjuangan bangsa Indonesia." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Special+Elite&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ============================== ENTRANCE 1 — FLAG SPLASH ============================== -->
+    <section id="entrance1" class="screen grain" aria-label="Layar pembuka">
+      <div class="vignette"></div>
+
+      <div class="flag-wrap" id="flagWrap">
+        <canvas id="flagCanvas" aria-hidden="true"></canvas>
+      </div>
+
+      <div class="e1-text" id="e1Text">
+        <p class="eyebrow">Sebuah Perjalanan Mengingat</p>
+        <h1 class="title-display">SEMANGAT PERJUANGAN</h1>
+        <p class="title-accent">Bangsa Indonesia</p>
+      </div>
+
+      <p class="e1-hint" id="e1Hint">Tekan spasi atau klik untuk melanjutkan</p>
+    </section>
+
+    <!-- ============================== ENTRANCE 2 — CREDITS ============================== -->
+    <section id="entrance2" class="screen grain" hidden aria-label="Kredit">
+      <div class="vignette"></div>
+      <div class="credits">
+        <p class="eyebrow">Road to Merdeka</p>
+        <div class="credits-divider"></div>
+        <h2>Dibuat untuk Hackathon</h2>
+        <p class="maker">— Nama Pembuat —</p>
+        <button class="btn btn--primary" id="ctaEnterMap">Masuk ke Peta Perjuangan</button>
+      </div>
+    </section>
+
+    <!-- ============================== MAIN — PETA PERJUANGAN ============================== -->
+    <section id="mainMap" class="screen" hidden aria-label="Peta Perjuangan">
+      <header class="map-header">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"><span class="top"></span><span class="bottom"></span></span>
+          <div class="brand-text">
+            <span class="brand-title">PERJUANGAN</span>
+            <span class="brand-version">v2.0 · Peta Perjuangan</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <span class="dev-badge" id="devBadge" hidden>DEV MODE</span>
+          <span class="progress-pill" id="progressLabel">0 / 5 MISI</span>
+          <button class="btn btn--ghost" id="resetBtn">Reset Progres</button>
+        </div>
+      </header>
+
+      <div class="map-body">
+        <div id="mapWrap" class="grain">
+          <svg class="map-silhouette" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="islandGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#1f1a14" />
+                <stop offset="100%" stop-color="#0a0908" />
+              </linearGradient>
+            </defs>
+            <!-- abstract archipelago silhouette — stylized, not a literal map -->
+            <path
+              d="M -5 90 Q 10 75 22 82 T 40 78 Q 46 65 58 68 T 72 60 Q 80 48 92 52 T 108 46 L 108 108 L -5 108 Z"
+              fill="url(#islandGrad)"
+              opacity="0.85"
+            />
+            <path
+              d="M -5 95 Q 15 84 30 90 T 55 84 Q 65 74 80 78 T 108 70 L 108 108 L -5 108 Z"
+              fill="#0f0c09"
+              opacity="0.9"
+            />
+          </svg>
+          <div class="fog-layer" aria-hidden="true"></div>
+
+          <svg id="routeSvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="routeGradient" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#4caf6a" />
+                <stop offset="100%" stop-color="#eac873" />
+              </linearGradient>
+            </defs>
+            <path id="routeBase" class="route-base" vector-effect="non-scaling-stroke" />
+            <path id="routeProgress" class="route-progress" vector-effect="non-scaling-stroke" />
+          </svg>
+
+          <div id="nodesLayer" aria-label="Daftar misi"></div>
+        </div>
+
+        <aside id="detailPanel" class="detail-panel" hidden aria-label="Detail misi"></aside>
+      </div>
+    </section>
+
+    <div id="modalRoot"></div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/flag.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
