@@ -46,14 +46,17 @@ fallbacks.
 perjuangan/
 ├── index.html        entrance markup + mission map DOM
 ├── style.css          all styling, design tokens, responsive rules
-├── js/
-│   ├── data.js         mission data (the single source of truth)
-│   ├── flag.js          cloth-simulated flag (Canvas 2D mesh grid)
-│   ├── modal.js         themed confirm/info modal helper
-│   ├── map.js            route rendering, node states, panel, progress, hooks
-│   └── main.js            screen-flow orchestration, entrance timing, dev toggle
+├── data.js             mission data (the single source of truth)
+├── flag.js              cloth-simulated flag (Canvas 2D mesh grid)
+├── modal.js              themed confirm/info modal helper
+├── map.js                 route rendering, node states, panel, progress, hooks
+├── main.js                 screen-flow orchestration, entrance timing, dev toggle
 └── README.md
 ```
+
+All files sit flat in the same folder — no subfolders — so uploading to
+GitHub Pages (or anywhere else) is just "drop every file into the repo
+folder, keep them side by side."
 
 ---
 
