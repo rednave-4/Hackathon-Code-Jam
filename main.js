@@ -174,6 +174,7 @@
     const cta = $("ctaContinue");
     const flagWrap = $("flagWrap");
     const textBlock = $("e1Text");
+    const embers = $("cinemaEmbers");
 
     if (!scroller) {
       console.warn("[PERJUANGAN] entranceScroll missing");
@@ -192,6 +193,19 @@
       console.warn("[PERJUANGAN] flag failed:", err);
     }
 
+    if (embers && !embers.childElementCount) {
+      for (let i = 0; i < 16; i++) {
+        const s = document.createElement("span");
+        s.style.left = Math.random() * 100 + "%";
+        s.style.setProperty("--dx", (Math.random() * 50 - 25).toFixed(1) + "px");
+        s.style.animationDuration = 9 + Math.random() * 12 + "s";
+        s.style.animationDelay = -Math.random() * 12 + "s";
+        const sz = 2 + Math.random() * 2.5;
+        s.style.width = s.style.height = sz + "px";
+        embers.appendChild(s);
+      }
+    }
+
     requestAnimationFrame(() => {
       if (flagInstance) {
         flagInstance.configure();
@@ -206,7 +220,6 @@
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let smooth = 0;
-    let target = 0;
 
     function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
     function lerp(a, b, t) { return a + (b - a) * t; }
@@ -214,84 +227,78 @@
       const x = clamp((v - e0) / (e1 - e0), 0, 1);
       return x * x * (3 - 2 * x);
     }
-
     function maxScroll() {
       return Math.max(1, scroller.offsetHeight - window.innerHeight);
     }
-
-    function readTarget() {
-      // Distance scrolled through the long entrance section
+    function progress01() {
       const top = scroller.getBoundingClientRect().top;
-      // When section top is 0 at start, progress from -top
-      return clamp(-top, 0, maxScroll());
+      return clamp(-top / maxScroll(), 0, 1);
     }
 
     function paint(p) {
-      // p: 0..1 through the long page
-      // Camera moves forward in Z; flag exits up/back; team comes from depth
-      const camZ = p * 280;
-      const camY = p * -30;
-      const rotX = p * 4; // subtle tilt
-
+      // Camera gently advances
+      const camZ = p * 200;
+      const camY = p * -24;
       if (world) {
         world.style.transform =
-          "translate3d(0, " + camY.toFixed(2) + "px, " + camZ.toFixed(2) + "px) rotateX(" + rotX.toFixed(3) + "deg)";
+          "translate3d(0," + camY.toFixed(1) + "px," + camZ.toFixed(1) + "px)";
       }
 
-      // FLAG: visible early, then flies back + fades
-      const flagOut = smoothstep(0.2, 0.55, p);
+      // FLAG exits earlier & clearer (0.12 → 0.48)
+      const flagOut = smoothstep(0.12, 0.48, p);
       if (panelFlag) {
-        const z = 0 - flagOut * 220;
-        const y = flagOut * -80;
-        const sc = 1 - flagOut * 0.25;
         panelFlag.style.opacity = String(1 - flagOut);
         panelFlag.style.transform =
-          "translate3d(0, " + y.toFixed(1) + "px, " + z.toFixed(1) + "px) scale(" + sc.toFixed(3) + ")";
-        panelFlag.style.filter = flagOut > 0.01 ? "blur(" + (flagOut * 6).toFixed(2) + "px)" : "none";
+          "translate3d(0," + (flagOut * -90).toFixed(1) + "px," + (-flagOut * 240).toFixed(1) +
+          "px) scale(" + (1 - flagOut * 0.28).toFixed(3) + ")";
+        panelFlag.style.filter = flagOut > 0.05 ? "blur(" + (flagOut * 7).toFixed(2) + "px)" : "none";
       }
 
-      // TEAM: starts deep, comes to camera
-      const teamIn = smoothstep(0.38, 0.72, p);
+      // TEAM enters earlier (0.28 → 0.58) so it is never "missing"
+      const teamIn = smoothstep(0.28, 0.58, p);
       if (panelTeam) {
-        const z = -320 + teamIn * 320;
-        const y = (1 - teamIn) * 40;
         panelTeam.style.opacity = String(teamIn);
         panelTeam.style.transform =
-          "translate3d(0, " + y.toFixed(1) + "px, " + z.toFixed(1) + "px) scale(" + (0.88 + teamIn * 0.12).toFixed(3) + ")";
-        panelTeam.style.filter = teamIn < 0.95 ? "blur(" + ((1 - teamIn) * 8).toFixed(2) + "px)" : "none";
-        if (teamIn > 0.55) panelTeam.classList.add("is-live");
+          "translate3d(0," + ((1 - teamIn) * 50).toFixed(1) + "px," +
+          (-280 + teamIn * 280).toFixed(1) + "px) scale(" + (0.9 + teamIn * 0.1).toFixed(3) + ")";
+        panelTeam.style.filter = teamIn < 0.92 ? "blur(" + ((1 - teamIn) * 6).toFixed(2) + "px)" : "none";
+        if (teamIn > 0.35) panelTeam.classList.add("is-live");
         else panelTeam.classList.remove("is-live");
       }
 
       if (fill) fill.style.width = (p * 100).toFixed(1) + "%";
       if (hint) {
-        const hide = smoothstep(0.65, 0.85, p);
-        hint.style.opacity = String(0.7 * (1 - hide));
+        const hide = smoothstep(0.55, 0.75, p);
+        hint.style.opacity = String(0.65 * (1 - hide));
       }
     }
 
     function tick() {
       if (cinemaDone) return;
-      target = readTarget() / maxScroll();
+      const target = progress01();
       if (reduceMotion.matches) smooth = target;
-      else smooth = lerp(smooth, target, 0.16);
+      else smooth = lerp(smooth, target, 0.18);
       if (Math.abs(smooth - target) < 0.001) smooth = target;
-      paint(clamp(smooth, 0, 1));
+      paint(smooth);
       cinemaRaf = requestAnimationFrame(tick);
     }
     if (cinemaRaf) cancelAnimationFrame(cinemaRaf);
     cinemaRaf = requestAnimationFrame(tick);
 
-    // Space / click: jump to team section, then to mode select
+    function jumpToTeam() {
+      const y = scroller.offsetTop + maxScroll() * 0.75;
+      window.scrollTo({ top: y, behavior: reduceMotion.matches ? "auto" : "smooth" });
+    }
+
     function advance(e) {
       if (cinemaDone) return;
       const t = e && e.target;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.closest(".lang-search"))) return;
       if (e && e.preventDefault) e.preventDefault();
-      const p = readTarget() / maxScroll();
-      if (p < 0.65) {
-        const y = scroller.offsetTop + maxScroll() * 0.82;
-        window.scrollTo({ top: y, behavior: reduceMotion.matches ? "auto" : "smooth" });
+      const p = progress01();
+      // If team not clearly visible yet → jump there
+      if (p < 0.5) {
+        jumpToTeam();
         return;
       }
       window.__pjGoMode(e);
@@ -316,10 +323,9 @@
       });
     }
 
-    // Start at top of entrance
     window.scrollTo(0, scroller.offsetTop || 0);
     paint(0);
-    console.log("[PERJUANGAN] 3D entrance ready — scroll the long page");
+    console.log("[PERJUANGAN] 3D entrance ready — scroll flag → team");
   }
 
   function finishCinemaEntrance() {
@@ -341,6 +347,7 @@
     }
     window.scrollTo(0, 0);
   }
+
 
   /* ---------- Global navigation (also used by inline onclick) ---------- */
   window.__pjGoMode = function (e) {

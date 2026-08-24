@@ -12,23 +12,22 @@
 </head>
 <body>
   <div id="app">
-            <!-- ENTRANCE — long-page 3D scroll (flag → team credits) -->
+                <!-- ENTRANCE — one long 3D page: flag → team -->
     <section id="entranceScroll" class="cinema-3d" aria-label="Pembuka 3D">
       <div class="cinema-3d__sticky">
-        <div class="cinema-3d__scene grain">
-          <div class="cinema-3d__world" id="cinemaWorld">
-            <!-- depth fog / atmosphere -->
-            <div class="cinema-3d__atmos" aria-hidden="true">
-              <div class="c3d-glow c3d-glow--a"></div>
-              <div class="c3d-glow c3d-glow--b"></div>
-              <div class="c3d-floor"></div>
-            </div>
+        <div class="cinema-3d__scene">
+          <div class="cinema-3d__void" aria-hidden="true">
+            <div class="c3d-glow c3d-glow--red"></div>
+            <div class="c3d-glow c3d-glow--gold"></div>
+            <div class="c3d-embers" id="cinemaEmbers"></div>
+          </div>
 
-            <!-- ENTRANCE 1: Flag + title (near camera at start) -->
+          <div class="cinema-3d__world" id="cinemaWorld">
+            <!-- Phase 1: Flag -->
             <div class="cinema-3d__panel cinema-3d__panel--flag" id="panelFlag">
               <div class="flag-wrap" id="flagWrap">
                 <div class="flag-pedestal" aria-hidden="true"></div>
-                <canvas id="flagCanvas" aria-hidden="true"></canvas>
+                <canvas id="flagCanvas" width="640" height="400" aria-hidden="true"></canvas>
               </div>
               <div class="e1-text" id="e1Text">
                 <p class="eyebrow" data-i18n="e1_eyebrow">Sebuah Perjalanan Mengingat</p>
@@ -37,7 +36,7 @@
               </div>
             </div>
 
-            <!-- ENTRANCE 2: Team credits (deeper in Z, comes forward) -->
+            <!-- Phase 2: Team -->
             <div class="cinema-3d__panel cinema-3d__panel--team" id="panelTeam">
               <div class="lang-search" id="langSearchE2" role="combobox" aria-haspopup="listbox" aria-expanded="false">
                 <div class="lang-search-box">
@@ -57,7 +56,6 @@
             </div>
           </div>
 
-          <div class="vignette" aria-hidden="true"></div>
           <div class="cinema-3d__hud">
             <div class="cinema-3d__bar"><span id="cinemaProgressFill"></span></div>
             <p class="e1-hint" id="e1Hint" data-i18n="e1_hint">Gulir untuk melanjutkan</p>
@@ -69,8 +67,7 @@
     <section id="entrance1" class="screen" hidden aria-hidden="true"></section>
     <section id="entrance2" class="screen" hidden aria-hidden="true"></section>
 
-    <!-- MODE SELECT --><!-- MODE SELECT --><!-- MODE SELECT -->
-    <section id="modeSelect" class="screen grain mode-stage" hidden aria-label="Pilih mode">
+<section id="modeSelect" class="screen grain mode-stage" hidden aria-label="Pilih mode">
       <div class="mode-space" aria-hidden="true">
         <div class="mode-glow mode-glow--a"></div>
         <div class="mode-glow mode-glow--b"></div>
