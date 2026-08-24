@@ -2544,9 +2544,8 @@ button {
 
 
 
-
 /* ==========================================================================
-   ENTRANCE — vertical scroll: flag grows to full-bleed, team over flag bg
+   ENTRANCE 3D — one long page, unified void, flag → team
    ========================================================================== */
 html.is-c3d,
 body.is-c3d {
@@ -2562,26 +2561,26 @@ body.is-c3d #app {
   overflow: visible !important;
   background: #000 !important;
 }
-body:not(.is-c3d) .c3d-page {
+body:not(.is-c3d) .cinema-3d {
   display: none !important;
 }
 
-.c3d-page {
+.cinema-3d {
   position: relative;
   width: 100%;
-  /* long page drives progress */
-  height: 240vh;
+  height: 260vh;
   z-index: 50;
   display: block !important;
   background: #000;
+  pointer-events: auto;
 }
-.c3d-page.is-done {
+.cinema-3d.is-done {
   display: none !important;
   height: 0 !important;
   pointer-events: none !important;
 }
 
-.c3d-sticky {
+.cinema-3d__sticky {
   position: sticky;
   top: 0;
   height: 100vh;
@@ -2590,20 +2589,24 @@ body:not(.is-c3d) .c3d-page {
   background: #000;
 }
 
-.c3d-stage {
+.cinema-3d__scene {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  perspective: 1100px;
+  perspective-origin: 50% 42%;
   background: #000;
+  overflow: hidden;
 }
 
-.c3d-void {
+/* Unified void atmosphere — same on whole entrance */
+.cinema-3d__void {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(200, 16, 46, 0.14) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 55% at 50% 40%, rgba(200, 16, 46, 0.12) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 35% at 50% 55%, rgba(234, 200, 115, 0.06) 0%, transparent 70%),
     #000;
 }
 .c3d-glow {
@@ -2613,18 +2616,18 @@ body:not(.is-c3d) .c3d-page {
   pointer-events: none;
 }
 .c3d-glow--red {
-  width: min(70vw, 520px);
-  height: min(70vw, 520px);
+  width: min(65vw, 480px);
+  height: min(65vw, 480px);
   left: 50%;
-  top: 40%;
+  top: 38%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(200, 16, 46, 0.22) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(200, 16, 46, 0.2) 0%, transparent 70%);
 }
 .c3d-glow--gold {
-  width: min(42vw, 300px);
-  height: min(42vw, 300px);
+  width: min(40vw, 280px);
+  height: min(40vw, 280px);
   left: 50%;
-  top: 50%;
+  top: 48%;
   transform: translate(-50%, -50%);
   background: radial-gradient(circle, rgba(234, 200, 115, 0.1) 0%, transparent 70%);
 }
@@ -2648,122 +2651,94 @@ body:not(.is-c3d) .c3d-page {
   100% { transform: translateY(-105vh) translateX(var(--dx, 0px)); opacity: 0; }
 }
 
-/* FLAG — center, scales up with scroll */
-.c3d-flag-layer {
+.cinema-3d__world {
   position: absolute;
-  left: 50%;
-  top: 38%;
-  transform: translate(-50%, -50%) scale(var(--flag-scale, 1));
-  transform-origin: center center;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
   z-index: 2;
-  width: min(68vw, 460px);
-  height: min(48vw, 330px);
-  max-width: 920px;
-  pointer-events: none;
+}
+
+.cinema-3d__panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  padding: 1.5rem 1rem 5rem;
   will-change: transform, opacity, filter;
 }
-.c3d-flag-layer .flag-wrap {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  opacity: 1 !important;
-  transform: none !important;
-  filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.55));
+
+.cinema-3d__panel--flag {
+  z-index: 3;
+  pointer-events: none;
 }
-.c3d-flag-layer .flag-pedestal {
+.cinema-3d__panel--flag .flag-wrap {
+  position: relative;
+  width: min(68vw, 460px);
+  height: min(48vw, 330px);
+  max-width: 460px;
+  opacity: 1 !important;
+  transform: translateZ(50px);
+  filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.6));
+}
+.cinema-3d__panel--flag .flag-pedestal {
   position: absolute;
   left: 50%;
   bottom: -6%;
   width: 55%;
   height: 14%;
   transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, transparent 70%);
   border-radius: 50%;
-  opacity: var(--pedestal-op, 1);
 }
-.c3d-flag-layer #flagCanvas {
+.cinema-3d__panel--flag #flagCanvas {
   position: absolute;
   inset: 0;
   width: 100% !important;
   height: 100% !important;
   display: block;
 }
-
-/* Darken flag when team text needs readability */
-.c3d-dim {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  background: rgba(0, 0, 0, 0.55);
-  opacity: var(--dim-op, 0);
-}
-
-/* Entrance 1 text */
-.c3d-hero-text {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 58%;
-  z-index: 4;
+.cinema-3d__panel--flag .e1-text {
+  margin-top: 1.5rem;
   text-align: center;
-  padding: 0 1.25rem;
-  pointer-events: none;
-  will-change: transform, opacity, filter;
-}
-.c3d-hero-text .eyebrow,
-.c3d-hero-text .title-display,
-.c3d-hero-text .title-accent {
-  /* inherit existing type styles from main CSS */
+  opacity: 1 !important;
+  transform: translateZ(70px);
+  padding: 0 1rem;
 }
 
-/* Entrance 2 team — centered over flag bg */
-.c3d-team {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem 5rem;
+.cinema-3d__panel--team {
+  z-index: 4;
   opacity: 0;
   pointer-events: none;
-  will-change: transform, opacity;
 }
-.c3d-team.is-live {
+.cinema-3d__panel--team.is-live {
   pointer-events: auto;
 }
-.c3d-team .lang-search {
+.cinema-3d__panel--team .lang-search {
   position: absolute;
   top: 16px;
   right: 16px;
   z-index: 10;
   pointer-events: auto;
 }
-.c3d-team .credits {
+.cinema-3d__panel--team .credits {
   text-align: center;
   max-width: 560px;
   padding: 2rem 1.5rem;
+  transform: translateZ(40px);
   pointer-events: auto;
 }
-.c3d-team .credits .eyebrow {
-  color: rgba(255, 255, 255, 0.6);
-}
-.c3d-team .credits h2 {
-  color: #fff;
-}
-.c3d-team .credits .maker {
-  color: rgba(234, 200, 115, 0.95);
-}
-.c3d-page #ctaContinue {
+.cinema-3d #ctaContinue {
   pointer-events: auto !important;
   cursor: pointer !important;
   position: relative;
   z-index: 15 !important;
 }
 
-.c3d-hud {
+.cinema-3d__hud {
   position: absolute;
   left: 0;
   right: 0;
@@ -2776,20 +2751,20 @@ body:not(.is-c3d) .c3d-page {
   gap: 12px;
   padding-bottom: 28px;
 }
-.c3d-bar {
+.cinema-3d__bar {
   width: min(200px, 42vw);
   height: 2px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 999px;
   overflow: hidden;
 }
-.c3d-bar span {
+.cinema-3d__bar span {
   display: block;
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, #c8102e, #eac873);
 }
-.c3d-page .e1-hint {
+.cinema-3d .e1-hint {
   position: static;
   margin: 0;
   opacity: 0.65;
@@ -2802,9 +2777,22 @@ body:not(.is-c3d) .c3d-page {
 }
 
 @media (max-width: 640px) {
-  .c3d-flag-layer {
+  .cinema-3d__panel--flag .flag-wrap {
     width: min(80vw, 320px);
     height: min(56vw, 240px);
   }
-  .c3d-hero-text { top: 56%; }
+}
+
+/* Team panel text must stay readable on void */
+.cinema-3d__panel--team .credits .eyebrow {
+  color: rgba(255,255,255,0.55);
+}
+.cinema-3d__panel--team .credits h2 {
+  color: #fff;
+}
+.cinema-3d__panel--team .credits .maker {
+  color: rgba(234, 200, 115, 0.9);
+}
+.cinema-3d__panel--team.is-live {
+  pointer-events: auto !important;
 }
