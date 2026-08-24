@@ -173,6 +173,7 @@
     const flagWrap = $("flagWrap");
     const textBlock = $("e1Text");
 
+    document.documentElement.classList.add("is-cinema-entrance");
     document.body.classList.add("is-cinema-entrance");
 
     try {
@@ -239,7 +240,7 @@
       root.style.setProperty("--cin-hint-y", (hintFade * 24).toFixed(1) + "px");
 
       if (credits) {
-        if (creditsIn > 0.85) credits.classList.add("is-interactive");
+        if (creditsIn > 0.55) credits.classList.add("is-interactive");
         else credits.classList.remove("is-interactive");
       }
 
@@ -283,15 +284,20 @@
   function finishCinemaEntrance() {
     if (cinemaDone) return;
     cinemaDone = true;
+    document.documentElement.classList.remove("is-cinema-entrance");
     document.body.classList.remove("is-cinema-entrance");
     const scrollRoot = $("entranceScroll");
     if (scrollRoot) {
       scrollRoot.classList.add("is-done");
+      scrollRoot.style.display = "none";
     }
     if (flagInstance) {
       try { flagInstance.stop(); } catch (e) {}
     }
+    // Reset scroll so mode select is not offset
     window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }
 
   /* ---------- Global navigation (also used by inline onclick) ---------- */
@@ -342,6 +348,7 @@
     const cta = $("ctaContinue");
     if (cta) {
       cta.onclick = window.__pjGoMode;
+      cta.addEventListener("click", window.__pjGoMode);
     }
     const learnBtn = $("btnModeLearn");
     if (learnBtn) learnBtn.onclick = window.__pjGoLearn;
