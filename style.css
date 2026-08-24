@@ -2782,3 +2782,17 @@ body:not(.is-c3d) .cinema-3d {
     height: min(56vw, 240px);
   }
 }
+
+/* Team panel text must stay readable on void */
+.cinema-3d__panel--team .credits .eyebrow {
+  color: rgba(255,255,255,0.55);
+}
+.cinema-3d__panel--team .credits h2 {
+  color: #fff;
+}
+.cinema-3d__panel--team .credits .maker {
+  color: rgba(234, 200, 115, 0.9);
+}
+.cinema-3d__panel--team.is-live {
+  pointer-events: auto !important;
+}
