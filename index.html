@@ -1,114 +1,123 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>PERJUANGAN — Peta Perjuangan</title>
-  <meta name="description" content="Road to Merdeka — sebuah perjalanan mengingat semangat perjuangan bangsa Indonesia." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PERJUANGAN — Cinematic</title>
+  <meta name="description" content="Sebuah perjalanan mengingat semangat perjuangan bangsa Indonesia." />
+  <link rel="icon" href="data:," />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Special+Elite&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap"
-    rel="stylesheet"
-  />
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Special+Elite&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="app">
-    <!-- ============================== ENTRANCE 1 — FLAG SPLASH ============================== -->
-    <section id="entrance1" class="screen grain" aria-label="Layar pembuka">
-      <div class="vignette"></div>
+  <main class="site-shell">
+    <section class="cinema-scroll" id="cinema" aria-label="Perjalanan cinematic perjuangan kemerdekaan">
+      <div class="stage">
+        <div class="world">
+          <!-- Atmosphere layers -->
+          <div class="layer sky" aria-hidden="true"></div>
+          <div class="layer glow glow-a" aria-hidden="true"></div>
+          <div class="layer glow glow-b" aria-hidden="true"></div>
+          <div class="layer fog" aria-hidden="true"></div>
+          <div class="layer embers" id="embers" aria-hidden="true"></div>
 
-      <div class="flag-wrap" id="flagWrap">
-        <canvas id="flagCanvas" aria-hidden="true"></canvas>
-      </div>
+          <!-- Header -->
+          <header class="site-header" aria-label="Navigasi utama">
+            <a class="site-logo" href="#cinema">PERJUANGAN</a>
+            <nav class="site-nav" aria-label="Menu utama">
+              <a href="#cinema">Awal</a>
+              <a href="#bridge">Proklamasi</a>
+              <a href="#bazaar">Perjuangan</a>
+              <a href="#routes">Misi</a>
+            </nav>
+            <button type="button" class="language-switcher" id="langBtn" aria-label="Ganti bahasa">
+              <span id="langLabel">ID</span>
+              <span aria-hidden="true">⌄</span>
+            </button>
+          </header>
 
-      <div class="e1-text" id="e1Text">
-        <p class="eyebrow">Sebuah Perjalanan Mengingat</p>
-        <h1 class="title-display">SEMANGAT PERJUANGAN</h1>
-        <p class="title-accent">Bangsa Indonesia</p>
-      </div>
-
-      <p class="e1-hint" id="e1Hint">Tekan spasi atau klik untuk melanjutkan</p>
-    </section>
-
-    <!-- ============================== ENTRANCE 2 — CREDITS ============================== -->
-    <section id="entrance2" class="screen grain" hidden aria-label="Kredit">
-      <div class="vignette"></div>
-      <div class="credits">
-        <p class="eyebrow">Road to Merdeka</p>
-        <div class="credits-divider"></div>
-        <h2>Dibuat untuk Hackathon</h2>
-        <p class="maker">— Nama Pembuat —</p>
-        <button class="btn btn--primary" id="ctaEnterMap">Masuk ke Peta Perjuangan</button>
-      </div>
-    </section>
-
-    <!-- ============================== MAIN — PETA PERJUANGAN ============================== -->
-    <section id="mainMap" class="screen" hidden aria-label="Peta Perjuangan">
-      <header class="map-header">
-        <div class="brand">
-          <span class="brand-mark" aria-hidden="true"><span class="top"></span><span class="bottom"></span></span>
-          <div class="brand-text">
-            <span class="brand-title">PERJUANGAN</span>
-            <span class="brand-version">v2.0 · Peta Perjuangan</span>
+          <!-- Flag hero -->
+          <div class="flag-stage" id="flagStage" aria-hidden="true">
+            <canvas id="flagCanvas"></canvas>
+            <div class="flag-glow"></div>
           </div>
+
+          <!-- Hero title -->
+          <h1 class="hero-title" data-i18n="hero_title">MERDEKA</h1>
+
+          <!-- Intro copy -->
+          <section class="intro-copy" aria-label="Pengantar">
+            <p data-i18n="intro_p">Sebuah perjalanan mengingat satu tanah air, satu bangsa, dan satu bahasa — dari ikrar pemuda hingga pengakuan kedaulatan.</p>
+            <div class="hero-tags" aria-label="Sorotan">
+              <span data-i18n="tag1">Sumpah Pemuda</span>
+              <span data-i18n="tag2">Proklamasi 1945</span>
+              <span data-i18n="tag3">Hari Pahlawan</span>
+            </div>
+          </section>
+
+          <!-- Story panel — Proklamasi -->
+          <section class="story-panel story-panel-bridge" id="bridge" aria-label="Proklamasi">
+            <h2 data-i18n="panel1_h2">Proklamasi adalah titik lahir.</h2>
+            <p data-i18n="panel1_p">Pada 17 Agustus 1945 di Pegangsaan Timur 56, Soekarno dan Hatta menyatakan kemerdekaan. Naskah singkat itu membuka jalan panjang mempertahankan Republik.</p>
+            <dl class="facts">
+              <div>
+                <dt>17.08</dt>
+                <dd data-i18n="fact1">Proklamasi dibacakan</dd>
+              </div>
+              <div>
+                <dt>1945</dt>
+                <dd data-i18n="fact2">Republik lahir</dd>
+              </div>
+            </dl>
+          </section>
+
+          <!-- Story panel — Perjuangan -->
+          <section class="story-panel story-panel-bazaar" id="bazaar" aria-label="Perjuangan bersenjata">
+            <h2 data-i18n="panel2_h2">Kemerdekaan harus dipertahankan.</h2>
+            <p data-i18n="panel2_p">Dari Surabaya hingga gerilya di pelosok, rakyat dan tentara menjawab agresi dengan keteguhan. Diplomasi dan senjata berjalan beriringan hingga 1949.</p>
+            <button type="button" class="note-button" id="notesBtn">
+              <span aria-hidden="true">↗</span>
+              <span data-i18n="notes_btn">Buka catatan perjuangan</span>
+            </button>
+          </section>
+
+          <!-- Sights / mission cards -->
+          <div class="sights-slider" id="routes" aria-label="Kartu misi perjuangan">
+            <div class="sights-track" id="sightsTrack"></div>
+          </div>
+          <div class="sights-controls" aria-label="Kontrol slider">
+            <button type="button" class="sight-nav sight-prev" aria-label="Sebelumnya">←</button>
+            <button type="button" class="sight-nav sight-next" aria-label="Berikutnya">→</button>
+          </div>
+
+          <!-- Shade overlay -->
+          <div class="shade" aria-hidden="true"></div>
         </div>
-        <div class="header-right">
-          <span class="dev-badge" id="devBadge" hidden>DEV MODE</span>
-          <span class="progress-pill" id="progressLabel">0 / 5 MISI</span>
-          <button class="btn btn--ghost" id="resetBtn">Reset Progres</button>
-        </div>
-      </header>
-
-      <div class="map-body">
-        <div id="mapWrap" class="grain">
-          <svg class="map-silhouette" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="islandGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#1f1a14" />
-                <stop offset="100%" stop-color="#0a0908" />
-              </linearGradient>
-            </defs>
-            <!-- abstract archipelago silhouette — stylized, not a literal map -->
-            <path
-              d="M -5 90 Q 10 75 22 82 T 40 78 Q 46 65 58 68 T 72 60 Q 80 48 92 52 T 108 46 L 108 108 L -5 108 Z"
-              fill="url(#islandGrad)"
-              opacity="0.85"
-            />
-            <path
-              d="M -5 95 Q 15 84 30 90 T 55 84 Q 65 74 80 78 T 108 70 L 108 108 L -5 108 Z"
-              fill="#0f0c09"
-              opacity="0.9"
-            />
-          </svg>
-          <div class="fog-layer" aria-hidden="true"></div>
-
-          <svg id="routeSvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="routeGradient" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#4caf6a" />
-                <stop offset="100%" stop-color="#eac873" />
-              </linearGradient>
-            </defs>
-            <path id="routeBase" class="route-base" vector-effect="non-scaling-stroke" />
-            <path id="routeProgress" class="route-progress" vector-effect="non-scaling-stroke" />
-          </svg>
-
-          <div id="nodesLayer" aria-label="Daftar misi"></div>
-        </div>
-
-        <aside id="detailPanel" class="detail-panel" hidden aria-label="Detail misi"></aside>
       </div>
     </section>
+  </main>
 
-    <div id="modalRoot"></div>
+  <!-- Notes modal -->
+  <div class="modal" id="notesModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__box" role="dialog" aria-modal="true" aria-labelledby="notesTitle">
+      <p class="modal__eyebrow">CATATAN</p>
+      <h3 id="notesTitle" data-i18n="notes_title">Garis waktu singkat</h3>
+      <ul class="notes-list">
+        <li><strong>1928</strong> — <span data-i18n="n1">Sumpah Pemuda: satu tanah air, satu bangsa, satu bahasa.</span></li>
+        <li><strong>16 Agu 1945</strong> — <span data-i18n="n2">Rengasdengklok: desakan golongan muda.</span></li>
+        <li><strong>17 Agu 1945</strong> — <span data-i18n="n3">Proklamasi kemerdekaan.</span></li>
+        <li><strong>10 Nov 1945</strong> — <span data-i18n="n4">Pertempuran Surabaya · Hari Pahlawan.</span></li>
+        <li><strong>1947–1949</strong> — <span data-i18n="n5">Agresi Belanda & perang gerilya hingga pengakuan kedaulatan.</span></li>
+      </ul>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--primary" data-close data-i18n="mengerti">Mengerti</button>
+      </div>
+    </div>
   </div>
 
-  <script src="data.js"></script>
-  <script src="modal.js"></script>
-  <script src="flag.js"></script>
-  <script src="map.js"></script>
-  <script src="main.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
