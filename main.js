@@ -166,16 +166,16 @@
   /* ---------- Entrance 1 ---------- */
   function initEntrance1() {
     const scroller = $("entranceScroll");
-    const sticky = scroller && scroller.querySelector(".cinema-3d__sticky");
-    const scene = scroller && scroller.querySelector(".cinema-3d__scene");
-    const world = $("cinemaWorld");
-    const panelFlag = $("panelFlag");
-    const panelTeam = $("panelTeam");
+    const sticky = scroller && scroller.querySelector(".c3d-sticky");
+    const stage = scroller && scroller.querySelector(".c3d-stage");
+    const flagLayer = $("flagLayer");
+    const heroText = $("heroText");
+    const teamPanel = $("teamPanel");
+    const dim = $("flagDim");
     const fill = $("cinemaProgressFill");
     const hint = $("e1Hint");
     const cta = $("ctaContinue");
     const flagWrap = $("flagWrap");
-    const textBlock = $("e1Text");
     const embers = $("cinemaEmbers");
 
     if (!scroller) {
@@ -214,7 +214,7 @@
         flagInstance.start();
       }
       if (flagWrap) flagWrap.classList.add("is-in");
-      if (textBlock) textBlock.classList.add("is-in");
+      if (heroText) heroText.classList.add("is-in");
       if (hint) hint.classList.add("is-in");
     });
     setTimeout(() => flagInstance && flagInstance.configure(), 250);
@@ -237,41 +237,63 @@
       return clamp(-top / maxScroll(), 0, 1);
     }
 
+    // How large must flag grow to cover viewport (approx)
+    function maxFlagScale() {
+      const baseW = flagLayer ? flagLayer.offsetWidth : 400;
+      const baseH = flagLayer ? flagLayer.offsetHeight : 280;
+      const sx = (window.innerWidth * 1.15) / Math.max(1, baseW);
+      const sy = (window.innerHeight * 1.15) / Math.max(1, baseH);
+      return Math.max(sx, sy, 2.8);
+    }
+
     function paint(p) {
-      // Keep camera subtle so panels stay readable
-      if (world) {
-        world.style.transform =
-          "translate3d(0," + (p * -18).toFixed(1) + "px," + (p * 120).toFixed(1) + "px)";
+      const grow = smoothstep(0.05, 0.55, p);       // flag scale up
+      const textOut = smoothstep(0.08, 0.38, p);    // title shrinks back + fade
+      const teamIn = smoothstep(0.42, 0.68, p);     // team fades in over flag
+      const dimIn = smoothstep(0.4, 0.62, p);       // darken for readability
+      const pedestalOut = smoothstep(0.15, 0.4, p);
+
+      const scale = 1 + grow * (maxFlagScale() - 1);
+
+      if (flagLayer) {
+        // Center rises slightly then holds as full bg
+        const topPct = 38 - grow * 8; // move toward vertical center
+        flagLayer.style.top = topPct + "%";
+        flagLayer.style.setProperty("--flag-scale", scale.toFixed(4));
+        flagLayer.style.transform = "translate(-50%, -50%) scale(" + scale.toFixed(4) + ")";
+        flagLayer.style.setProperty("--pedestal-op", String(1 - pedestalOut));
+        // Soften cloth shadow when huge
+        const wrap = flagLayer.querySelector(".flag-wrap");
+        if (wrap) {
+          wrap.style.filter =
+            "drop-shadow(0 " + (24 - grow * 12).toFixed(0) + "px " +
+            (40 - grow * 16).toFixed(0) + "px rgba(0,0,0," + (0.55 - grow * 0.2).toFixed(2) + "))";
+        }
       }
 
-      // Flag: visible start → gone by ~45%
-      const flagOut = smoothstep(0.08, 0.42, p);
-      if (panelFlag) {
-        panelFlag.style.opacity = String(1 - flagOut);
-        panelFlag.style.transform =
-          "translate3d(0," + (flagOut * -70).toFixed(1) + "px," +
-          (-flagOut * 200).toFixed(1) + "px) scale(" + (1 - flagOut * 0.22).toFixed(3) + ")";
-        panelFlag.style.filter = flagOut > 0.08 ? "blur(" + (flagOut * 6).toFixed(2) + "px)" : "none";
-        panelFlag.style.visibility = flagOut >= 0.98 ? "hidden" : "visible";
+      if (dim) dim.style.setProperty("--dim-op", dimIn.toFixed(3));
+
+      // Title: fade + shrink backward (scale down + blur)
+      if (heroText) {
+        heroText.style.opacity = String(1 - textOut);
+        heroText.style.transform =
+          "translateY(" + (textOut * -40).toFixed(1) + "px) scale(" + (1 - textOut * 0.2).toFixed(3) + ")";
+        heroText.style.filter = textOut > 0.05 ? "blur(" + (textOut * 6).toFixed(2) + "px)" : "none";
+        heroText.style.visibility = textOut >= 0.98 ? "hidden" : "visible";
       }
 
-      // Team: starts ~25%, FULL by ~50%, STAYS visible until end (no black hole)
-      const teamIn = smoothstep(0.22, 0.5, p);
-      if (panelTeam) {
-        panelTeam.style.opacity = String(teamIn);
-        panelTeam.style.transform =
-          "translate3d(0," + ((1 - teamIn) * 36).toFixed(1) + "px," +
-          (-220 + teamIn * 220).toFixed(1) + "px) scale(" + (0.92 + teamIn * 0.08).toFixed(3) + ")";
-        panelTeam.style.filter = teamIn < 0.9 ? "blur(" + ((1 - teamIn) * 5).toFixed(2) + "px)" : "none";
-        panelTeam.style.visibility = teamIn < 0.02 ? "hidden" : "visible";
-        if (teamIn > 0.3) panelTeam.classList.add("is-live");
-        else panelTeam.classList.remove("is-live");
+      // Team over full flag bg
+      if (teamPanel) {
+        teamPanel.style.opacity = String(teamIn);
+        teamPanel.style.transform =
+          "translateY(" + ((1 - teamIn) * 28).toFixed(1) + "px)";
+        if (teamIn > 0.35) teamPanel.classList.add("is-live");
+        else teamPanel.classList.remove("is-live");
       }
 
       if (fill) fill.style.width = (p * 100).toFixed(1) + "%";
       if (hint) {
-        // Hide hint once team is readable
-        const hide = smoothstep(0.4, 0.55, p);
+        const hide = smoothstep(0.45, 0.6, p);
         hint.style.opacity = String(0.65 * (1 - hide));
       }
     }
@@ -288,31 +310,22 @@
     if (cinemaRaf) cancelAnimationFrame(cinemaRaf);
     cinemaRaf = requestAnimationFrame(tick);
 
-    // CRITICAL: forward mouse wheel on sticky stage → page scroll
-    // (overflow:hidden stage often eats wheel without scrolling the document)
+    // Mouse wheel on stage → page scroll
     function onWheel(e) {
       if (cinemaDone) return;
-      // Let page scroll natively by applying delta to window
       e.preventDefault();
-      const scale = 1;
-      window.scrollBy({
-        top: e.deltaY * scale,
-        left: 0,
-        behavior: "auto",
-      });
+      window.scrollBy(0, e.deltaY);
     }
-    const wheelTargets = [scroller, sticky, scene].filter(Boolean);
-    wheelTargets.forEach((el) => {
+    [scroller, sticky, stage].filter(Boolean).forEach((el) => {
       el.addEventListener("wheel", onWheel, { passive: false });
     });
 
-    // Touch swipe support
     let touchY = null;
-    function onTouchStart(e) {
+    scroller.addEventListener("touchstart", (e) => {
       if (cinemaDone) return;
       touchY = e.touches[0].clientY;
-    }
-    function onTouchMove(e) {
+    }, { passive: true });
+    scroller.addEventListener("touchmove", (e) => {
       if (cinemaDone || touchY == null) return;
       const y = e.touches[0].clientY;
       const dy = touchY - y;
@@ -321,12 +334,10 @@
         e.preventDefault();
         window.scrollBy(0, dy);
       }
-    }
-    scroller.addEventListener("touchstart", onTouchStart, { passive: true });
-    scroller.addEventListener("touchmove", onTouchMove, { passive: false });
+    }, { passive: false });
 
     function jumpToTeam() {
-      const y = scroller.offsetTop + maxScroll() * 0.62;
+      const y = scroller.offsetTop + maxScroll() * 0.7;
       window.scrollTo({ top: y, behavior: reduceMotion.matches ? "auto" : "smooth" });
     }
 
@@ -336,7 +347,7 @@
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.closest(".lang-search"))) return;
       if (e && e.preventDefault) e.preventDefault();
       const p = progress01();
-      if (p < 0.45) {
+      if (p < 0.5) {
         jumpToTeam();
         return;
       }
@@ -362,9 +373,13 @@
       });
     }
 
+    window.addEventListener("resize", () => {
+      if (flagInstance) flagInstance.configure();
+    });
+
     window.scrollTo(0, scroller.offsetTop || 0);
     paint(0);
-    console.log("[PERJUANGAN] 3D entrance ready — wheel scrolls page, team holds");
+    console.log("[PERJUANGAN] entrance: flag grows to full-bleed, team over flag");
   }
 
   function finishCinemaEntrance() {
@@ -386,6 +401,7 @@
     }
     window.scrollTo(0, 0);
   }
+
 
 
 
