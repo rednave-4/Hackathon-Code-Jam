@@ -12,17 +12,18 @@
 </head>
 <body>
   <div id="app">
-    <!-- ENTRANCE — cinematic scroll (e1 + e2 in one sticky stage) -->
+        <!-- ENTRANCE — fixed cinematic stage (wheel / space driven) -->
     <section id="entranceScroll" class="cinema-entrance" aria-label="Pembuka cinematic">
-      <div class="cinema-entrance__sticky stage grain">
-        <div class="e1-space" aria-hidden="true">
+      <div class="cinema-stage grain">
+        <div class="cinema-bg" aria-hidden="true">
           <div class="e1-glow e1-glow--a"></div>
           <div class="e1-glow e1-glow--b"></div>
-          <div class="e1-floor"></div>
-          <div class="e1-rays"></div>
+          <div class="cinema-rays"></div>
+          <div class="cinema-embers" id="cinemaEmbers"></div>
         </div>
         <div class="vignette"></div>
 
+        <!-- Phase 1: Flag + title -->
         <div class="cinema-layer cinema-layer--hero" id="cinemaHero">
           <div class="flag-wrap" id="flagWrap">
             <div class="flag-pedestal" aria-hidden="true"></div>
@@ -35,6 +36,7 @@
           </div>
         </div>
 
+        <!-- Phase 2: Credits -->
         <div class="cinema-layer cinema-layer--credits" id="cinemaCredits">
           <div class="lang-search" id="langSearchE2" role="combobox" aria-haspopup="listbox" aria-expanded="false">
             <div class="lang-search-box">
@@ -49,19 +51,19 @@
             <div class="credits-divider"></div>
             <h2 data-i18n="e2_heading">Dibuat untuk Hackathon</h2>
             <p class="maker" data-i18n="e2_maker">— MEATLOVER TEAM —</p>
-            <button type="button" class="btn btn--primary" id="ctaContinue" data-i18n="e2_cta" onclick="window.__pjGoMode&&window.__pjGoMode(event)">Lanjutkan</button>
+            <button type="button" class="btn btn--primary" id="ctaContinue" data-i18n="e2_cta">Lanjutkan</button>
           </div>
         </div>
 
-        <p class="e1-hint" id="e1Hint" data-i18n="e1_hint">Gulir ke bawah untuk melanjutkan</p>
+        <div class="cinema-progress" aria-hidden="true"><span id="cinemaProgressFill"></span></div>
+        <p class="e1-hint" id="e1Hint" data-i18n="e1_hint">Gulir atau tekan spasi untuk melanjutkan</p>
       </div>
     </section>
 
-    <!-- Legacy placeholders so old selectors do not break -->
     <section id="entrance1" class="screen" hidden aria-hidden="true"></section>
     <section id="entrance2" class="screen" hidden aria-hidden="true"></section>
 
-    <!-- MODE SELECT -->
+    <!-- MODE SELECT --><!-- MODE SELECT -->
     <section id="modeSelect" class="screen grain mode-stage" hidden aria-label="Pilih mode">
       <div class="mode-space" aria-hidden="true">
         <div class="mode-glow mode-glow--a"></div>

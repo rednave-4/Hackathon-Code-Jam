@@ -2541,169 +2541,227 @@ button {
 
 
 
+
 /* ==========================================================================
-   Cinematic entrance scroll (e1 + e2 only)
+   Cinematic entrance — fixed stage, wheel/space progress (no document scroll)
    ========================================================================== */
-
-/* While cinematic entrance is active, allow page scroll */
-html.is-cinema-entrance,
-body.is-cinema-entrance {
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  height: auto !important;
-  min-height: 100%;
-}
-body.is-cinema-entrance #app {
-  height: auto !important;
-  min-height: 100vh;
-  overflow: visible !important;
-}
-
-/* Hide cinematic block after user continues */
-body:not(.is-cinema-entrance) .cinema-entrance {
-  display: none !important;
-  height: 0 !important;
-  overflow: hidden !important;
-  pointer-events: none !important;
-}
-
 .cinema-entrance {
-  position: relative;
-  width: 100%;
-  height: calc(100vh + 1600px);
-  z-index: 40;
-  display: block !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
-  opacity: 1 !important;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 .cinema-entrance.is-done {
   display: none !important;
-  height: 0 !important;
   pointer-events: none !important;
+  visibility: hidden !important;
 }
 
-.cinema-entrance__sticky {
-  position: sticky;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  min-height: 560px;
+.cinema-stage {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  display: flex !important;
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(120% 100% at 50% 30%, var(--ink-2) 0%, var(--ink) 65%, #000 100%);
-  opacity: 1 !important;
-  visibility: visible !important;
-  pointer-events: auto;
+  background: radial-gradient(120% 100% at 50% 28%, #15110e 0%, #0a0908 58%, #000 100%);
+}
+
+.cinema-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.cinema-stage .e1-glow--a {
+  position: absolute;
+  width: min(70vw, 520px);
+  height: min(70vw, 520px);
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(200, 16, 46, 0.2) 0%, transparent 70%);
+  filter: blur(8px);
+  opacity: 0.9;
+}
+.cinema-stage .e1-glow--b {
+  position: absolute;
+  width: min(48vw, 340px);
+  height: min(48vw, 340px);
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(234, 200, 115, 0.12) 0%, transparent 70%);
+  filter: blur(10px);
+  animation: e1GlowPulse 5s ease-in-out infinite;
+}
+.cinema-rays {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 40% 55% at 50% 18%, rgba(243, 238, 225, 0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 22% 40% at 30% 65%, rgba(200, 16, 46, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cinema-embers {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.cinema-embers span {
+  position: absolute;
+  bottom: -5%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #eac873;
+  opacity: 0.45;
+  box-shadow: 0 0 6px rgba(234, 200, 115, 0.45);
+  animation: cinemaEmber linear infinite;
+}
+@keyframes cinemaEmber {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  15% { opacity: 0.55; }
+  100% { transform: translateY(-110vh) translateX(var(--dx, 0px)); opacity: 0; }
+}
+
+.cinema-stage .vignette {
+  z-index: 2;
 }
 
 .cinema-layer {
   position: absolute;
   inset: 0;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  transition: none;
   will-change: opacity, transform;
 }
-
-/* Hero: flag + title — never steal clicks from credits */
 .cinema-layer--hero {
-  z-index: 4;
-  opacity: var(--cin-hero-opacity, 1);
-  transform: translate3d(0, var(--cin-hero-y, 0px), 0) scale(var(--cin-hero-scale, 1));
-  pointer-events: none !important;
+  z-index: 5;
+  pointer-events: none;
 }
-.cinema-layer--hero * {
-  pointer-events: none !important;
-}
-
-/* Credits layer */
 .cinema-layer--credits {
   z-index: 6;
-  opacity: var(--cin-credits-opacity, 0);
-  transform: translate3d(0, var(--cin-credits-y, 48px), 0);
   pointer-events: none;
-  visibility: visible;
+  opacity: 0;
 }
-.cinema-layer--hero {
-  visibility: visible;
-}
-/* Only become interactive when mostly visible */
 .cinema-layer--credits.is-interactive {
-  pointer-events: auto !important;
-}
-.cinema-layer--credits.is-interactive .lang-search,
-.cinema-layer--credits.is-interactive .credits,
-.cinema-layer--credits.is-interactive .btn,
-.cinema-layer--credits.is-interactive a,
-.cinema-layer--credits.is-interactive input,
-.cinema-layer--credits.is-interactive button {
-  pointer-events: auto !important;
-  position: relative;
-  z-index: 8;
+  pointer-events: auto;
 }
 
-.cinema-entrance .e1-hint {
-  z-index: 7;
-  opacity: var(--cin-hint-opacity, 0.75);
-  transform: translate3d(0, var(--cin-hint-y, 0px), 0);
-  pointer-events: none !important;
-}
-
-/* Ensure flag/text visible without depending on old entrance1 classes */
 .cinema-entrance .flag-wrap {
-  opacity: 1 !important;
-  transform: scale(1) translateY(0) !important;
-  pointer-events: none !important;
-}
-.cinema-entrance .e1-text {
+  position: relative;
+  flex-shrink: 0;
+  width: min(70vw, 480px);
+  height: min(50vw, 340px);
+  max-width: 480px;
   opacity: 1 !important;
   transform: none !important;
-  pointer-events: none !important;
+  margin-bottom: 0.2rem;
+  filter: drop-shadow(0 28px 40px rgba(0, 0, 0, 0.55));
+  pointer-events: none;
 }
-.cinema-entrance .e1-space,
-.cinema-entrance .vignette {
-  opacity: 1;
-  pointer-events: none !important;
+.cinema-entrance .flag-pedestal {
+  position: absolute;
+  left: 50%;
+  bottom: -4%;
+  width: 55%;
+  height: 14%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.cinema-entrance #flagCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
 }
 
-/* Credits positioning inside sticky stage */
+.cinema-entrance .e1-text {
+  margin-top: 1.8rem;
+  text-align: center;
+  opacity: 1 !important;
+  transform: none !important;
+  position: relative;
+  z-index: 4;
+  pointer-events: none;
+  padding: 0 1.25rem;
+}
+
 .cinema-layer--credits .lang-search {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 10;
+  top: 18px;
+  right: 18px;
+  z-index: 12;
+  pointer-events: auto;
 }
 .cinema-layer--credits .credits {
   position: relative;
-  z-index: 9;
+  z-index: 8;
+  pointer-events: auto;
+  text-align: center;
+  max-width: 560px;
+  padding: 2rem 1.5rem;
 }
-
-/* CTA must be clickable */
 .cinema-entrance #ctaContinue {
   pointer-events: auto !important;
   cursor: pointer !important;
-  z-index: 12 !important;
+  position: relative;
+  z-index: 15 !important;
 }
 
-/* AI fab stays above entrance */
-.ai-guide {
-  z-index: 180;
+.cinema-progress {
+  position: absolute;
+  left: 50%;
+  bottom: 64px;
+  transform: translateX(-50%);
+  width: min(180px, 40vw);
+  height: 2px;
+  background: rgba(243, 238, 225, 0.12);
+  border-radius: 999px;
+  z-index: 8;
+  overflow: hidden;
+  pointer-events: none;
+}
+.cinema-progress span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #c8102e, #eac873);
+  border-radius: 999px;
+  transition: width 0.08s linear;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .cinema-layer { transition: none; }
+.cinema-entrance .e1-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
+  margin: 0;
+  text-align: center;
+  z-index: 9;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: rgba(243, 238, 225, 0.45);
 }
 
-html.is-cinema-entrance, body.is-cinema-entrance {
-  overflow-y: scroll !important;
-}
-.cinema-layer--credits .credits {
-  pointer-events: inherit;
+@media (max-width: 640px) {
+  .cinema-entrance .flag-wrap {
+    width: min(78vw, 320px);
+    height: min(56vw, 240px);
+  }
+  .cinema-entrance .e1-text { margin-top: 1.2rem; }
 }
