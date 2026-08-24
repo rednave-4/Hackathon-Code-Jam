@@ -1,0 +1,2461 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUARA PERLAWANAN — Voice of Resistance</title>
+<style>
+:root{
+  --bg:#0a0a0a;
+  --green:#39FF14;
+  --green-dim:#1e8a0c;
+  --green-glow:rgba(57,255,20,0.55);
+  --red:#FF5555;
+  --amber:#ffb347;
+  --panel:#0f130f;
+  --line:#1c2b17;
+  --font-mono:'Courier New', 'Consolas', monospace;
+}
+*{box-sizing:border-box;}
+html,body{
+  margin:0;padding:0;height:100%;background:var(--bg);
+  color:var(--green);font-family:var(--font-mono);
+  overflow:hidden;user-select:none;
+}
+button{
+  font-family:var(--font-mono);background:#0d150d;color:var(--green);
+  border:1px solid var(--green-dim);padding:8px 14px;cursor:pointer;
+  letter-spacing:1px;text-transform:uppercase;font-size:12px;
+  transition:all .15s;
+}
+button:hover{background:var(--green);color:#000;box-shadow:0 0 12px var(--green-glow);}
+button:disabled{opacity:.35;cursor:not-allowed;}
+button:disabled:hover{background:#0d150d;color:var(--green);box-shadow:none;}
+h1,h2,h3{margin:0;letter-spacing:2px;}
+
+/* ---------- CRT OVERLAY ---------- */
+#crt-overlay{
+  position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 3px);
+  mix-blend-mode:overlay;
+}
+#crt-vignette{
+  position:fixed;inset:0;pointer-events:none;z-index:9998;
+  box-shadow:inset 0 0 180px 60px rgba(0,0,0,0.75);
+}
+#crt-flicker{
+  position:fixed;inset:0;pointer-events:none;z-index:9997;
+  background:var(--green);opacity:0;
+  animation:flicker 6.5s infinite;
+}
+@keyframes flicker{
+  0%,96%,100%{opacity:0;}
+  97%{opacity:.02;}
+  98%{opacity:0;}
+}
+.reduced-motion #crt-flicker{animation:none;}
+.glitch #crt-overlay{animation:glitchshift .25s steps(2) 3;}
+@keyframes glitchshift{
+  0%{transform:translate(0,0);}
+  25%{transform:translate(-3px,1px);}
+  50%{transform:translate(3px,-1px);}
+  75%{transform:translate(-2px,0);}
+  100%{transform:translate(0,0);}
+}
+
+/* ---------- LAYOUT ---------- */
+#app{position:relative;width:100vw;height:100vh;}
+.screen{
+  position:absolute;inset:0;display:none;flex-direction:column;
+}
+.screen.active{display:flex;}
+
+/* ---------- TOP BAR ---------- */
+#topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 14px;border-bottom:1px solid var(--line);
+  background:var(--panel);font-size:11px;flex-shrink:0;
+}
+/* ---------- LANGUAGE SEARCH BAR ---------- */
+.lang-search{ position:relative; font-family:var(--font-mono); }
+.lang-search-box{
+  display:flex; align-items:center; gap:6px;
+  background:#0d150d; border:1px solid var(--green-dim); padding:4px 8px; cursor:text;
+}
+.lang-search.open .lang-search-box{ border-color:var(--green); box-shadow:0 0 8px var(--green-glow); }
+.lang-search-icon{ font-size:10px; color:var(--green-dim); flex-shrink:0; }
+.lang-search-input{
+  width:78px; min-width:0; background:transparent; border:none; outline:none;
+  color:var(--green); font-family:var(--font-mono); font-size:11px; letter-spacing:.5px;
+}
+.lang-search-input::placeholder{ color:var(--green-dim); }
+.lang-search-current{
+  font-size:9px; color:var(--amber); text-transform:uppercase; letter-spacing:.5px; flex-shrink:0;
+  max-width:60px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.lang-search.open .lang-search-current{ display:none; }
+.lang-search-list{
+  display:none; position:absolute; top:calc(100% + 4px); right:0; width:180px;
+  max-height:240px; overflow-y:auto; background:#0d150d; border:1px solid var(--green-dim);
+  z-index:600; box-shadow:0 0 16px rgba(0,0,0,.6);
+}
+.lang-search.open .lang-search-list{ display:block; }
+.lang-opt{
+  display:flex; justify-content:space-between; align-items:center; gap:8px;
+  padding:7px 10px; font-size:11px; cursor:pointer; border-bottom:1px solid var(--line);
+}
+.lang-opt:last-child{ border-bottom:none; }
+.lang-opt:hover, .lang-opt.active{ background:#152015; }
+.lang-opt.active{ border-left:2px solid var(--green); }
+.lang-opt-native{ color:var(--green); }
+.lang-opt-en{ color:#5a8a4a; font-size:9px; text-transform:uppercase; }
+.lang-opt-empty{ color:var(--green-dim); cursor:default; justify-content:center; }
+.lang-opt-empty:hover{ background:transparent; }
+
+/* ---------- MENU ---------- */
+#screen-menu{
+  align-items:center;justify-content:center;text-align:center;
+  background:radial-gradient(ellipse at center, #0f1a0f 0%, #050705 80%);
+}
+.menu-box{
+  border:1px solid var(--green-dim);padding:36px 48px;background:rgba(10,15,10,.55);
+  box-shadow:0 0 40px rgba(57,255,20,.08);max-width:560px;
+}
+.menu-title{font-size:34px;font-weight:bold;text-shadow:0 0 12px var(--green-glow);letter-spacing:4px;}
+.menu-subtitle{font-size:15px;color:var(--amber);margin-top:4px;letter-spacing:3px;}
+.menu-loc{margin-top:14px;font-size:12px;color:#7fbf6a;}
+.menu-tagline{margin:18px 0;font-size:12px;font-style:italic;color:#8ad678;line-height:1.6;}
+.menu-buttons{display:flex;flex-direction:column;gap:8px;margin-top:20px;align-items:center;}
+.menu-buttons button{width:220px;}
+.static-line{height:2px;width:100%;background:repeating-linear-gradient(90deg,var(--green-dim) 0 2px,transparent 2px 4px);opacity:.4;margin:16px 0;}
+
+/* ---------- GAME SCREEN ---------- */
+#screen-game{flex-direction:column;}
+#game-body{display:flex;flex:1;min-height:0;}
+#map-pane{width:60%;position:relative;border-right:1px solid var(--line);background:#060a06;}
+#console-pane{width:40%;display:flex;flex-direction:column;background:var(--panel);overflow-y:auto;padding:10px;gap:10px;}
+canvas#mapCanvas{width:100%;height:100%;display:block;}
+
+/* ---------- RESPONSIVE DESIGN ---------- */
+@media (max-width: 1024px) {
+  #map-pane{width:55%;}
+  #console-pane{width:45%;}
+  .menu-box{padding:28px 36px;}
+  .menu-title{font-size:28px;}
+}
+
+@media (max-width: 768px) {
+  #game-body{flex-direction:column;}
+  #map-pane{width:100%;height:50%;border-right:none;border-bottom:1px solid var(--line);}
+  #console-pane{width:100%;height:50%;padding:8px;gap:8px;}
+  .menu-box{padding:20px 24px;max-width:90%;}
+  .menu-title{font-size:24px;}
+  .menu-subtitle{font-size:13px;}
+  .menu-buttons button{width:180px;padding:12px 14px;}
+  .console-block{padding:8px;}
+  .bar-label{width:90px;font-size:10px;}
+  #freqDisplay{font-size:18px;}
+  #waveCanvas{height:60px;}
+  #broadcastBtn{padding:12px;font-size:13px;}
+  .control-row button{font-size:11px;padding:8px 6px;}
+  #topbar{padding:4px 10px;font-size:10px;}
+  .lang-search-input{width:60px;}
+}
+
+@media (max-width: 480px) {
+  .menu-box{padding:16px 20px;}
+  .menu-title{font-size:20px;letter-spacing:2px;}
+  .menu-subtitle{font-size:11px;letter-spacing:1px;}
+  .menu-tagline{font-size:11px;}
+  .menu-buttons button{width:100%;padding:14px 16px;font-size:13px;}
+  .console-block h3{font-size:10px;}
+  .bar-row{font-size:10px;}
+  .bar-label{width:70px;}
+  .bar-outer{height:10px;}
+  #freqDisplay{font-size:16px;}
+  #waveCanvas{height:50px;}
+  #broadcastBtn{padding:14px;font-size:13px;}
+  .control-row{flex-wrap:wrap;}
+  .control-row button{min-width:80px;padding:10px 8px;font-size:11px;}
+  #hud-top{font-size:10px;padding:4px 8px;}
+  #warningBanner{font-size:10px;top:30px;}
+  .modal-box{padding:20px 24px;max-height:90vh;}
+  .modal-box h2{font-size:13px;}
+  .modal-box p{font-size:11px;}
+  .choice-btn{font-size:11px;padding:10px;}
+  .codex-entry{font-size:11px;}
+  #endingTitle{font-size:16px;}
+  #endingRank{font-size:28px;}
+}
+
+/* Touch-friendly controls */
+@media (hover: none) and (pointer: coarse) {
+  button{padding:12px 16px;font-size:14px;}
+  #broadcastBtn{padding:14px;font-size:15px;}
+  .control-row button{padding:10px;font-size:12px;}
+  input[type=range]{height:20px;}
+}
+
+.console-block{border:1px solid var(--line);padding:10px;background:#0b110b;}
+.console-block h3{font-size:11px;color:var(--amber);letter-spacing:2px;margin-bottom:8px;}
+.bar-row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:11px;}
+.bar-label{width:110px;flex-shrink:0;}
+.bar-outer{flex:1;height:12px;border:1px solid var(--green-dim);background:#040604;position:relative;}
+.bar-inner{height:100%;background:var(--green);box-shadow:0 0 8px var(--green-glow);transition:width .3s;}
+.bar-inner.detection{background:var(--red);box-shadow:0 0 8px rgba(255,85,85,.6);}
+.bar-value{width:42px;text-align:right;font-size:11px;}
+
+#freqDisplay{font-size:22px;text-align:center;letter-spacing:2px;margin:6px 0;text-shadow:0 0 8px var(--green-glow);}
+#freqSliderWrap{padding:10px 4px;}
+input[type=range]{width:100%;accent-color:var(--green);}
+#waveCanvas{width:100%;height:80px;background:#040604;border:1px solid var(--green-dim);display:block;}
+#lockStatus{text-align:center;font-size:13px;margin-top:6px;letter-spacing:2px;height:18px;}
+#lockStatus.locked{color:var(--green);text-shadow:0 0 10px var(--green-glow);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
+
+#broadcastBtn{width:100%;padding:12px;font-size:14px;margin-top:8px;}
+#broadcastBtn.on{background:var(--green);color:#000;box-shadow:0 0 16px var(--green-glow);}
+
+.control-row{display:flex;gap:8px;margin-top:8px;}
+.control-row button{flex:1;font-size:10px;padding:6px;}
+
+#objectiveBox{font-size:11px;line-height:1.6;}
+#statusLine{font-size:11px;color:var(--amber);}
+#voiceSource{font-size:10px;color:#6a8a5f;margin-top:4px;}
+
+/* HUD top of map */
+#hud-top{
+  position:absolute;top:0;left:0;right:0;padding:6px 10px;
+  background:linear-gradient(rgba(0,0,0,.7),transparent);
+  font-size:11px;display:flex;justify-content:space-between;pointer-events:none;
+}
+#warningBanner{
+  position:absolute;top:34px;left:50%;transform:translateX(-50%);
+  color:var(--red);font-size:12px;letter-spacing:2px;text-shadow:0 0 8px var(--red);
+  display:none;
+}
+#warningBanner.show{display:block;animation:blink .6s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+
+/* ---------- MODALS / OVERLAYS ---------- */
+.overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.82);
+  display:none;align-items:center;justify-content:center;z-index:50;
+}
+.overlay.active{display:flex;}
+.modal-box{
+  border:1px solid var(--green-dim);background:#0a100a;padding:26px 32px;
+  max-width:520px;width:90%;box-shadow:0 0 30px rgba(57,255,20,.12);
+  max-height:82vh;overflow-y:auto;
+}
+.modal-box h2{color:var(--amber);font-size:15px;margin-bottom:10px;letter-spacing:2px;}
+.modal-box p{font-size:12px;line-height:1.7;margin:8px 0;}
+.choice-btn{display:block;width:100%;text-align:left;margin:6px 0;padding:10px;font-size:11px;}
+.choice-effects{color:#7fbf6a;font-size:10px;display:block;margin-top:3px;}
+.typewriter-line{white-space:pre-wrap;font-size:12px;line-height:1.8;min-height:1.4em;}
+.codex-entry{border-bottom:1px solid var(--line);padding:10px 0;font-size:12px;line-height:1.6;}
+.codex-tag{display:inline-block;font-size:9px;padding:2px 6px;margin-bottom:4px;letter-spacing:1px;}
+.codex-tag.record{background:var(--green-dim);color:#000;}
+.codex-tag.abstraction{background:#553311;color:var(--amber);}
+.modal-close{margin-top:14px;}
+
+/* Ending */
+#endingTitle{font-size:20px;color:var(--amber);text-shadow:0 0 10px var(--amber);letter-spacing:2px;}
+#endingScore{margin-top:14px;font-size:11px;line-height:1.8;border-top:1px solid var(--line);padding-top:10px;}
+#endingRank{font-size:34px;color:var(--green);text-align:center;text-shadow:0 0 14px var(--green-glow);}
+
+/* screen shake */
+.shake{animation:shakeAnim .4s;}
+@keyframes shakeAnim{
+  0%{transform:translate(0,0);}20%{transform:translate(-6px,4px);}
+  40%{transform:translate(5px,-5px);}60%{transform:translate(-4px,3px);}
+  80%{transform:translate(3px,-2px);}100%{transform:translate(0,0);}
+}
+.redflash{position:absolute;inset:0;background:var(--red);opacity:0;pointer-events:none;z-index:40;}
+.redflash.flash{animation:redflashAnim .5s ease-out;}
+@keyframes redflashAnim{0%{opacity:.55;}100%{opacity:0;}}
+
+::-webkit-scrollbar{width:8px;}
+::-webkit-scrollbar-thumb{background:var(--green-dim);}
+::-webkit-scrollbar-track{background:#050705;}
+
+/* ---------- ENTRY GATE (autoplay-policy click-to-enter) ---------- */
+#entry-gate{
+  position:fixed;inset:0;z-index:10050;background:#0A0A0A;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  gap:18px;
+}
+#entry-gate.hidden{display:none;}
+#entry-gate p{font-size:12px;letter-spacing:2px;color:var(--green);text-shadow:0 0 8px var(--green-glow);text-align:center;}
+#entry-gate button{padding:12px 26px;font-size:12px;}
+
+/* ---------- FULL-SCREEN CINEMATIC INTRO WAVE ---------- */
+#introWaveLayer{
+  position:fixed;inset:0;z-index:10000;background:#0A0A0A;
+  display:none;align-items:center;justify-content:center;overflow:hidden;
+}
+#introWaveLayer.active{display:flex;}
+#introWaveCanvas{
+  position:fixed;inset:0;width:100vw;height:100vh;display:block;
+}
+#introClimaxText{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:44px;letter-spacing:6px;color:var(--green);
+  text-shadow:0 0 18px var(--green-glow),0 0 40px var(--green-glow);
+  opacity:0;pointer-events:none;z-index:10001;text-align:center;
+  transition:opacity .25s ease-out;white-space:nowrap;
+}
+#introClimaxText.show{opacity:1;}
+#introWaveLayer.shake{animation:shakeAnim .4s;}
+@media (max-width:820px){
+  #introClimaxText{font-size:24px;letter-spacing:3px;}
+}
+
+@media (max-width:820px){
+  #game-body{flex-direction:column;}
+  #map-pane,#console-pane{width:100%;}
+  #map-pane{height:42vh;}
+  #console-pane{height:58vh;}
+}
+</style>
+</head>
+<body>
+<div id="crt-overlay"></div>
+<div id="crt-vignette"></div>
+<div id="crt-flicker"></div>
+
+<!-- ================= CINEMATIC OPENING (full-screen radio wave) ================= -->
+<div id="entry-gate">
+  <p>KLIK UNTUK MASUK — CLICK TO ENTER</p>
+  <button id="entryGateBtn">MASUK / ENTER</button>
+</div>
+<div id="introWaveLayer">
+  <canvas id="introWaveCanvas"></canvas>
+  <div id="introClimaxText"></div>
+</div>
+
+<div id="app">
+
+  <!-- ================= MAIN MENU ================= -->
+  <div class="screen active" id="screen-menu">
+    <div id="topbar" style="position:absolute;top:0;width:100%;">
+      <span></span>
+      <div class="lang-search" id="lang-search-menu" role="combobox" aria-haspopup="listbox" aria-expanded="false">
+        <div class="lang-search-box">
+          <span class="lang-search-icon" aria-hidden="true">&#9906;</span>
+          <input class="lang-search-input" type="search" autocomplete="off" spellcheck="false" placeholder="Language..." aria-label="Search and select language">
+          <span class="lang-search-current"></span>
+        </div>
+        <div class="lang-search-list" role="listbox" aria-label="Available languages"></div>
+      </div>
+    </div>
+    <div class="menu-box">
+      <div class="menu-title">SUARA PERLAWANAN</div>
+      <div class="menu-subtitle">VOICE OF RESISTANCE</div>
+      <div class="menu-loc" data-i18n="menuLocation">SURABAYA — NOVEMBER 1945</div>
+      <div class="static-line"></div>
+      <div class="menu-tagline" data-i18n="tagline">"Ketika senjata tak mampu menjangkau semuanya, biarkan suara yang melakukannya."</div>
+      <div class="menu-buttons">
+        <button id="btn-start" data-i18n="btnStart">MULAI</button>
+        <button id="btn-codex" data-i18n="btnCodex">CATATAN SEJARAH</button>
+        <button id="btn-howto" data-i18n="btnHowTo">CARA BERMAIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= INTRO CINEMATIC ================= -->
+  <div class="screen" id="screen-intro" style="align-items:center;justify-content:center;background:#000;">
+    <div class="typewriter-line" id="introText" style="max-width:640px;text-align:center;padding:20px;"></div>
+  </div>
+
+  <!-- ================= GAME SCREEN ================= -->
+  <div class="screen" id="screen-game">
+    <div id="topbar">
+      <span id="statusLine" data-i18n="statusOff">STATUS: SIARAN NONAKTIF</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="lang-search" id="lang-search-game" role="combobox" aria-haspopup="listbox" aria-expanded="false">
+          <div class="lang-search-box">
+            <span class="lang-search-icon" aria-hidden="true">&#9906;</span>
+            <input class="lang-search-input" type="search" autocomplete="off" spellcheck="false" placeholder="Language..." aria-label="Search and select language">
+            <span class="lang-search-current"></span>
+          </div>
+          <div class="lang-search-list" role="listbox" aria-label="Available languages"></div>
+        </div>
+        <span id="timeDisplay">00:00</span>
+        <button id="btn-pause" data-i18n="btnPause">JEDA</button>
+      </div>
+    </div>
+    <div id="game-body">
+      <div id="map-pane">
+        <canvas id="mapCanvas"></canvas>
+        <div id="hud-top">
+          <span data-i18n="mapLabel">SURABAYA — MALAM HARI</span>
+          <span id="nodeCountDisplay">0/5</span>
+        </div>
+        <div id="warningBanner" data-i18n="warningTriangulation">PERINGATAN: SINYAL SEDANG DILACAK</div>
+        <div class="redflash" id="redFlash"></div>
+      </div>
+      <div id="console-pane">
+
+        <div class="console-block">
+          <h3 data-i18n="hFrequency">FREKUENSI</h3>
+          <div id="freqDisplay">000.00 MHz</div>
+          <div id="freqSliderWrap">
+            <input type="range" id="freqSlider" min="0" max="1000" value="500">
+          </div>
+          <canvas id="waveCanvas"></canvas>
+          <div id="lockStatus"></div>
+        </div>
+
+        <div class="console-block">
+          <h3 data-i18n="hStatus">STATUS TRANSMISI</h3>
+          <div class="bar-row">
+            <div class="bar-label" data-i18n="lblMorale">SEMANGAT</div>
+            <div class="bar-outer"><div class="bar-inner" id="moraleBar" style="width:50%"></div></div>
+            <div class="bar-value" id="moraleVal">50%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label" data-i18n="lblDetection">RADAR</div>
+            <div class="bar-outer"><div class="bar-inner detection" id="detectionBar" style="width:0%"></div></div>
+            <div class="bar-value" id="detectionVal">0%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label" data-i18n="lblSignal">SINYAL</div>
+            <div class="bar-outer"><div class="bar-inner" id="signalBar" style="width:0%"></div></div>
+            <div class="bar-value" id="signalVal">0%</div>
+          </div>
+          <button id="broadcastBtn" data-i18n="btnBroadcastOn">MULAI SIARAN [SPACE]</button>
+          <div class="control-row">
+            <button id="btn-relocate" data-i18n="btnRelocate">PINDAH [R]</button>
+            <button id="btn-mute" data-i18n="btnMute">BISU [M]</button>
+          </div>
+          <div id="voiceSource" data-i18n="voiceSim">SUMBER SUARA: SIMULASI</div>
+        </div>
+
+        <div class="console-block">
+          <h3 data-i18n="hObjective">OBJEKTIF UTAMA</h3>
+          <div id="objectiveBox"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= OVERLAYS ================= -->
+
+  <div class="overlay" id="overlay-tutorial">
+    <div class="modal-box">
+      <h2 data-i18n="tutTitle">PELATIHAN OPERATOR</h2>
+      <p class="typewriter-line" id="tutStepText"></p>
+      <button id="btn-tut-next" data-i18n="btnNext">LANJUT</button>
+      <button id="btn-tut-skip" data-i18n="btnSkip">LEWATI</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-courier">
+    <div class="modal-box">
+      <h2 data-i18n="courierTitle">KURIR DARURAT</h2>
+      <p class="typewriter-line" id="courierText"></p>
+      <div id="courierChoices"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-pause">
+    <div class="modal-box" style="text-align:center;">
+      <h2 data-i18n="pausedTitle">JEDA</h2>
+      <div class="menu-buttons" style="margin-top:16px;">
+        <button id="btn-resume" data-i18n="btnResume">LANJUTKAN</button>
+        <button id="btn-pause-howto" data-i18n="btnHowTo">CARA BERMAIN</button>
+        <button id="btn-pause-codex" data-i18n="btnCodex">CATATAN SEJARAH</button>
+        <button id="btn-pause-menu" data-i18n="btnMainMenu">MENU UTAMA</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-howto">
+    <div class="modal-box">
+      <h2 data-i18n="howToTitle">CARA BERMAIN</h2>
+      <div id="howToBody" style="font-size:12px;line-height:1.8;"></div>
+      <button class="modal-close" id="btn-close-howto" data-i18n="btnClose">TUTUP</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-codex">
+    <div class="modal-box">
+      <h2 data-i18n="codexTitle">CATATAN SEJARAH</h2>
+      <p style="font-size:10px;color:#7fbf6a;" data-i18n="codexDisclaimer">Sebagian mekanisme permainan adalah abstraksi fiktif untuk menyampaikan pentingnya radio, semangat, komunikasi, dan perlawanan secara historis.</p>
+      <div id="codexBody"></div>
+      <button class="modal-close" id="btn-close-codex" data-i18n="btnClose">TUTUP</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-bombardment">
+    <div class="modal-box" style="text-align:center;border-color:var(--red);">
+      <h2 style="color:var(--red);" data-i18n="bombTitle">TRIANGULASI SELESAI</h2>
+      <p data-i18n="bombText">Peralatan rusak. Anda kehilangan sebagian jaringan.</p>
+      <button id="btn-bomb-continue" data-i18n="btnContinue">LANJUTKAN</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-ending">
+    <div class="modal-box" style="text-align:center;">
+      <div id="endingTitle"></div>
+      <p id="endingBody" style="text-align:left;"></p>
+      <div id="endingRank"></div>
+      <div id="endingScore"></div>
+      <div class="menu-buttons" style="margin-top:16px;">
+        <button id="btn-ending-history" data-i18n="btnRealHistory">APA YANG NYATA?</button>
+        <button id="btn-restart" data-i18n="btnRestart">MAIN LAGI</button>
+        <button id="btn-ending-menu" data-i18n="btnMainMenu">MENU UTAMA</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-audio-enable">
+    <div class="modal-box" style="text-align:center;">
+      <p data-i18n="clickAudio">KLIK UNTUK MENGAKTIFKAN AUDIO RADIO</p>
+      <button id="btn-enable-audio" data-i18n="btnOk">OK</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================================
+   SUARA PERLAWANAN — VOICE OF RESISTANCE
+   A historical radio-broadcast strategy/puzzle game.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------
+   1. LOCALIZATION
+--------------------------------------------------------------------- */
+const translations = {
+  id: {
+    menuLocation:"SURABAYA — NOVEMBER 1945",
+    tagline:'"Ketika senjata tak mampu menjangkau semuanya, biarkan suara yang melakukannya."',
+    btnStart:"MULAI", btnCodex:"CATATAN SEJARAH", btnHowTo:"CARA BERMAIN",
+    statusOff:"STATUS: SIARAN NONAKTIF", statusOn:"STATUS: SIARAN AKTIF",
+    btnPause:"JEDA", mapLabel:"SURABAYA — MALAM HARI",
+    warningTriangulation:"PERINGATAN: SINYAL SEDANG DILACAK",
+    hFrequency:"FREKUENSI", hStatus:"STATUS TRANSMISI", hObjective:"OBJEKTIF UTAMA",
+    lblMorale:"SEMANGAT", lblDetection:"RADAR", lblSignal:"SINYAL",
+    btnBroadcastOn:"MULAI SIARAN [SPACE]", btnBroadcastOff:"HENTIKAN SIARAN [SPACE]",
+    btnRelocate:"PINDAH [R]", btnMute:"BISU [M]",
+    voiceSim:"SUMBER SUARA: SIMULASI", voiceReal:"SUMBER SUARA: REKAMAN",
+    tutTitle:"PELATIHAN OPERATOR", btnNext:"LANJUT", btnSkip:"LEWATI",
+    courierTitle:"KURIR DARURAT",
+    pausedTitle:"JEDA", btnResume:"LANJUTKAN", btnMainMenu:"MENU UTAMA",
+    howToTitle:"CARA BERMAIN", btnClose:"TUTUP",
+    codexTitle:"CATATAN SEJARAH",
+    codexDisclaimer:"Sebagian mekanisme permainan adalah abstraksi fiktif untuk menyampaikan pentingnya radio, semangat, komunikasi, dan perlawanan secara historis.",
+    bombTitle:"TRIANGULASI SELESAI", bombText:"Peralatan rusak. Anda kehilangan sebagian jaringan.",
+    btnContinue:"LANJUTKAN", btnRealHistory:"APA YANG NYATA?", btnRestart:"MAIN LAGI",
+    clickAudio:"KLIK UNTUK MENGAKTIFKAN AUDIO RADIO", btnOk:"OK",
+    signalLocked:"SINYAL TERKUNCI", signalSearching:"MENCARI SINYAL...",
+    objectiveText:"Sebarkan siaran ke minimal 5 kampung sambil menjaga SEMANGAT ≥ 60, sebelum RADAR mencapai 100%.",
+    reachedLabel:"Kampung terjangkau",
+    node:"Kampung",
+    introLines:[
+      "SURABAYA","NOVEMBER 1945","",
+      "Kota ini tegang.","","Pesan-pesan berjalan melalui jalanan,\ngang-gang, atap rumah, dan radio.","",
+      "Namun ada satu hal yang dapat menjangkau\nlebih jauh dari seorang kurir:","","SEBUAH SUARA.","",
+      "Tugas Anda sederhana.","","Jaga agar transmisi tetap hidup."
+    ],
+    tutorialSteps:[
+      "Temukan sinyal. Putar tombol FREKUENSI hingga mendekati target.",
+      "Kunci frekuensi. Perhatikan gelombang CRT menjadi stabil dan hijau terang.",
+      "Mulai SIARAN. Semangat rakyat akan meningkat selama Anda mengudara.",
+      "Awasi RADAR. Semakin lama Anda siaran, semakin besar risiko terdeteksi.",
+      "Pindahkan pemancar sebelum mereka menemukan Anda, jika radar terlalu tinggi.",
+      "Pilih dengan bijak saat kurir datang membawa laporan darurat."
+    ],
+    howToBody:`
+      <p><b>TUJUAN:</b> Jaga siaran Bung Tomo tetap hidup. Jangkau minimal 5 kampung dengan SEMANGAT ≥ 60 sebelum RADAR mencapai 100%.</p>
+      <p><b>FREKUENSI:</b> Geser slider agar angka CURRENT mendekati TARGET. Semakin dekat, sinyal semakin bersih dan gelombang semakin stabil.</p>
+      <p><b>SIARAN:</b> Tekan SPASI atau tombol MULAI SIARAN. Selama siaran aktif, semangat naik namun radar juga naik.</p>
+      <p><b>RADAR:</b> Jika mencapai 100%, peralatan Anda akan rusak (bombardir). Tekan R untuk berpindah dan menurunkan radar secara cepat.</p>
+      <p><b>KURIR:</b> Peristiwa acak akan meminta Anda mengambil keputusan yang mengubah semangat dan radar.</p>
+      <p><b>KONTROL:</b> A/D atau slider — tuning · SPASI — siaran on/off · R — pindah · ESC — jeda · M — bisu · Klik tombol ID/EN — bahasa</p>
+    `,
+    codexEntries:[
+      {tag:"record", title:"Bung Tomo", text:"Sutomo, dikenal sebagai Bung Tomo, adalah tokoh yang pidato-pidatonya melalui radio dikenal luas sebagai sumber semangat perlawanan rakyat Surabaya pada November 1945."},
+      {tag:"record", title:"Pertempuran Surabaya", text:"Pertempuran besar di Surabaya meletus pada 10 November 1945, setelah eskalasi ketegangan antara pejuang/rakyat Indonesia dan pasukan Sekutu/Inggris."},
+      {tag:"record", title:"Kedatangan Sekutu", text:"Pasukan Sekutu (termasuk Inggris) tiba di Surabaya setelah Proklamasi Kemerdekaan Indonesia, memicu ketegangan yang meningkat menjelang November 1945."},
+      {tag:"record", title:"Radio sebagai Media Perjuangan", text:"Radio menjadi media komunikasi penting pada masa itu untuk menyebarkan informasi dan membangkitkan semangat juang di tengah situasi yang kacau."},
+      {tag:"record", title:"Peran Rakyat dan Pemuda", text:"Perjuangan di Surabaya melibatkan banyak pihak — pejuang bersenjata, pemuda, organisasi rakyat, dan warga sipil — bukan hasil satu tokoh saja."},
+      {tag:"abstraction", title:"Sistem Frekuensi & Radar", text:"Mekanisme tuning frekuensi, radar deteksi Inggris, dan jaringan kabel dalam game ini adalah abstraksi permainan, bukan klaim bahwa sistem persis ini pernah ada secara historis."},
+      {tag:"abstraction", title:"Peran Operator Radio", text:"Karakter 'operator radio' yang dimainkan pemain adalah tokoh fiktif untuk kebutuhan gameplay, mewakili banyak orang tak dikenal yang membantu penyebaran informasi."}
+    ],
+    endings:{
+      survives:{title:"BABAK 1 — SUARA ITU BERTAHAN", body:"Jaringan berhasil menyebarkan pesan ke banyak kampung dengan risiko yang terkendali. Operator selamat, dan pesan terus berjalan."},
+      flame:{title:"BABAK 2 — SINYAL MENJADI NYALA API", body:"Semangat rakyat memuncak. Anda mengorbankan keselamatan demi menjangkau lebih banyak orang. Pemancar akhirnya dibungkam — tetapi suaranya telah menyebar."},
+      silence:{title:"BABAK 3 — DIAM UNTUK BERTAHAN", body:"Anda memilih keselamatan berulang kali. Jaringan bertahan, tetapi lebih sedikit orang yang mendengar pesan itu."},
+      fallen:{title:"BABAK 4 — JARINGAN RUNTUH", body:"Radar mencapai batas maksimum sebelum pesan cukup tersebar. Stasiun radio ditemukan."}
+    },
+    realHistory:{
+      real:"• Surabaya menjadi pusat perlawanan besar pada 1945.\n• Ketegangan meningkat tajam menjelang 10 November.\n• Bung Tomo dikenal luas terkait siaran radio yang membangkitkan semangat perlawanan.\n• Radio dan komunikasi berperan penting dalam moral perjuangan saat itu.",
+      abstraction:"• Penalaan frekuensi\n• Deteksi radar\n• Jaringan kabel\n• Peran spesifik operator radio\n• Mekanisme cakupan sinyal\n• Peristiwa gameplay"
+    },
+    courierEvents:[
+      {
+        text:'"Laporan dari kampung sebelah. Pasukan Inggris sedang melakukan penggeledahan. Apa yang harus kita lakukan?"',
+        choices:[
+          {label:"A — Lanjutkan Siaran", effects:"Semangat +15 · Radar +15", morale:15, detection:15, note:"continue"},
+          {label:"B — Hentikan & Bantu Warga", effects:"Semangat -5 · Radar -20", morale:-5, detection:-20, note:"assist"},
+          {label:"C — Pindahkan Pemancar Dulu", effects:"Kehilangan waktu siaran · Radar -10", morale:0, detection:-10, note:"relocate"}
+        ]
+      },
+      {
+        text:'"Kabel di atap timur mulai rusak akibat tembakan. Kita bisa memperbaikinya atau membiarkannya."',
+        choices:[
+          {label:"A — Perbaiki Sekarang", effects:"Radar +10 · Sinyal membaik", morale:5, detection:10, note:"repair"},
+          {label:"B — Biarkan, Fokus Siaran", effects:"Semangat +10 · Radar +5", morale:10, detection:5, note:"ignore"},
+          {label:"C — Matikan Sementara", effects:"Radar -15 · Semangat -10", morale:-10, detection:-15, note:"shutdown"}
+        ]
+      },
+      {
+        text:'"Warga di kampung utara ketakutan dan ragu mendengarkan siaran. Bagaimana sikap kita?"',
+        choices:[
+          {label:"A — Perkuat Siaran", effects:"Semangat +12 · Radar +12", morale:12, detection:12, note:"boost"},
+          {label:"B — Kirim Kurir Penenang", effects:"Semangat +8 · Radar -5", morale:8, detection:-5, note:"courier"},
+          {label:"C — Tunggu dan Amati", effects:"Tidak banyak berubah", morale:2, detection:-2, note:"wait"}
+        ]
+      }
+    ]
+  },
+  en:{
+    menuLocation:"SURABAYA — NOVEMBER 1945",
+    tagline:'"When the guns fall silent, let the voice carry."',
+    btnStart:"START", btnCodex:"HISTORY", btnHowTo:"HOW TO PLAY",
+    statusOff:"STATUS: BROADCAST OFF", statusOn:"STATUS: BROADCASTING",
+    btnPause:"PAUSE", mapLabel:"SURABAYA — NIGHT",
+    warningTriangulation:"WARNING: SIGNAL TRIANGULATION DETECTED",
+    hFrequency:"FREQUENCY", hStatus:"TRANSMISSION STATUS", hObjective:"PRIMARY OBJECTIVE",
+    lblMorale:"MORALE", lblDetection:"RADAR", lblSignal:"SIGNAL",
+    btnBroadcastOn:"START BROADCAST [SPACE]", btnBroadcastOff:"CUT TRANSMISSION [SPACE]",
+    btnRelocate:"RELOCATE [R]", btnMute:"MUTE [M]",
+    voiceSim:"VOICE SOURCE: SIMULATION", voiceReal:"VOICE SOURCE: RECORDING",
+    tutTitle:"OPERATOR TRAINING", btnNext:"NEXT", btnSkip:"SKIP",
+    courierTitle:"URGENT COURIER",
+    pausedTitle:"PAUSED", btnResume:"RESUME", btnMainMenu:"MAIN MENU",
+    howToTitle:"HOW TO PLAY", btnClose:"CLOSE",
+    codexTitle:"HISTORICAL CODEX",
+    codexDisclaimer:"Some gameplay mechanics are fictionalized abstractions designed to communicate the historical importance of radio, morale, communication, and resistance.",
+    bombTitle:"TRIANGULATION COMPLETE", bombText:"Equipment damaged. Part of your network is lost.",
+    btnContinue:"CONTINUE", btnRealHistory:"WHAT WAS REAL?", btnRestart:"PLAY AGAIN",
+    clickAudio:"CLICK TO ENABLE RADIO AUDIO", btnOk:"OK",
+    signalLocked:"SIGNAL LOCKED", signalSearching:"SEARCHING...",
+    objectiveText:"Broadcast to at least 5 neighborhoods while keeping MORALE ≥ 60, before DETECTION reaches 100%.",
+    reachedLabel:"Neighborhoods reached",
+    node:"Neighborhood",
+    introLines:[
+      "SURABAYA","NOVEMBER 1945","",
+      "The city was tense.","","Messages traveled through streets,\nalleys, rooftops and radios.","",
+      "But one thing could travel farther\nthan a messenger:","","A VOICE.","",
+      "Your task is simple.","","Keep the transmission alive."
+    ],
+    tutorialSteps:[
+      "Find the signal. Turn the FREQUENCY dial until it nears the target.",
+      "Lock the frequency. Watch the CRT waveform become stable and bright green.",
+      "Start BROADCASTING. People's morale rises while you're on air.",
+      "Watch the RADAR. The longer you broadcast, the greater the risk of detection.",
+      "Relocate the transmitter before they find you, if radar gets too high.",
+      "Choose carefully when a courier arrives with an urgent report."
+    ],
+    howToBody:`
+      <p><b>OBJECTIVE:</b> Keep Bung Tomo's broadcast alive. Reach at least 5 neighborhoods with MORALE ≥ 60 before RADAR reaches 100%.</p>
+      <p><b>FREQUENCY:</b> Drag the slider so CURRENT nears TARGET. The closer it is, the cleaner the signal and the more stable the waveform.</p>
+      <p><b>BROADCAST:</b> Press SPACE or the START BROADCAST button. While broadcasting, morale rises but so does radar.</p>
+      <p><b>RADAR:</b> If it reaches 100%, your equipment is damaged (bombardment). Press R to relocate and rapidly lower radar.</p>
+      <p><b>COURIER:</b> Random events will ask you to make decisions that change morale and radar.</p>
+      <p><b>CONTROLS:</b> A/D or slider — tuning · SPACE — broadcast on/off · R — relocate · ESC — pause · M — mute · ID/EN buttons — language</p>
+    `,
+    codexEntries:[
+      {tag:"record", title:"Bung Tomo", text:"Sutomo, known as Bung Tomo, is widely associated with radio speeches that became an important source of morale for Surabaya's resistance in November 1945."},
+      {tag:"record", title:"Battle of Surabaya", text:"Major fighting in Surabaya broke out on 10 November 1945, following escalating tension between Indonesian fighters/civilians and Allied/British forces."},
+      {tag:"record", title:"Allied Arrival", text:"Allied forces (including British troops) arrived in Surabaya after Indonesia's Proclamation of Independence, fueling rising tension leading up to November 1945."},
+      {tag:"record", title:"Radio as a Tool of Struggle", text:"Radio was an important communication medium at the time, used to spread information and bolster morale amid a chaotic situation."},
+      {tag:"record", title:"Role of Civilians and Youth", text:"The struggle in Surabaya involved many actors — armed fighters, youth, civilian organizations, and ordinary residents — not the result of one figure alone."},
+      {tag:"abstraction", title:"Frequency & Radar System", text:"The frequency-tuning mechanic, British detection radar, and cable network in this game are gameplay abstractions, not claims that this exact system historically existed."},
+      {tag:"abstraction", title:"The Radio Operator Role", text:"The 'radio operator' character the player controls is a fictional gameplay perspective, representing the many unnamed people who helped spread information."}
+    ],
+    endings:{
+      survives:{title:"ENDING 1 — THE VOICE SURVIVES", body:"The network successfully spread the message to many neighborhoods while keeping risk under control. The operator survived, and the message continued to travel."},
+      flame:{title:"ENDING 2 — THE SIGNAL BECOMES A FLAME", body:"Morale peaked. You sacrificed safety to reach more people. The transmitter was eventually silenced — but the voice had already spread."},
+      silence:{title:"ENDING 3 — SILENCE TO SURVIVE", body:"You repeatedly chose safety. The network survived, but fewer people heard the message."},
+      fallen:{title:"ENDING 4 — THE NETWORK FALLS", body:"Detection reached its maximum before the message spread far enough. The radio station was discovered."}
+    },
+    realHistory:{
+      real:"• Surabaya became a major center of resistance in 1945.\n• Tension escalated sharply before 10 November.\n• Bung Tomo became strongly associated with radio broadcasts that encouraged resistance.\n• Radio and communication played an important role in wartime morale.",
+      abstraction:"• Frequency tuning\n• Radar detection\n• Cable network\n• The specific radio operator role\n• Signal coverage mechanics\n• Gameplay events"
+    },
+    courierEvents:[
+      {
+        text:'"Report from the next neighborhood over. British troops are conducting a search. What should we do?"',
+        choices:[
+          {label:"A — Continue Broadcasting", effects:"Morale +15 · Radar +15", morale:15, detection:15, note:"continue"},
+          {label:"B — Shut Down & Assist", effects:"Morale -5 · Radar -20", morale:-5, detection:-20, note:"assist"},
+          {label:"C — Relocate First", effects:"Lose broadcast time · Radar -10", morale:0, detection:-10, note:"relocate"}
+        ]
+      },
+      {
+        text:'"The cable on the east rooftop is damaged from gunfire. We could repair it or leave it."',
+        choices:[
+          {label:"A — Repair Now", effects:"Radar +10 · Signal improves", morale:5, detection:10, note:"repair"},
+          {label:"B — Leave It, Keep Broadcasting", effects:"Morale +10 · Radar +5", morale:10, detection:5, note:"ignore"},
+          {label:"C — Shut Down Briefly", effects:"Radar -15 · Morale -10", morale:-10, detection:-15, note:"shutdown"}
+        ]
+      },
+      {
+        text:'"Residents in the northern neighborhood are afraid and hesitant to listen. How do we respond?"',
+        choices:[
+          {label:"A — Strengthen the Broadcast", effects:"Morale +12 · Radar +12", morale:12, detection:12, note:"boost"},
+          {label:"B — Send a Reassuring Courier", effects:"Morale +8 · Radar -5", morale:8, detection:-5, note:"courier"},
+          {label:"C — Wait and Observe", effects:"Little changes", morale:2, detection:-2, note:"wait"}
+        ]
+      }
+    ]
+  },
+
+  zh:{
+    menuLocation:"泗水 — 1945年11月",
+    tagline:'"当枪声无法传到每一个角落，就让声音去传达。"',
+    btnStart:"开始", btnCodex:"历史记录", btnHowTo:"玩法说明",
+    statusOff:"状态：未广播", statusOn:"状态：广播中",
+    btnPause:"暂停", mapLabel:"泗水 — 夜晚",
+    warningTriangulation:"警告：信号正被追踪",
+    hFrequency:"频率", hStatus:"传输状态", hObjective:"主要目标",
+    lblMorale:"士气", lblDetection:"雷达", lblSignal:"信号",
+    btnBroadcastOn:"开始广播 [空格]", btnBroadcastOff:"停止广播 [空格]",
+    btnRelocate:"转移 [R]", btnMute:"静音 [M]",
+    voiceSim:"声音来源：模拟", voiceReal:"声音来源：录音",
+    tutTitle:"操作员训练", btnNext:"下一步", btnSkip:"跳过",
+    courierTitle:"紧急信使",
+    pausedTitle:"已暂停", btnResume:"继续", btnMainMenu:"主菜单",
+    howToTitle:"玩法说明", btnClose:"关闭",
+    codexTitle:"历史记录",
+    codexDisclaimer:"部分游戏机制是为了传达广播、士气、通讯与抵抗在历史上的重要性而进行的虚构化处理。",
+    bombTitle:"定位完成", bombText:"设备受损。你失去了部分网络。",
+    btnContinue:"继续", btnRealHistory:"哪些是真实的？", btnRestart:"再玩一次",
+    clickAudio:"点击以启用电台音频", btnOk:"确定",
+    signalLocked:"信号已锁定", signalSearching:"搜索中...",
+    objectiveText:"在雷达达到100%之前，向至少5个社区广播，并保持士气≥60。",
+    reachedLabel:"已覆盖的社区",
+    node:"社区",
+    introLines:[
+      "泗水","1945年11月","",
+      "这座城市剑拔弩张。","","消息通过街道、\n小巷、屋顶和电台传播。","",
+      "但有一样东西能传得\n比信使更远：","","一个声音。","",
+      "你的任务很简单。","","让广播保持不中断。"
+    ],
+    tutorialSteps:[
+      "找到信号。转动频率旋钮，使其接近目标值。",
+      "锁定频率。观察CRT波形变得稳定并呈明亮绿色。",
+      "开始广播。只要你在播音，民众士气就会上升。",
+      "留意雷达。广播时间越长，被侦测到的风险越大。",
+      "如果雷达过高，请在被发现前转移发射机。",
+      "信使带来紧急报告时，请谨慎抉择。"
+    ],
+    howToBody:`
+      <p><b>目标：</b>让Bung Tomo的广播持续下去。在雷达达到100%之前，让至少5个社区收到广播，并保持士气≥60。</p>
+      <p><b>频率：</b>拖动滑块使当前值接近目标值。越接近，信号越清晰，波形越稳定。</p>
+      <p><b>广播：</b>按空格键或“开始广播”按钮。广播期间士气上升，但雷达值也会上升。</p>
+      <p><b>雷达：</b>若达到100%，设备将被摧毁（遭到轰炸）。按R键转移位置以快速降低雷达值。</p>
+      <p><b>信使：</b>随机事件会要求你做出影响士气与雷达的决定。</p>
+      <p><b>操作：</b>A/D 或滑块 — 调频 · 空格 — 广播开/关 · R — 转移 · ESC — 暂停 · M — 静音 · 语言搜索框 — 切换语言</p>
+    `,
+    endings:{
+      survives:{title:"结局一 — 声音得以延续", body:"网络成功将信息传播到许多社区，同时将风险控制在可控范围内。操作员幸存下来，信息也持续传播。"},
+      flame:{title:"结局二 — 信号化作火焰", body:"民众士气达到顶点。你牺牲了安全以触及更多人。发射机最终被摧毁——但声音早已传开。"},
+      silence:{title:"结局三 — 沉默以求生存", body:"你一次又一次选择了安全。网络得以存续，但听到消息的人更少了。"},
+      fallen:{title:"结局四 — 网络崩溃", body:"在消息充分传播之前，雷达值达到了上限，电台被发现了。"}
+    },
+    realHistory:{
+      real:"• 泗水在1945年成为重要的抵抗中心。\n• 11月10日之前局势急剧升级。\n• Bung Tomo因其振奋抵抗士气的广播而广为人知。\n• 电台与通讯在当时的战时士气中发挥了重要作用。",
+      abstraction:"• 频率调谐\n• 雷达侦测\n• 电缆网络\n• 特定的电台操作员角色\n• 信号覆盖机制\n• 游戏内事件"
+    },
+    courierEvents:[
+      {
+        text:'"隔壁社区传来报告。英军正在进行搜查。我们该怎么办？"',
+        choices:[
+          {label:"A — 继续广播", effects:"士气 +15 · 雷达 +15", morale:15, detection:15, note:"continue"},
+          {label:"B — 停播并协助居民", effects:"士气 -5 · 雷达 -20", morale:-5, detection:-20, note:"assist"},
+          {label:"C — 先转移发射机", effects:"损失广播时间 · 雷达 -10", morale:0, detection:-10, note:"relocate"}
+        ]
+      },
+      {
+        text:'"东侧屋顶的电缆被枪火打坏了。我们可以修复它，也可以放着不管。"',
+        choices:[
+          {label:"A — 立刻修复", effects:"雷达 +10 · 信号改善", morale:5, detection:10, note:"repair"},
+          {label:"B — 不管它，继续广播", effects:"士气 +10 · 雷达 +5", morale:10, detection:5, note:"ignore"},
+          {label:"C — 暂时停播", effects:"雷达 -15 · 士气 -10", morale:-10, detection:-15, note:"shutdown"}
+        ]
+      },
+      {
+        text:'"北边社区的居民感到害怕，不敢收听广播。我们该如何应对？"',
+        choices:[
+          {label:"A — 加强广播", effects:"士气 +12 · 雷达 +12", morale:12, detection:12, note:"boost"},
+          {label:"B — 派信使安抚民心", effects:"士气 +8 · 雷达 -5", morale:8, detection:-5, note:"courier"},
+          {label:"C — 静观其变", effects:"变化不大", morale:2, detection:-2, note:"wait"}
+        ]
+      }
+    ]
+  },
+
+  hi:{
+    menuLocation:"सुराबाया — नवंबर 1945",
+    tagline:'"जब बंदूकें हर जगह नहीं पहुँच पातीं, तब आवाज़ को पहुँचने दो।"',
+    btnStart:"शुरू करें", btnCodex:"इतिहास", btnHowTo:"कैसे खेलें",
+    statusOff:"स्थिति: प्रसारण बंद", statusOn:"स्थिति: प्रसारण जारी",
+    btnPause:"रुकें", mapLabel:"सुराबाया — रात",
+    warningTriangulation:"चेतावनी: सिग्नल ट्रैक किया जा रहा है",
+    hFrequency:"आवृत्ति", hStatus:"ट्रांसमिशन स्थिति", hObjective:"मुख्य लक्ष्य",
+    lblMorale:"मनोबल", lblDetection:"रडार", lblSignal:"सिग्नल",
+    btnBroadcastOn:"प्रसारण शुरू करें [SPACE]", btnBroadcastOff:"प्रसारण बंद करें [SPACE]",
+    btnRelocate:"स्थान बदलें [R]", btnMute:"म्यूट [M]",
+    voiceSim:"आवाज़ स्रोत: सिमुलेशन", voiceReal:"आवाज़ स्रोत: रिकॉर्डिंग",
+    tutTitle:"ऑपरेटर प्रशिक्षण", btnNext:"अगला", btnSkip:"छोड़ें",
+    courierTitle:"आपातकालीन संदेशवाहक",
+    pausedTitle:"रुका हुआ", btnResume:"फिर से शुरू करें", btnMainMenu:"मुख्य मेनू",
+    howToTitle:"कैसे खेलें", btnClose:"बंद करें",
+    codexTitle:"इतिहास",
+    codexDisclaimer:"कुछ गेमप्ले तंत्र रेडियो, मनोबल, संचार और प्रतिरोध के ऐतिहासिक महत्व को दर्शाने के लिए काल्पनिक रूप से सरल किए गए हैं।",
+    bombTitle:"स्थान-निर्धारण पूरा हुआ", bombText:"उपकरण क्षतिग्रस्त हुए। तुम्हारे नेटवर्क का एक हिस्सा खो गया।",
+    btnContinue:"जारी रखें", btnRealHistory:"असल में क्या हुआ था?", btnRestart:"फिर से खेलें",
+    clickAudio:"रेडियो ऑडियो चालू करने के लिए क्लिक करें", btnOk:"ठीक है",
+    signalLocked:"सिग्नल लॉक हुआ", signalSearching:"खोज रहे हैं...",
+    objectiveText:"रडार के 100% तक पहुँचने से पहले, मनोबल ≥ 60 बनाए रखते हुए कम से कम 5 मोहल्लों तक प्रसारण पहुँचाएँ।",
+    reachedLabel:"पहुँचे हुए मोहल्ले",
+    node:"मोहल्ला",
+    introLines:[
+      "सुराबाया","नवंबर 1945","",
+      "शहर तनाव में था।","","संदेश सड़कों,\nगलियों, छतों और रेडियो से होकर गुज़रते थे।","",
+      "लेकिन एक चीज़ किसी संदेशवाहक से\nज़्यादा दूर तक जा सकती थी:","","एक आवाज़।","",
+      "तुम्हारा काम सरल है।","","प्रसारण को ज़िंदा रखो।"
+    ],
+    tutorialSteps:[
+      "सिग्नल ढूँढो। आवृत्ति (FREQUENCY) डायल को तब तक घुमाओ जब तक वह लक्ष्य के करीब न पहुँच जाए।",
+      "आवृत्ति लॉक करो। CRT तरंग को स्थिर और चमकीला हरा होते देखो।",
+      "प्रसारण शुरू करो। जब तुम प्रसारण कर रहे होते हो, तब जनता का मनोबल बढ़ता है।",
+      "रडार पर नज़र रखो। जितनी देर प्रसारण करोगे, पकड़े जाने का ख़तरा उतना बढ़ेगा।",
+      "अगर रडार बहुत ज़्यादा बढ़ जाए, तो पकड़े जाने से पहले ट्रांसमीटर का स्थान बदल दो।",
+      "जब कोई संदेशवाहक तत्काल रिपोर्ट लेकर आए, तब सोच-समझकर चुनाव करो।"
+    ],
+    howToBody:`
+      <p><b>लक्ष्य:</b> Bung Tomo का प्रसारण जारी रखो। रडार के 100% तक पहुँचने से पहले, मनोबल ≥ 60 के साथ कम से कम 5 मोहल्लों तक पहुँचो।</p>
+      <p><b>आवृत्ति:</b> स्लाइडर को खींचो ताकि CURRENT, TARGET के करीब आ जाए। जितना करीब होगा, सिग्नल उतना साफ़ और तरंग उतनी स्थिर होगी।</p>
+      <p><b>प्रसारण:</b> SPACE या "प्रसारण शुरू करें" बटन दबाओ। प्रसारण के दौरान मनोबल बढ़ता है, लेकिन रडार भी बढ़ता है।</p>
+      <p><b>रडार:</b> अगर यह 100% तक पहुँच जाए, तो तुम्हारे उपकरण क्षतिग्रस्त हो जाएँगे (बमबारी)। रडार को तेज़ी से घटाने के लिए R दबाकर स्थान बदलो।</p>
+      <p><b>संदेशवाहक:</b> अचानक होने वाली घटनाएँ तुमसे ऐसे फ़ैसले माँगेंगी जो मनोबल और रडार दोनों को बदल देंगे।</p>
+      <p><b>नियंत्रण:</b> A/D या स्लाइडर — ट्यूनिंग · SPACE — प्रसारण चालू/बंद · R — स्थान बदलें · ESC — रोकें · M — म्यूट · भाषा खोज बॉक्स — भाषा बदलें</p>
+    `,
+    endings:{
+      survives:{title:"अंत 1 — आवाज़ बची रही", body:"नेटवर्क ने जोखिम को नियंत्रण में रखते हुए संदेश को कई मोहल्लों तक सफलतापूर्वक पहुँचाया। ऑपरेटर बच गया, और संदेश आगे बढ़ता रहा।"},
+      flame:{title:"अंत 2 — सिग्नल एक ज्वाला बन गया", body:"मनोबल चरम पर पहुँच गया। तुमने अधिक लोगों तक पहुँचने के लिए सुरक्षा की क़ुर्बानी दी। आख़िरकार ट्रांसमीटर चुप करा दिया गया — लेकिन आवाज़ पहले ही फैल चुकी थी।"},
+      silence:{title:"अंत 3 — जीवित रहने के लिए ख़ामोशी", body:"तुमने बार-बार सुरक्षा को चुना। नेटवर्क बच गया, लेकिन कम लोगों ने संदेश सुना।"},
+      fallen:{title:"अंत 4 — नेटवर्क का पतन", body:"संदेश पर्याप्त रूप से फैलने से पहले ही रडार अपनी अधिकतम सीमा तक पहुँच गया। रेडियो स्टेशन का पता लग गया।"}
+    },
+    realHistory:{
+      real:"• 1945 में सुराबाया प्रतिरोध का एक बड़ा केंद्र बन गया।\n• 10 नवंबर से पहले तनाव तेज़ी से बढ़ा।\n• Bung Tomo को उन रेडियो प्रसारणों से जोड़ा जाता है जिन्होंने प्रतिरोध को प्रोत्साहित किया।\n• उस समय के मनोबल में रेडियो और संचार की अहम भूमिका थी।",
+      abstraction:"• आवृत्ति ट्यूनिंग\n• रडार डिटेक्शन\n• केबल नेटवर्क\n• विशिष्ट रेडियो ऑपरेटर की भूमिका\n• सिग्नल कवरेज तंत्र\n• गेमप्ले घटनाएँ"
+    },
+    courierEvents:[
+      {
+        text:'"बगल के मोहल्ले से रिपोर्ट है। ब्रिटिश सैनिक तलाशी ले रहे हैं। हमें क्या करना चाहिए?"',
+        choices:[
+          {label:"A — प्रसारण जारी रखें", effects:"मनोबल +15 · रडार +15", morale:15, detection:15, note:"continue"},
+          {label:"B — बंद करें और मदद करें", effects:"मनोबल -5 · रडार -20", morale:-5, detection:-20, note:"assist"},
+          {label:"C — पहले स्थान बदलें", effects:"प्रसारण समय गँवाएँ · रडार -10", morale:0, detection:-10, note:"relocate"}
+        ]
+      },
+      {
+        text:'"पूर्वी छत की केबल गोलीबारी से क्षतिग्रस्त हो गई है। हम इसे ठीक कर सकते हैं या यूँ ही छोड़ सकते हैं।"',
+        choices:[
+          {label:"A — अभी ठीक करें", effects:"रडार +10 · सिग्नल बेहतर होता है", morale:5, detection:10, note:"repair"},
+          {label:"B — छोड़ दें, प्रसारण जारी रखें", effects:"मनोबल +10 · रडार +5", morale:10, detection:5, note:"ignore"},
+          {label:"C — थोड़ी देर के लिए बंद करें", effects:"रडार -15 · मनोबल -10", morale:-10, detection:-15, note:"shutdown"}
+        ]
+      },
+      {
+        text:'"उत्तरी मोहल्ले के निवासी डरे हुए हैं और सुनने में हिचकिचा रहे हैं। हम कैसे जवाब दें?"',
+        choices:[
+          {label:"A — प्रसारण मज़बूत करें", effects:"मनोबल +12 · रडार +12", morale:12, detection:12, note:"boost"},
+          {label:"B — भरोसा दिलाने वाला संदेशवाहक भेजें", effects:"मनोबल +8 · रडार -5", morale:8, detection:-5, note:"courier"},
+          {label:"C — प्रतीक्षा करें और देखें", effects:"ज़्यादा बदलाव नहीं", morale:2, detection:-2, note:"wait"}
+        ]
+      }
+    ]
+  },
+
+  es:{
+    menuLocation:"SURABAYA — NOVIEMBRE DE 1945",
+    tagline:'"Cuando las armas no pueden llegar a todas partes, deja que la voz lo haga."',
+    btnStart:"EMPEZAR", btnCodex:"HISTORIA", btnHowTo:"CÓMO JUGAR",
+    statusOff:"ESTADO: TRANSMISIÓN APAGADA", statusOn:"ESTADO: TRANSMITIENDO",
+    btnPause:"PAUSA", mapLabel:"SURABAYA — NOCHE",
+    warningTriangulation:"ADVERTENCIA: SEÑAL SIENDO RASTREADA",
+    hFrequency:"FRECUENCIA", hStatus:"ESTADO DE TRANSMISIÓN", hObjective:"OBJETIVO PRINCIPAL",
+    lblMorale:"MORAL", lblDetection:"RADAR", lblSignal:"SEÑAL",
+    btnBroadcastOn:"INICIAR TRANSMISIÓN [ESPACIO]", btnBroadcastOff:"CORTAR TRANSMISIÓN [ESPACIO]",
+    btnRelocate:"REUBICAR [R]", btnMute:"SILENCIAR [M]",
+    voiceSim:"FUENTE DE VOZ: SIMULACIÓN", voiceReal:"FUENTE DE VOZ: GRABACIÓN",
+    tutTitle:"ENTRENAMIENTO DE OPERADOR", btnNext:"SIGUIENTE", btnSkip:"OMITIR",
+    courierTitle:"MENSAJERO URGENTE",
+    pausedTitle:"EN PAUSA", btnResume:"REANUDAR", btnMainMenu:"MENÚ PRINCIPAL",
+    howToTitle:"CÓMO JUGAR", btnClose:"CERRAR",
+    codexTitle:"CÓDICE HISTÓRICO",
+    codexDisclaimer:"Algunas mecánicas de juego son abstracciones ficticias creadas para transmitir la importancia histórica de la radio, la moral, la comunicación y la resistencia.",
+    bombTitle:"TRIANGULACIÓN COMPLETA", bombText:"Equipo dañado. Has perdido parte de tu red.",
+    btnContinue:"CONTINUAR", btnRealHistory:"¿QUÉ FUE REAL?", btnRestart:"JUGAR DE NUEVO",
+    clickAudio:"HAZ CLIC PARA ACTIVAR EL AUDIO DE LA RADIO", btnOk:"OK",
+    signalLocked:"SEÑAL FIJADA", signalSearching:"BUSCANDO...",
+    objectiveText:"Transmite a al menos 5 barrios manteniendo la MORAL ≥ 60, antes de que la DETECCIÓN llegue al 100%.",
+    reachedLabel:"Barrios alcanzados",
+    node:"Barrio",
+    introLines:[
+      "SURABAYA","NOVIEMBRE DE 1945","",
+      "La ciudad estaba tensa.","","Los mensajes viajaban por calles,\ncallejones, tejados y radios.","",
+      "Pero había algo que podía llegar\nmás lejos que un mensajero:","","UNA VOZ.","",
+      "Tu tarea es simple.","","Mantén viva la transmisión."
+    ],
+    tutorialSteps:[
+      "Encuentra la señal. Gira el dial de FRECUENCIA hasta acercarte al objetivo.",
+      "Fija la frecuencia. Observa cómo la onda del CRT se vuelve estable y de un verde brillante.",
+      "Empieza a TRANSMITIR. La moral del pueblo sube mientras estás al aire.",
+      "Vigila el RADAR. Cuanto más tiempo transmitas, mayor es el riesgo de ser detectado.",
+      "Reubica el transmisor antes de que te encuentren, si el radar sube demasiado.",
+      "Elige con cuidado cuando llegue un mensajero con un informe urgente."
+    ],
+    howToBody:`
+      <p><b>OBJETIVO:</b> Mantén viva la transmisión de Bung Tomo. Alcanza al menos 5 barrios con MORAL ≥ 60 antes de que el RADAR llegue al 100%.</p>
+      <p><b>FRECUENCIA:</b> Arrastra el control deslizante para que CURRENT se acerque a TARGET. Cuanto más cerca esté, más limpia será la señal y más estable la onda.</p>
+      <p><b>TRANSMISIÓN:</b> Pulsa ESPACIO o el botón INICIAR TRANSMISIÓN. Mientras transmites, la moral sube, pero el radar también.</p>
+      <p><b>RADAR:</b> Si llega al 100%, tu equipo se dañará (bombardeo). Pulsa R para reubicarte y bajar el radar rápidamente.</p>
+      <p><b>MENSAJERO:</b> Eventos aleatorios te pedirán tomar decisiones que cambian la moral y el radar.</p>
+      <p><b>CONTROLES:</b> A/D o deslizador — sintonía · ESPACIO — transmisión on/off · R — reubicar · ESC — pausa · M — silenciar · Barra de búsqueda de idioma — cambiar idioma</p>
+    `,
+    endings:{
+      survives:{title:"FINAL 1 — LA VOZ SOBREVIVE", body:"La red logró difundir el mensaje a muchos barrios manteniendo el riesgo bajo control. El operador sobrevivió, y el mensaje siguió viajando."},
+      flame:{title:"FINAL 2 — LA SEÑAL SE CONVIERTE EN LLAMA", body:"La moral alcanzó su punto máximo. Sacrificaste la seguridad para llegar a más gente. El transmisor fue finalmente silenciado, pero la voz ya se había extendido."},
+      silence:{title:"FINAL 3 — SILENCIO PARA SOBREVIVIR", body:"Elegiste la seguridad una y otra vez. La red sobrevivió, pero menos gente escuchó el mensaje."},
+      fallen:{title:"FINAL 4 — LA RED CAE", body:"La detección alcanzó su máximo antes de que el mensaje se extendiera lo suficiente. La estación de radio fue descubierta."}
+    },
+    realHistory:{
+      real:"• Surabaya se convirtió en un importante centro de resistencia en 1945.\n• La tensión aumentó bruscamente antes del 10 de noviembre.\n• Bung Tomo quedó fuertemente asociado con las transmisiones de radio que alentaban la resistencia.\n• La radio y la comunicación jugaron un papel importante en la moral durante la guerra.",
+      abstraction:"• Sintonización de frecuencia\n• Detección por radar\n• Red de cables\n• El papel específico del operador de radio\n• Mecánicas de cobertura de señal\n• Eventos del juego"
+    },
+    courierEvents:[
+      {
+        text:'"Informe del barrio de al lado. Tropas británicas están haciendo un registro. ¿Qué deberíamos hacer?"',
+        choices:[
+          {label:"A — Continuar transmitiendo", effects:"Moral +15 · Radar +15", morale:15, detection:15, note:"continue"},
+          {label:"B — Apagar y ayudar", effects:"Moral -5 · Radar -20", morale:-5, detection:-20, note:"assist"},
+          {label:"C — Reubicarse primero", effects:"Pierde tiempo de transmisión · Radar -10", morale:0, detection:-10, note:"relocate"}
+        ]
+      },
+      {
+        text:'"El cable en el tejado este está dañado por disparos. Podríamos repararlo o dejarlo así."',
+        choices:[
+          {label:"A — Reparar ahora", effects:"Radar +10 · La señal mejora", morale:5, detection:10, note:"repair"},
+          {label:"B — Dejarlo, seguir transmitiendo", effects:"Moral +10 · Radar +5", morale:10, detection:5, note:"ignore"},
+          {label:"C — Apagar brevemente", effects:"Radar -15 · Moral -10", morale:-10, detection:-15, note:"shutdown"}
+        ]
+      },
+      {
+        text:'"Los residentes del barrio norte tienen miedo y dudan en escuchar. ¿Cómo respondemos?"',
+        choices:[
+          {label:"A — Reforzar la transmisión", effects:"Moral +12 · Radar +12", morale:12, detection:12, note:"boost"},
+          {label:"B — Enviar un mensajero tranquilizador", effects:"Moral +8 · Radar -5", morale:8, detection:-5, note:"courier"},
+          {label:"C — Esperar y observar", effects:"Casi no cambia nada", morale:2, detection:-2, note:"wait"}
+        ]
+      }
+    ]
+  },
+
+  ar:{
+    menuLocation:"سورابايا — نوفمبر 1945",
+    tagline:'"حين لا تصل البنادق إلى كل مكان، دع الصوت يفعل ذلك."',
+    btnStart:"ابدأ", btnCodex:"التاريخ", btnHowTo:"كيفية اللعب",
+    statusOff:"الحالة: البث متوقف", statusOn:"الحالة: البث جارٍ",
+    btnPause:"إيقاف مؤقت", mapLabel:"سورابايا — ليلاً",
+    warningTriangulation:"تحذير: يتم تتبّع الإشارة",
+    hFrequency:"التردد", hStatus:"حالة الإرسال", hObjective:"الهدف الرئيسي",
+    lblMorale:"المعنويات", lblDetection:"الرادار", lblSignal:"الإشارة",
+    btnBroadcastOn:"ابدأ البث [مسافة]", btnBroadcastOff:"أوقف البث [مسافة]",
+    btnRelocate:"انتقل [R]", btnMute:"كتم [M]",
+    voiceSim:"مصدر الصوت: محاكاة", voiceReal:"مصدر الصوت: تسجيل",
+    tutTitle:"تدريب المُشغّل", btnNext:"التالي", btnSkip:"تخطٍّ",
+    courierTitle:"رسول عاجل",
+    pausedTitle:"متوقف مؤقتًا", btnResume:"استئناف", btnMainMenu:"القائمة الرئيسية",
+    howToTitle:"كيفية اللعب", btnClose:"إغلاق",
+    codexTitle:"السجل التاريخي",
+    codexDisclaimer:"بعض آليات اللعبة تبسيطات خيالية صُممت لإيصال الأهمية التاريخية للراديو والمعنويات والتواصل والمقاومة.",
+    bombTitle:"اكتمل تحديد الموقع", bombText:"تضررت المعدات. فقدت جزءًا من شبكتك.",
+    btnContinue:"متابعة", btnRealHistory:"ما الذي كان حقيقيًا؟", btnRestart:"العب مرة أخرى",
+    clickAudio:"انقر لتفعيل صوت الراديو", btnOk:"موافق",
+    signalLocked:"تم تثبيت الإشارة", signalSearching:"جارٍ البحث...",
+    objectiveText:"ابثّ إلى 5 أحياء على الأقل مع الحفاظ على المعنويات ≥ 60، قبل أن يصل الرادار إلى 100%.",
+    reachedLabel:"الأحياء التي تم الوصول إليها",
+    node:"حي",
+    introLines:[
+      "سورابايا","نوفمبر 1945","",
+      "كانت المدينة متوترة.","","انتقلت الرسائل عبر الشوارع،\nوالأزقة، والأسطح، وأجهزة الراديو.","",
+      "لكن هناك شيئًا واحدًا استطاع أن يصل\nأبعد من أي رسول:","","صوت.","",
+      "مهمتك بسيطة.","","حافظ على استمرار الإرسال."
+    ],
+    tutorialSteps:[
+      "ابحث عن الإشارة. أدر مؤشر التردد حتى يقترب من الهدف.",
+      "ثبّت التردد. راقب موجة الشاشة وهي تصبح مستقرة وخضراء زاهية.",
+      "ابدأ البث. ترتفع معنويات الناس طالما أنت على الهواء.",
+      "راقب الرادار. كلما بثثت لفترة أطول، زاد خطر اكتشافك.",
+      "انقل جهاز الإرسال قبل أن يعثروا عليك، إذا ارتفع الرادار كثيرًا.",
+      "اختر بعناية عندما يصل رسول بتقرير عاجل."
+    ],
+    howToBody:`
+      <p><b>الهدف:</b> حافظ على استمرار بث بونغ تومو. صِل إلى 5 أحياء على الأقل بمعنويات ≥ 60 قبل أن يصل الرادار إلى 100%.</p>
+      <p><b>التردد:</b> اسحب شريط التمرير حتى تقترب القيمة الحالية من الهدف. كلما اقتربت، كانت الإشارة أنقى والموجة أكثر استقرارًا.</p>
+      <p><b>البث:</b> اضغط مسافة أو زر "ابدأ البث". أثناء البث ترتفع المعنويات لكن الرادار يرتفع أيضًا.</p>
+      <p><b>الرادار:</b> إذا وصل إلى 100%، ستتضرر معداتك (قصف). اضغط R للانتقال وخفض الرادار بسرعة.</p>
+      <p><b>الرسول:</b> ستطلب منك أحداث عشوائية اتخاذ قرارات تغيّر المعنويات والرادار.</p>
+      <p><b>التحكم:</b> A/D أو شريط التمرير — الضبط · مسافة — تشغيل/إيقاف البث · R — انتقال · ESC — إيقاف مؤقت · M — كتم · شريط بحث اللغة — تغيير اللغة</p>
+    `,
+    endings:{
+      survives:{title:"النهاية 1 — الصوت ينجو", body:"نجحت الشبكة في نشر الرسالة إلى العديد من الأحياء مع إبقاء الخطر تحت السيطرة. نجا المُشغّل، واستمرت الرسالة في الانتشار."},
+      flame:{title:"النهاية 2 — الإشارة تصبح لهبًا", body:"بلغت المعنويات ذروتها. ضحّيت بالسلامة للوصول إلى المزيد من الناس. أُسكت جهاز الإرسال في النهاية — لكن الصوت كان قد انتشر بالفعل."},
+      silence:{title:"النهاية 3 — الصمت من أجل البقاء", body:"اخترت السلامة مرارًا وتكرارًا. نجت الشبكة، لكن عددًا أقل من الناس سمع الرسالة."},
+      fallen:{title:"النهاية 4 — انهيار الشبكة", body:"وصل الرادار إلى الحد الأقصى قبل أن تنتشر الرسالة بما يكفي. تم اكتشاف محطة الراديو."}
+    },
+    realHistory:{
+      real:"• أصبحت سورابايا مركزًا رئيسيًا للمقاومة عام 1945.\n• تصاعد التوتر بشدة قبل 10 نوفمبر.\n• ارتبط اسم بونغ تومو بقوة بالبث الإذاعي الذي شجّع المقاومة.\n• لعب الراديو والاتصالات دورًا مهمًا في معنويات الحرب.",
+      abstraction:"• ضبط التردد\n• كشف الرادار\n• شبكة الكابلات\n• دور مُشغّل الراديو المحدد\n• آليات تغطية الإشارة\n• أحداث اللعبة"
+    },
+    courierEvents:[
+      {
+        text:'"تقرير من الحي المجاور. القوات البريطانية تقوم بتفتيش. ماذا يجب أن نفعل؟"',
+        choices:[
+          {label:"أ — متابعة البث", effects:"المعنويات +15 · الرادار +15", morale:15, detection:15, note:"continue"},
+          {label:"ب — التوقف والمساعدة", effects:"المعنويات -5 · الرادار -20", morale:-5, detection:-20, note:"assist"},
+          {label:"ج — الانتقال أولاً", effects:"فقدان وقت البث · الرادار -10", morale:0, detection:-10, note:"relocate"}
+        ]
+      },
+      {
+        text:'"الكابل على السطح الشرقي تضرر من إطلاق النار. يمكننا إصلاحه أو تركه."',
+        choices:[
+          {label:"أ — الإصلاح الآن", effects:"الرادار +10 · تتحسن الإشارة", morale:5, detection:10, note:"repair"},
+          {label:"ب — تركه، ومتابعة البث", effects:"المعنويات +10 · الرادار +5", morale:10, detection:5, note:"ignore"},
+          {label:"ج — الإيقاف مؤقتًا", effects:"الرادار -15 · المعنويات -10", morale:-10, detection:-15, note:"shutdown"}
+        ]
+      },
+      {
+        text:'"سكان الحي الشمالي خائفون ويترددون في الاستماع. كيف نتصرف؟"',
+        choices:[
+          {label:"أ — تعزيز البث", effects:"المعنويات +12 · الرادار +12", morale:12, detection:12, note:"boost"},
+          {label:"ب — إرسال رسول لطمأنتهم", effects:"المعنويات +8 · الرادار -5", morale:8, detection:-5, note:"courier"},
+          {label:"ج — الانتظار والمراقبة", effects:"تغيّر طفيف", morale:2, detection:-2, note:"wait"}
+        ]
+      }
+    ]
+  },
+
+  fr:{
+    menuLocation:"SURABAYA — NOVEMBRE 1945",
+    tagline:'"Quand les armes ne peuvent tout atteindre, laisse la voix le faire."',
+    btnStart:"COMMENCER", btnCodex:"HISTOIRE", btnHowTo:"COMMENT JOUER",
+    statusOff:"STATUT : DIFFUSION ARRÊTÉE", statusOn:"STATUT : EN DIFFUSION",
+    btnPause:"PAUSE", mapLabel:"SURABAYA — NUIT",
+    warningTriangulation:"AVERTISSEMENT : SIGNAL EN COURS DE LOCALISATION",
+    hFrequency:"FRÉQUENCE", hStatus:"ÉTAT DE TRANSMISSION", hObjective:"OBJECTIF PRINCIPAL",
+    lblMorale:"MORAL", lblDetection:"RADAR", lblSignal:"SIGNAL",
+    btnBroadcastOn:"DÉMARRER LA DIFFUSION [ESPACE]", btnBroadcastOff:"COUPER LA TRANSMISSION [ESPACE]",
+    btnRelocate:"DÉPLACER [R]", btnMute:"COUPER LE SON [M]",
+    voiceSim:"SOURCE VOCALE : SIMULATION", voiceReal:"SOURCE VOCALE : ENREGISTREMENT",
+    tutTitle:"FORMATION DE L'OPÉRATEUR", btnNext:"SUIVANT", btnSkip:"PASSER",
+    courierTitle:"MESSAGER URGENT",
+    pausedTitle:"EN PAUSE", btnResume:"REPRENDRE", btnMainMenu:"MENU PRINCIPAL",
+    howToTitle:"COMMENT JOUER", btnClose:"FERMER",
+    codexTitle:"CODEX HISTORIQUE",
+    codexDisclaimer:"Certaines mécaniques de jeu sont des abstractions fictives conçues pour illustrer l'importance historique de la radio, du moral, de la communication et de la résistance.",
+    bombTitle:"TRIANGULATION TERMINÉE", bombText:"Équipement endommagé. Une partie de votre réseau est perdue.",
+    btnContinue:"CONTINUER", btnRealHistory:"QU'EST-CE QUI ÉTAIT RÉEL ?", btnRestart:"REJOUER",
+    clickAudio:"CLIQUEZ POUR ACTIVER L'AUDIO RADIO", btnOk:"OK",
+    signalLocked:"SIGNAL VERROUILLÉ", signalSearching:"RECHERCHE...",
+    objectiveText:"Diffusez vers au moins 5 quartiers en maintenant le MORAL ≥ 60, avant que la DÉTECTION n'atteigne 100 %.",
+    reachedLabel:"Quartiers atteints",
+    node:"Quartier",
+    introLines:[
+      "SURABAYA","NOVEMBRE 1945","",
+      "La ville était tendue.","","Les messages circulaient par les rues,\nles ruelles, les toits et les radios.","",
+      "Mais une chose pouvait voyager\nplus loin qu'un messager :","","UNE VOIX.","",
+      "Ta tâche est simple.","","Garde la transmission en vie."
+    ],
+    tutorialSteps:[
+      "Trouve le signal. Tourne le cadran de FRÉQUENCE jusqu'à approcher la cible.",
+      "Verrouille la fréquence. Observe l'onde du CRT devenir stable et d'un vert éclatant.",
+      "Commence à DIFFUSER. Le moral du peuple augmente tant que tu es à l'antenne.",
+      "Surveille le RADAR. Plus tu diffuses longtemps, plus le risque de détection augmente.",
+      "Déplace l'émetteur avant qu'on te trouve, si le radar devient trop élevé.",
+      "Choisis avec soin quand un messager arrive avec un rapport urgent."
+    ],
+    howToBody:`
+      <p><b>OBJECTIF :</b> Garde la diffusion de Bung Tomo en vie. Atteins au moins 5 quartiers avec un MORAL ≥ 60 avant que le RADAR n'atteigne 100 %.</p>
+      <p><b>FRÉQUENCE :</b> Fais glisser le curseur pour que CURRENT se rapproche de TARGET. Plus c'est proche, plus le signal est net et l'onde stable.</p>
+      <p><b>DIFFUSION :</b> Appuie sur ESPACE ou le bouton DÉMARRER LA DIFFUSION. Pendant la diffusion, le moral augmente, mais le radar aussi.</p>
+      <p><b>RADAR :</b> S'il atteint 100 %, ton équipement est endommagé (bombardement). Appuie sur R pour te déplacer et faire baisser rapidement le radar.</p>
+      <p><b>MESSAGER :</b> Des événements aléatoires te demanderont de prendre des décisions qui modifient le moral et le radar.</p>
+      <p><b>CONTRÔLES :</b> A/D ou curseur — réglage · ESPACE — diffusion on/off · R — déplacer · ESC — pause · M — muet · Barre de recherche de langue — changer de langue</p>
+    `,
+    endings:{
+      survives:{title:"FIN 1 — LA VOIX PERSISTE", body:"Le réseau a réussi à diffuser le message à de nombreux quartiers tout en gardant le risque sous contrôle. L'opérateur a survécu, et le message a continué de circuler."},
+      flame:{title:"FIN 2 — LE SIGNAL DEVIENT UNE FLAMME", body:"Le moral a atteint son sommet. Tu as sacrifié la sécurité pour atteindre plus de gens. L'émetteur a finalement été réduit au silence — mais la voix s'était déjà répandue."},
+      silence:{title:"FIN 3 — LE SILENCE POUR SURVIVRE", body:"Tu as choisi la sécurité à répétition. Le réseau a survécu, mais moins de gens ont entendu le message."},
+      fallen:{title:"FIN 4 — LE RÉSEAU S'EFFONDRE", body:"La détection a atteint son maximum avant que le message ne se propage suffisamment. La station de radio a été découverte."}
+    },
+    realHistory:{
+      real:"• Surabaya est devenue un centre majeur de résistance en 1945.\n• Les tensions se sont fortement intensifiées avant le 10 novembre.\n• Bung Tomo est étroitement associé aux émissions radio qui encourageaient la résistance.\n• La radio et la communication ont joué un rôle important dans le moral pendant la guerre.",
+      abstraction:"• Le réglage de fréquence\n• La détection radar\n• Le réseau de câbles\n• Le rôle spécifique de l'opérateur radio\n• Les mécaniques de couverture du signal\n• Les événements de jeu"
+    },
+    courierEvents:[
+      {
+        text:'"Rapport du quartier voisin. Des troupes britanniques mènent une perquisition. Que devrions-nous faire ?"',
+        choices:[
+          {label:"A — Continuer à diffuser", effects:"Moral +15 · Radar +15", morale:15, detection:15, note:"continue"},
+          {label:"B — Arrêter et aider", effects:"Moral -5 · Radar -20", morale:-5, detection:-20, note:"assist"},
+          {label:"C — Se déplacer d'abord", effects:"Perte de temps de diffusion · Radar -10", morale:0, detection:-10, note:"relocate"}
+        ]
+      },
+      {
+        text:'"Le câble sur le toit est est endommagé par des tirs. On pourrait le réparer ou le laisser tel quel."',
+        choices:[
+          {label:"A — Réparer maintenant", effects:"Radar +10 · Le signal s'améliore", morale:5, detection:10, note:"repair"},
+          {label:"B — Le laisser, continuer à diffuser", effects:"Moral +10 · Radar +5", morale:10, detection:5, note:"ignore"},
+          {label:"C — Arrêter brièvement", effects:"Radar -15 · Moral -10", morale:-10, detection:-15, note:"shutdown"}
+        ]
+      },
+      {
+        text:'"Les habitants du quartier nord ont peur et hésitent à écouter. Comment répondre ?"',
+        choices:[
+          {label:"A — Renforcer la diffusion", effects:"Moral +12 · Radar +12", morale:12, detection:12, note:"boost"},
+          {label:"B — Envoyer un messager rassurant", effects:"Moral +8 · Radar -5", morale:8, detection:-5, note:"courier"},
+          {label:"C — Attendre et observer", effects:"Peu de changement", morale:2, detection:-2, note:"wait"}
+        ]
+      }
+    ]
+  },
+
+  bn:{
+    menuLocation:"সুরাবায়া — নভেম্বর ১৯৪৫",
+    tagline:'"যখন বন্দুক সবখানে পৌঁছাতে পারে না, তখন কণ্ঠস্বরকে পৌঁছাতে দাও।"',
+    btnStart:"শুরু করুন", btnCodex:"ইতিহাস", btnHowTo:"কীভাবে খেলবেন",
+    statusOff:"অবস্থা: সম্প্রচার বন্ধ", statusOn:"অবস্থা: সম্প্রচার চলছে",
+    btnPause:"বিরতি", mapLabel:"সুরাবায়া — রাত",
+    warningTriangulation:"সতর্কতা: সিগন্যাল ট্র্যাক করা হচ্ছে",
+    hFrequency:"ফ্রিকোয়েন্সি", hStatus:"সম্প্রচার অবস্থা", hObjective:"প্রধান লক্ষ্য",
+    lblMorale:"মনোবল", lblDetection:"রাডার", lblSignal:"সিগন্যাল",
+    btnBroadcastOn:"সম্প্রচার শুরু করুন [SPACE]", btnBroadcastOff:"সম্প্রচার বন্ধ করুন [SPACE]",
+    btnRelocate:"স্থানান্তর [R]", btnMute:"নীরব [M]",
+    voiceSim:"কণ্ঠস্বরের উৎস: সিমুলেশন", voiceReal:"কণ্ঠস্বরের উৎস: রেকর্ডিং",
+    tutTitle:"অপারেটর প্রশিক্ষণ", btnNext:"পরবর্তী", btnSkip:"এড়িয়ে যান",
+    courierTitle:"জরুরি বার্তাবাহক",
+    pausedTitle:"বিরতিতে", btnResume:"আবার শুরু করুন", btnMainMenu:"প্রধান মেনু",
+    howToTitle:"কীভাবে খেলবেন", btnClose:"বন্ধ করুন",
+    codexTitle:"ঐতিহাসিক নথি",
+    codexDisclaimer:"কিছু গেমপ্লে ব্যবস্থা বেতার, মনোবল, যোগাযোগ ও প্রতিরোধের ঐতিহাসিক গুরুত্ব তুলে ধরার জন্য কাল্পনিকভাবে সরলীকৃত করা হয়েছে।",
+    bombTitle:"অবস্থান শনাক্তকরণ সম্পন্ন", bombText:"যন্ত্রপাতি ক্ষতিগ্রস্ত হয়েছে। তোমার নেটওয়ার্কের একটি অংশ হারিয়ে গেছে।",
+    btnContinue:"চালিয়ে যান", btnRealHistory:"আসলে কী ঘটেছিল?", btnRestart:"আবার খেলুন",
+    clickAudio:"রেডিও অডিও চালু করতে ক্লিক করুন", btnOk:"ঠিক আছে",
+    signalLocked:"সিগন্যাল লক হয়েছে", signalSearching:"খোঁজা হচ্ছে...",
+    objectiveText:"রাডার ১০০%-এ পৌঁছানোর আগে, মনোবল ≥ ৬০ বজায় রেখে অন্তত ৫টি পাড়ায় সম্প্রচার পৌঁছান।",
+    reachedLabel:"পৌঁছানো পাড়া",
+    node:"পাড়া",
+    introLines:[
+      "সুরাবায়া","নভেম্বর ১৯৪৫","",
+      "শহরটি উত্তেজনাপূর্ণ ছিল।","","বার্তাগুলো রাস্তা,\nগলি, ছাদ এবং রেডিওর মধ্য দিয়ে যাতায়াত করত।","",
+      "কিন্তু একটি জিনিস বার্তাবাহকের চেয়েও\nদূরে যেতে পারত:","","একটি কণ্ঠস্বর।","",
+      "তোমার কাজটি সহজ।","","সম্প্রচার সচল রাখো।"
+    ],
+    tutorialSteps:[
+      "সিগন্যাল খুঁজে বের করো। FREQUENCY ডায়াল ঘুরিয়ে লক্ষ্যের কাছাকাছি নিয়ে আসো।",
+      "ফ্রিকোয়েন্সি লক করো। CRT তরঙ্গ স্থিতিশীল ও উজ্জ্বল সবুজ হতে দেখো।",
+      "সম্প্রচার শুরু করো। তুমি সম্প্রচারে থাকাকালীন জনগণের মনোবল বাড়ে।",
+      "রাডারের দিকে নজর রাখো। যত বেশি সময় সম্প্রচার করবে, ধরা পড়ার ঝুঁকি তত বাড়বে।",
+      "রাডার খুব বেশি হয়ে গেলে, ধরা পড়ার আগেই ট্রান্সমিটার স্থানান্তর করো।",
+      "কোনো বার্তাবাহক জরুরি প্রতিবেদন নিয়ে এলে সাবধানে সিদ্ধান্ত নাও।"
+    ],
+    howToBody:`
+      <p><b>লক্ষ্য:</b> বুং তোমোর সম্প্রচার সচল রাখো। রাডার ১০০%-এ পৌঁছানোর আগে মনোবল ≥ ৬০ বজায় রেখে অন্তত ৫টি পাড়ায় পৌঁছাও।</p>
+      <p><b>ফ্রিকোয়েন্সি:</b> স্লাইডার টেনে CURRENT-কে TARGET-এর কাছাকাছি আনো। যত কাছাকাছি হবে, সিগন্যাল তত পরিষ্কার ও তরঙ্গ তত স্থিতিশীল হবে।</p>
+      <p><b>সম্প্রচার:</b> SPACE বা "সম্প্রচার শুরু করুন" বোতাম চাপো। সম্প্রচারের সময় মনোবল বাড়ে, তবে রাডারও বাড়ে।</p>
+      <p><b>রাডার:</b> ১০০%-এ পৌঁছালে তোমার যন্ত্রপাতি ক্ষতিগ্রস্ত হবে (বোমাবর্ষণ)। দ্রুত রাডার কমাতে R চেপে স্থানান্তর করো।</p>
+      <p><b>বার্তাবাহক:</b> এলোমেলো ঘটনাগুলো তোমাকে এমন সিদ্ধান্ত নিতে বলবে যা মনোবল ও রাডার বদলে দেয়।</p>
+      <p><b>নিয়ন্ত্রণ:</b> A/D বা স্লাইডার — টিউনিং · SPACE — সম্প্রচার চালু/বন্ধ · R — স্থানান্তর · ESC — বিরতি · M — নীরব · ভাষা খোঁজার বার — ভাষা পরিবর্তন</p>
+    `,
+    endings:{
+      survives:{title:"সমাপ্তি ১ — কণ্ঠস্বর টিকে থাকে", body:"ঝুঁকি নিয়ন্ত্রণে রেখে নেটওয়ার্ক সফলভাবে অনেক পাড়ায় বার্তা ছড়িয়ে দিতে পেরেছিল। অপারেটর বেঁচে ছিল, এবং বার্তা ছড়িয়ে যেতে থেকেছে।"},
+      flame:{title:"সমাপ্তি ২ — সিগন্যাল আগুনের শিখা হয়ে ওঠে", body:"মনোবল চূড়ান্ত পর্যায়ে পৌঁছেছিল। বেশি মানুষের কাছে পৌঁছাতে তুমি নিরাপত্তা বিসর্জন দিয়েছিলে। শেষ পর্যন্ত ট্রান্সমিটার নীরব করে দেওয়া হয়েছিল — কিন্তু ততক্ষণে কণ্ঠস্বর ছড়িয়ে পড়েছিল।"},
+      silence:{title:"সমাপ্তি ৩ — বেঁচে থাকার জন্য নীরবতা", body:"তুমি বারবার নিরাপত্তা বেছে নিয়েছিলে। নেটওয়ার্ক টিকে ছিল, কিন্তু কম মানুষ বার্তাটি শুনেছিল।"},
+      fallen:{title:"সমাপ্তি ৪ — নেটওয়ার্কের পতন", body:"বার্তা যথেষ্ট ছড়ানোর আগেই রাডার সর্বোচ্চ সীমায় পৌঁছে যায়। রেডিও স্টেশনটি শনাক্ত হয়ে যায়।"}
+    },
+    realHistory:{
+      real:"• ১৯৪৫ সালে সুরাবায়া প্রতিরোধের একটি বড় কেন্দ্রে পরিণত হয়।\n• ১০ নভেম্বরের আগে উত্তেজনা তীব্রভাবে বেড়ে যায়।\n• বুং তোমো রেডিও সম্প্রচারের সাথে ঘনিষ্ঠভাবে যুক্ত, যা প্রতিরোধকে উৎসাহিত করেছিল।\n• যুদ্ধকালীন মনোবলে রেডিও ও যোগাযোগ গুরুত্বপূর্ণ ভূমিকা পালন করেছিল।",
+      abstraction:"• ফ্রিকোয়েন্সি টিউনিং\n• রাডার শনাক্তকরণ\n• কেবল নেটওয়ার্ক\n• নির্দিষ্ট রেডিও অপারেটরের ভূমিকা\n• সিগন্যাল কভারেজ ব্যবস্থা\n• গেমপ্লে ঘটনা"
+    },
+    courierEvents:[
+      {
+        text:'"পাশের পাড়া থেকে প্রতিবেদন এসেছে। ব্রিটিশ সৈন্যরা তল্লাশি চালাচ্ছে। আমাদের কী করা উচিত?"',
+        choices:[
+          {label:"ক — সম্প্রচার চালিয়ে যান", effects:"মনোবল +১৫ · রাডার +১৫", morale:15, detection:15, note:"continue"},
+          {label:"খ — বন্ধ করে সাহায্য করুন", effects:"মনোবল -৫ · রাডার -২০", morale:-5, detection:-20, note:"assist"},
+          {label:"গ — আগে স্থানান্তর করুন", effects:"সম্প্রচারের সময় হারানো · রাডার -১০", morale:0, detection:-10, note:"relocate"}
+        ]
+      },
+      {
+        text:'"পূর্ব ছাদের তারটি গুলিবর্ষণে ক্ষতিগ্রস্ত হয়েছে। আমরা এটি মেরামত করতে পারি অথবা যেমন আছে তেমন রাখতে পারি।"',
+        choices:[
+          {label:"ক — এখনই মেরামত করুন", effects:"রাডার +১০ · সিগন্যাল উন্নত হয়", morale:5, detection:10, note:"repair"},
+          {label:"খ — রেখে দিন, সম্প্রচার চালিয়ে যান", effects:"মনোবল +১০ · রাডার +৫", morale:10, detection:5, note:"ignore"},
+          {label:"গ — সাময়িকভাবে বন্ধ করুন", effects:"রাডার -১৫ · মনোবল -১০", morale:-10, detection:-15, note:"shutdown"}
+        ]
+      },
+      {
+        text:'"উত্তর পাড়ার বাসিন্দারা ভয় পাচ্ছে এবং শুনতে দ্বিধাগ্রস্ত। আমরা কীভাবে সাড়া দেব?"',
+        choices:[
+          {label:"ক — সম্প্রচার জোরদার করুন", effects:"মনোবল +১২ · রাডার +১২", morale:12, detection:12, note:"boost"},
+          {label:"খ — আশ্বাসদায়ক বার্তাবাহক পাঠান", effects:"মনোবল +৮ · রাডার -৫", morale:8, detection:-5, note:"courier"},
+          {label:"গ — অপেক্ষা করুন ও পর্যবেক্ষণ করুন", effects:"সামান্য পরিবর্তন", morale:2, detection:-2, note:"wait"}
+        ]
+      }
+    ]
+  },
+
+  pt:{
+    menuLocation:"SURABAYA — NOVEMBRO DE 1945",
+    tagline:'"Quando as armas não conseguem alcançar tudo, deixe a voz fazê-lo."',
+    btnStart:"COMEÇAR", btnCodex:"HISTÓRIA", btnHowTo:"COMO JOGAR",
+    statusOff:"STATUS: TRANSMISSÃO DESLIGADA", statusOn:"STATUS: TRANSMITINDO",
+    btnPause:"PAUSA", mapLabel:"SURABAYA — NOITE",
+    warningTriangulation:"AVISO: SINAL SENDO RASTREADO",
+    hFrequency:"FREQUÊNCIA", hStatus:"STATUS DE TRANSMISSÃO", hObjective:"OBJETIVO PRINCIPAL",
+    lblMorale:"MORAL", lblDetection:"RADAR", lblSignal:"SINAL",
+    btnBroadcastOn:"INICIAR TRANSMISSÃO [ESPAÇO]", btnBroadcastOff:"CORTAR TRANSMISSÃO [ESPAÇO]",
+    btnRelocate:"REALOCAR [R]", btnMute:"SILENCIAR [M]",
+    voiceSim:"FONTE DE VOZ: SIMULAÇÃO", voiceReal:"FONTE DE VOZ: GRAVAÇÃO",
+    tutTitle:"TREINAMENTO DO OPERADOR", btnNext:"PRÓXIMO", btnSkip:"PULAR",
+    courierTitle:"MENSAGEIRO URGENTE",
+    pausedTitle:"PAUSADO", btnResume:"RETOMAR", btnMainMenu:"MENU PRINCIPAL",
+    howToTitle:"COMO JOGAR", btnClose:"FECHAR",
+    codexTitle:"CÓDICE HISTÓRICO",
+    codexDisclaimer:"Algumas mecânicas de jogo são abstrações fictícias criadas para transmitir a importância histórica do rádio, do moral, da comunicação e da resistência.",
+    bombTitle:"TRIANGULAÇÃO CONCLUÍDA", bombText:"Equipamento danificado. Parte da sua rede foi perdida.",
+    btnContinue:"CONTINUAR", btnRealHistory:"O QUE FOI REAL?", btnRestart:"JOGAR NOVAMENTE",
+    clickAudio:"CLIQUE PARA ATIVAR O ÁUDIO DO RÁDIO", btnOk:"OK",
+    signalLocked:"SINAL TRAVADO", signalSearching:"PROCURANDO...",
+    objectiveText:"Transmita para pelo menos 5 bairros mantendo o MORAL ≥ 60, antes que a DETECÇÃO chegue a 100%.",
+    reachedLabel:"Bairros alcançados",
+    node:"Bairro",
+    introLines:[
+      "SURABAYA","NOVEMBRO DE 1945","",
+      "A cidade estava tensa.","","Mensagens viajavam por ruas,\nbecos, telhados e rádios.","",
+      "Mas uma coisa conseguia viajar\nmais longe que um mensageiro:","","UMA VOZ.","",
+      "Sua tarefa é simples.","","Mantenha a transmissão viva."
+    ],
+    tutorialSteps:[
+      "Encontre o sinal. Gire o botão de FREQUÊNCIA até se aproximar do alvo.",
+      "Trave a frequência. Observe a onda do CRT ficar estável e verde brilhante.",
+      "Comece a TRANSMITIR. O moral do povo sobe enquanto você está no ar.",
+      "Observe o RADAR. Quanto mais tempo você transmite, maior o risco de detecção.",
+      "Realoque o transmissor antes que te encontrem, se o radar ficar muito alto.",
+      "Escolha com cuidado quando um mensageiro chegar com um relatório urgente."
+    ],
+    howToBody:`
+      <p><b>OBJETIVO:</b> Mantenha a transmissão de Bung Tomo viva. Alcance pelo menos 5 bairros com MORAL ≥ 60 antes que o RADAR chegue a 100%.</p>
+      <p><b>FREQUÊNCIA:</b> Arraste o controle deslizante para que CURRENT se aproxime de TARGET. Quanto mais perto, mais limpo o sinal e mais estável a onda.</p>
+      <p><b>TRANSMISSÃO:</b> Pressione ESPAÇO ou o botão INICIAR TRANSMISSÃO. Enquanto transmite, o moral sobe, mas o radar também.</p>
+      <p><b>RADAR:</b> Se chegar a 100%, seu equipamento será danificado (bombardeio). Pressione R para realocar e baixar o radar rapidamente.</p>
+      <p><b>MENSAGEIRO:</b> Eventos aleatórios pedirão que você tome decisões que mudam o moral e o radar.</p>
+      <p><b>CONTROLES:</b> A/D ou controle deslizante — sintonia · ESPAÇO — transmissão on/off · R — realocar · ESC — pausa · M — silenciar · Barra de busca de idioma — trocar idioma</p>
+    `,
+    endings:{
+      survives:{title:"FINAL 1 — A VOZ SOBREVIVE", body:"A rede conseguiu espalhar a mensagem para muitos bairros mantendo o risco sob controle. O operador sobreviveu, e a mensagem continuou a viajar."},
+      flame:{title:"FINAL 2 — O SINAL VIRA UMA CHAMA", body:"O moral atingiu o pico. Você sacrificou a segurança para alcançar mais pessoas. O transmissor acabou sendo silenciado — mas a voz já havia se espalhado."},
+      silence:{title:"FINAL 3 — SILÊNCIO PARA SOBREVIVER", body:"Você escolheu a segurança repetidamente. A rede sobreviveu, mas menos pessoas ouviram a mensagem."},
+      fallen:{title:"FINAL 4 — A REDE CAI", body:"A detecção atingiu o máximo antes que a mensagem se espalhasse o suficiente. A estação de rádio foi descoberta."}
+    },
+    realHistory:{
+      real:"• Surabaya se tornou um importante centro de resistência em 1945.\n• A tensão aumentou drasticamente antes de 10 de novembro.\n• Bung Tomo ficou fortemente associado às transmissões de rádio que incentivavam a resistência.\n• O rádio e a comunicação tiveram papel importante no moral em tempos de guerra.",
+      abstraction:"• Sintonia de frequência\n• Detecção por radar\n• Rede de cabos\n• O papel específico do operador de rádio\n• Mecânicas de cobertura de sinal\n• Eventos de jogo"
+    },
+    courierEvents:[
+      {
+        text:'"Relatório do bairro vizinho. Tropas britânicas estão fazendo uma busca. O que devemos fazer?"',
+        choices:[
+          {label:"A — Continuar transmitindo", effects:"Moral +15 · Radar +15", morale:15, detection:15, note:"continue"},
+          {label:"B — Desligar e ajudar", effects:"Moral -5 · Radar -20", morale:-5, detection:-20, note:"assist"},
+          {label:"C — Realocar primeiro", effects:"Perde tempo de transmissão · Radar -10", morale:0, detection:-10, note:"relocate"}
+        ]
+      },
+      {
+        text:'"O cabo no telhado leste está danificado por tiros. Podemos consertá-lo ou deixá-lo assim."',
+        choices:[
+          {label:"A — Consertar agora", effects:"Radar +10 · O sinal melhora", morale:5, detection:10, note:"repair"},
+          {label:"B — Deixar, continuar transmitindo", effects:"Moral +10 · Radar +5", morale:10, detection:5, note:"ignore"},
+          {label:"C — Desligar brevemente", effects:"Radar -15 · Moral -10", morale:-10, detection:-15, note:"shutdown"}
+        ]
+      },
+      {
+        text:'"Os moradores do bairro norte estão com medo e hesitam em ouvir. Como respondemos?"',
+        choices:[
+          {label:"A — Reforçar a transmissão", effects:"Moral +12 · Radar +12", morale:12, detection:12, note:"boost"},
+          {label:"B — Enviar um mensageiro tranquilizador", effects:"Moral +8 · Radar -5", morale:8, detection:-5, note:"courier"},
+          {label:"C — Esperar e observar", effects:"Pouca mudança", morale:2, detection:-2, note:"wait"}
+        ]
+      }
+    ]
+  },
+
+  ru:{
+    menuLocation:"СУРАБАЯ — НОЯБРЬ 1945",
+    tagline:'"Когда оружие не может достичь всех, пусть это сделает голос."',
+    btnStart:"НАЧАТЬ", btnCodex:"ИСТОРИЯ", btnHowTo:"КАК ИГРАТЬ",
+    statusOff:"СТАТУС: ВЕЩАНИЕ ВЫКЛЮЧЕНО", statusOn:"СТАТУС: ИДЁТ ВЕЩАНИЕ",
+    btnPause:"ПАУЗА", mapLabel:"СУРАБАЯ — НОЧЬ",
+    warningTriangulation:"ВНИМАНИЕ: СИГНАЛ ОТСЛЕЖИВАЕТСЯ",
+    hFrequency:"ЧАСТОТА", hStatus:"СОСТОЯНИЕ ПЕРЕДАЧИ", hObjective:"ГЛАВНАЯ ЦЕЛЬ",
+    lblMorale:"МОРАЛЬ", lblDetection:"РАДАР", lblSignal:"СИГНАЛ",
+    btnBroadcastOn:"НАЧАТЬ ВЕЩАНИЕ [ПРОБЕЛ]", btnBroadcastOff:"ПРЕКРАТИТЬ ПЕРЕДАЧУ [ПРОБЕЛ]",
+    btnRelocate:"ПЕРЕЕХАТЬ [R]", btnMute:"БЕЗ ЗВУКА [M]",
+    voiceSim:"ИСТОЧНИК ГОЛОСА: СИМУЛЯЦИЯ", voiceReal:"ИСТОЧНИК ГОЛОСА: ЗАПИСЬ",
+    tutTitle:"ОБУЧЕНИЕ ОПЕРАТОРА", btnNext:"ДАЛЕЕ", btnSkip:"ПРОПУСТИТЬ",
+    courierTitle:"СРОЧНЫЙ ГОНЕЦ",
+    pausedTitle:"ПАУЗА", btnResume:"ПРОДОЛЖИТЬ", btnMainMenu:"ГЛАВНОЕ МЕНЮ",
+    howToTitle:"КАК ИГРАТЬ", btnClose:"ЗАКРЫТЬ",
+    codexTitle:"ИСТОРИЧЕСКАЯ СПРАВКА",
+    codexDisclaimer:"Некоторые игровые механики являются художественным упрощением, призванным передать историческое значение радио, морального духа, связи и сопротивления.",
+    bombTitle:"ТРИАНГУЛЯЦИЯ ЗАВЕРШЕНА", bombText:"Оборудование повреждено. Часть вашей сети потеряна.",
+    btnContinue:"ПРОДОЛЖИТЬ", btnRealHistory:"ЧТО БЫЛО НА САМОМ ДЕЛЕ?", btnRestart:"ИГРАТЬ СНОВА",
+    clickAudio:"НАЖМИТЕ, ЧТОБЫ ВКЛЮЧИТЬ ЗВУК РАДИО", btnOk:"OK",
+    signalLocked:"СИГНАЛ ЗАФИКСИРОВАН", signalSearching:"ПОИСК...",
+    objectiveText:"Ведите вещание как минимум на 5 районов, поддерживая МОРАЛЬ ≥ 60, пока ОБНАРУЖЕНИЕ не достигло 100%.",
+    reachedLabel:"Охваченные районы",
+    node:"Район",
+    introLines:[
+      "СУРАБАЯ","НОЯБРЬ 1945","",
+      "Город был напряжён.","","Сообщения передавались по улицам,\nпереулкам, крышам и радио.","",
+      "Но было нечто, способное уйти\nдальше любого гонца:","","ГОЛОС.","",
+      "Твоя задача проста.","","Поддерживай передачу живой."
+    ],
+    tutorialSteps:[
+      "Найди сигнал. Крути регулятор ЧАСТОТЫ, пока не приблизишься к цели.",
+      "Зафиксируй частоту. Смотри, как волна на экране становится стабильной и ярко-зелёной.",
+      "Начни ВЕЩАНИЕ. Пока ты в эфире, моральный дух людей растёт.",
+      "Следи за РАДАРОМ. Чем дольше ты вещаешь, тем выше риск обнаружения.",
+      "Перемести передатчик, пока тебя не нашли, если радар стал слишком высоким.",
+      "Выбирай осторожно, когда гонец приносит срочное донесение."
+    ],
+    howToBody:`
+      <p><b>ЦЕЛЬ:</b> Поддерживай передачу Бунг Томо живой. Охвати как минимум 5 районов с МОРАЛЬЮ ≥ 60, пока РАДАР не достиг 100%.</p>
+      <p><b>ЧАСТОТА:</b> Перетащи ползунок так, чтобы CURRENT приблизилось к TARGET. Чем ближе, тем чище сигнал и стабильнее волна.</p>
+      <p><b>ВЕЩАНИЕ:</b> Нажми ПРОБЕЛ или кнопку «НАЧАТЬ ВЕЩАНИЕ». Во время вещания мораль растёт, но и радар тоже.</p>
+      <p><b>РАДАР:</b> Если он достигнет 100%, твоё оборудование будет повреждено (обстрел). Нажми R, чтобы переехать и быстро снизить радар.</p>
+      <p><b>ГОНЕЦ:</b> Случайные события потребуют от тебя решений, которые меняют мораль и радар.</p>
+      <p><b>УПРАВЛЕНИЕ:</b> A/D или ползунок — настройка · ПРОБЕЛ — вещание вкл/выкл · R — переезд · ESC — пауза · M — без звука · Строка поиска языка — смена языка</p>
+    `,
+    endings:{
+      survives:{title:"КОНЦОВКА 1 — ГОЛОС ВЫЖИВАЕТ", body:"Сеть успешно донесла сообщение до множества районов, удерживая риск под контролем. Оператор выжил, и сообщение продолжало распространяться."},
+      flame:{title:"КОНЦОВКА 2 — СИГНАЛ СТАНОВИТСЯ ПЛАМЕНЕМ", body:"Моральный дух достиг пика. Ты пожертвовал безопасностью ради того, чтобы охватить больше людей. Передатчик в итоге заглушили — но голос уже разнёсся повсюду."},
+      silence:{title:"КОНЦОВКА 3 — МОЛЧАНИЕ РАДИ ВЫЖИВАНИЯ", body:"Ты снова и снова выбирал безопасность. Сеть выжила, но сообщение услышало меньше людей."},
+      fallen:{title:"КОНЦОВКА 4 — СЕТЬ РУШИТСЯ", body:"Обнаружение достигло максимума прежде, чем сообщение успело достаточно распространиться. Радиостанцию нашли."}
+    },
+    realHistory:{
+      real:"• В 1945 году Сурабая стала крупным центром сопротивления.\n• Напряжённость резко возросла перед 10 ноября.\n• Имя Бунг Томо тесно связано с радиопередачами, поддерживавшими сопротивление.\n• Радио и связь сыграли важную роль в поддержании боевого духа во время войны.",
+      abstraction:"• Настройка частоты\n• Обнаружение радаром\n• Кабельная сеть\n• Конкретная роль радиста\n• Механика покрытия сигналом\n• Игровые события"
+    },
+    courierEvents:[
+      {
+        text:'"Донесение из соседнего района. Британские войска проводят обыск. Что нам делать?"',
+        choices:[
+          {label:"А — Продолжить вещание", effects:"Мораль +15 · Радар +15", morale:15, detection:15, note:"continue"},
+          {label:"Б — Прекратить и помочь", effects:"Мораль -5 · Радар -20", morale:-5, detection:-20, note:"assist"},
+          {label:"В — Сначала переехать", effects:"Потеря времени вещания · Радар -10", morale:0, detection:-10, note:"relocate"}
+        ]
+      },
+      {
+        text:'"Кабель на восточной крыше повреждён выстрелами. Можно починить его или оставить как есть."',
+        choices:[
+          {label:"А — Починить сейчас", effects:"Радар +10 · Сигнал улучшается", morale:5, detection:10, note:"repair"},
+          {label:"Б — Оставить, продолжить вещание", effects:"Мораль +10 · Радар +5", morale:10, detection:5, note:"ignore"},
+          {label:"В — Временно прекратить", effects:"Радар -15 · Мораль -10", morale:-10, detection:-15, note:"shutdown"}
+        ]
+      },
+      {
+        text:'"Жители северного района напуганы и не решаются слушать. Как нам ответить?"',
+        choices:[
+          {label:"А — Усилить вещание", effects:"Мораль +12 · Радар +12", morale:12, detection:12, note:"boost"},
+          {label:"Б — Отправить гонца с успокоением", effects:"Мораль +8 · Радар -5", morale:8, detection:-5, note:"courier"},
+          {label:"В — Подождать и понаблюдать", effects:"Почти без изменений", morale:2, detection:-2, note:"wait"}
+        ]
+      }
+    ]
+  },
+};
+
+let lang = "id";
+
+/* ---------------------------------------------------------------------
+   AUDIO CONFIGURATION
+--------------------------------------------------------------------- */
+const INTRO_AUDIO_CONFIG = {
+  src: "merdeka.mp3"  // Ganti dengan path file MP3 Anda / Replace with your MP3 file path
+};
+
+/* ---------------------------------------------------------------------
+   2. GAME STATE
+--------------------------------------------------------------------- */
+const gameState = {
+  language:"id",
+  frequency: 500,      // current, 0-1000 scale
+  targetFrequency: 0,
+  signalQuality: 0,    // 0-1
+  morale: 50,
+  detection: 0,
+  broadcasting: false,
+  connectedNodes: [],
+  neighborhoodsReached: 0,
+  civiliansHelped: 0,
+  historicalEntriesUnlocked: [],
+  currentEvent: null,
+  gameTime: 0,
+  score: 0,
+  paused: false,
+  running: false,
+  muted:false,
+  coverageRadius: 0,
+  lastCourierTime: 0,
+  courierIndex: 0,
+  ended:false
+};
+
+const NEIGHBORHOODS = [
+  {id:0, x:0.75, y:0.22, reached:false, hitboxOffset:{x:0.05, y:0}},
+  {id:1, x:0.60, y:0.60, reached:false},
+  {id:2, x:0.65, y:0.75, reached:false},
+  {id:3, x:0.30, y:0.68, reached:false},
+  {id:4, x:0.20, y:0.30, reached:false}
+];
+const RADIO_POS = {x:0.42, y:0.48};
+const BRITISH_HQ = {x:0.92, y:0.08};
+
+/* ---------------------------------------------------------------------
+   3. DOM REFS
+--------------------------------------------------------------------- */
+const $ = id => document.getElementById(id);
+const screens = {
+  menu:$("screen-menu"), intro:$("screen-intro"), game:$("screen-game")
+};
+const overlays = {
+  tutorial:$("overlay-tutorial"), courier:$("overlay-courier"), pause:$("overlay-pause"),
+  howto:$("overlay-howto"), codex:$("overlay-codex"), bombardment:$("overlay-bombardment"),
+  ending:$("overlay-ending"), audioEnable:$("overlay-audio-enable")
+};
+
+function showScreen(name){
+  Object.values(screens).forEach(s=>s.classList.remove("active"));
+  screens[name].classList.add("active");
+}
+function showOverlay(name){ overlays[name].classList.add("active"); }
+function hideOverlay(name){ overlays[name].classList.remove("active"); }
+
+/* ---------------------------------------------------------------------
+   4. LOCALIZATION APPLY
+--------------------------------------------------------------------- */
+function applyLanguage(){
+  const t0 = translations[lang] || translations.en;
+  const tEN = translations.en;
+  // proxy: any key missing on the active language object falls back to EN,
+  // so nothing ever renders blank/undefined for the newer languages.
+  const t = new Proxy(t0, { get(obj,key){ return (obj[key] !== undefined) ? obj[key] : tEN[key]; } });
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const key = el.getAttribute("data-i18n");
+    if(t[key] !== undefined) el.textContent = t[key];
+  });
+  document.documentElement.lang = lang;
+  document.documentElement.dir = (lang === "ar") ? "rtl" : "ltr";
+  if(typeof updateLangSearchActive === "function") updateLangSearchActive();
+  $("objectiveBox").textContent = t.objectiveText;
+  $("voiceSource").textContent = t.voiceSim;
+  $("statusLine").textContent = gameState.broadcasting ? t.statusOn : t.statusOff;
+  $("broadcastBtn").textContent = gameState.broadcasting ? t.btnBroadcastOff : t.btnBroadcastOn;
+  $("lockStatus").textContent = gameState.signalQuality > 0.85 ? t.signalLocked : (gameState.broadcasting ? t.signalSearching : "");
+  renderHowTo();
+  renderCodex();
+}
+function switchLanguage(newLang){
+  lang = newLang; gameState.language = newLang;
+  applyLanguage();
+}
+
+/* ---------------------------------------------------------------------
+   5. AUDIO SYSTEM
+--------------------------------------------------------------------- */
+let audioCtx=null, noiseSource=null, noiseGain=null, noiseFilter=null;
+let voiceOsc=null, voiceGain=null, voiceFilter=null, voiceLFO=null, voiceLFOGain=null;
+let pingOsc=null, pingGain=null, pingTimer=null;
+let audioReady=false;
+
+// ---- Bung Tomo MP3 chain (shared by cinematic intro AND gameplay broadcast voice) ----
+let mp3Audio=null, mp3Source=null, mp3Filter=null, mp3Gain=null, mp3Analyser=null;
+let mp3Available=false, mp3ChainReady=false;
+
+function initAudio(){
+  if(audioReady) return;
+  try{
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+
+    // ---- noise (static) ----
+    const bufferSize = audioCtx.sampleRate * 2;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++) data[i] = Math.random()*2-1;
+    noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = buffer; noiseSource.loop = true;
+    noiseFilter = audioCtx.createBiquadFilter();
+    noiseFilter.type="bandpass"; noiseFilter.frequency.value=1800; noiseFilter.Q.value=0.6;
+    noiseGain = audioCtx.createGain(); noiseGain.gain.value=0.0;
+    noiseSource.connect(noiseFilter).connect(noiseGain).connect(audioCtx.destination);
+    noiseSource.start();
+
+    // ---- "voice" placeholder (formant-ish tone) ----
+    voiceOsc = audioCtx.createOscillator(); voiceOsc.type="sawtooth"; voiceOsc.frequency.value=140;
+    voiceFilter = audioCtx.createBiquadFilter(); voiceFilter.type="bandpass"; voiceFilter.frequency.value=900; voiceFilter.Q.value=4;
+    voiceGain = audioCtx.createGain(); voiceGain.gain.value=0.0;
+    voiceLFO = audioCtx.createOscillator(); voiceLFO.frequency.value=3.2;
+    voiceLFOGain = audioCtx.createGain(); voiceLFOGain.gain.value=350;
+    voiceLFO.connect(voiceLFOGain).connect(voiceFilter.frequency);
+    voiceOsc.connect(voiceFilter).connect(voiceGain).connect(audioCtx.destination);
+    voiceOsc.start(); voiceLFO.start();
+
+    // ---- radar ping ----
+    pingGain = audioCtx.createGain(); pingGain.gain.value=0.0;
+    pingGain.connect(audioCtx.destination);
+
+    audioReady = true;
+  }catch(e){
+    console.warn("Audio init failed", e);
+    audioReady=false;
+  }
+
+  // Build the Bung Tomo MP3 chain (shared between intro cinematic and gameplay).
+  initMp3Chain();
+}
+
+/* ---- Bung Tomo MP3 chain setup (single audio element/source, reused everywhere) ---- */
+function initMp3Chain(){
+  if(mp3ChainReady || !audioReady) return;
+  try{
+    mp3Audio = new Audio();
+    mp3Audio.src = INTRO_AUDIO_CONFIG.src;
+    mp3Audio.loop = true;          // loops through the full speech continuously
+    mp3Audio.preload = "auto";
+    mp3Audio.crossOrigin = "anonymous";
+    mp3Audio.volume = 1.0;         // actual loudness is controlled by mp3Gain, not element volume
+
+    mp3Audio.addEventListener("error", ()=>{
+      mp3Available = false;
+      const el = $("voiceSource");
+      if(el) el.textContent = translations[lang].voiceSim;
+    });
+    mp3Audio.addEventListener("canplaythrough", ()=>{ mp3Available = true; }, {once:true});
+
+    mp3Source = audioCtx.createMediaElementSource(mp3Audio);
+    mp3Filter = audioCtx.createBiquadFilter();
+    mp3Filter.type = "lowpass";
+    mp3Filter.frequency.value = 600; // muffled by default until tuned
+    mp3Filter.Q.value = 0.7;
+    mp3Gain = audioCtx.createGain();
+    mp3Gain.gain.value = 0.0;
+    mp3Analyser = audioCtx.createAnalyser();
+    mp3Analyser.fftSize = 2048;
+
+    mp3Source.connect(mp3Filter).connect(mp3Gain).connect(audioCtx.destination);
+    mp3Source.connect(mp3Analyser); // parallel tap for waveform visualization only
+
+    mp3ChainReady = true;
+  }catch(e){
+    console.warn("MP3 chain init failed", e);
+    mp3Available = false;
+  }
+}
+
+function playPing(){
+  if(!audioReady || gameState.muted) return;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type="sine"; osc.frequency.value=880;
+  g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+  g.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.25);
+  osc.connect(g).connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime+0.3);
+}
+
+function schedulePing(){
+  if(pingTimer) clearTimeout(pingTimer);
+  const det = gameState.detection/100;
+  const interval = Math.max(180, 1400 - det*1200); // faster as detection rises
+  pingTimer = setTimeout(()=>{
+    playPing();
+    schedulePing();
+  }, interval);
+}
+
+function updateAudioParams(){
+  if(!audioReady) return;
+  const q = gameState.signalQuality;
+  const broadcasting = gameState.broadcasting;
+  const muted = gameState.muted;
+
+  // Old procedural noise kept only as a faint atmospheric hiss (no longer the dominant sound).
+  const noiseTarget = muted ? 0 : (broadcasting ? (1-q)*0.09 + 0.01 : 0.02);
+  // The oscillator "voice" placeholder is retired now that the real MP3 drives the voice.
+  const voiceTarget = 0;
+  noiseGain.gain.setTargetAtTime(noiseTarget, audioCtx.currentTime, 0.15);
+  voiceGain.gain.setTargetAtTime(voiceTarget, audioCtx.currentTime, 0.15);
+  noiseFilter.frequency.setTargetAtTime(1200 + (1-q)*2500, audioCtx.currentTime, 0.2);
+  voiceLFO.frequency.setTargetAtTime(2 + q*2, audioCtx.currentTime, 0.3);
+
+  // Bung Tomo MP3: signalQuality drives clarity (frequency/gameplay tuning mechanic).
+  if(mp3ChainReady && mp3Available){
+    let mp3GainTarget, mp3CutoffTarget;
+    if(muted || !broadcasting){
+      mp3GainTarget = 0;
+      mp3CutoffTarget = 500;
+    } else if(q < 0.3){                 // 0-30%: very distorted / muffled
+      mp3GainTarget = 0.12 + q*0.3;
+      mp3CutoffTarget = 350 + q*900;
+    } else if(q < 0.7){                 // 30-70%: partially understandable
+      mp3GainTarget = 0.25 + q*0.4;
+      mp3CutoffTarget = 700 + q*2400;
+    } else if(q < 0.9){                 // 70-90%: mostly clear
+      mp3GainTarget = 0.55 + q*0.35;
+      mp3CutoffTarget = 2500 + q*5000;
+    } else {                            // 90-100%: clear voice (locked)
+      mp3GainTarget = 0.85;
+      mp3CutoffTarget = 12000;
+    }
+    mp3Gain.gain.setTargetAtTime(mp3GainTarget, audioCtx.currentTime, 0.2);
+    mp3Filter.frequency.setTargetAtTime(mp3CutoffTarget, audioCtx.currentTime, 0.25);
+
+    if(mp3Audio && mp3Audio.paused && broadcasting){
+      mp3Audio.play().catch(()=>{ /* ignore; will retry on next broadcast toggle */ });
+    }
+  }
+}
+
+function stopAudio(){
+  if(!audioReady) return;
+  if(pingTimer) clearTimeout(pingTimer);
+  noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+  voiceGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+  if(mp3ChainReady) mp3Gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+}
+
+/* ---------------------------------------------------------------------
+   6. FREQUENCY / SIGNAL LOGIC
+--------------------------------------------------------------------- */
+function newTargetFrequency(){
+  gameState.targetFrequency = 150 + Math.random()*700;
+}
+
+function updateSignalQuality(){
+  const diff = Math.abs(gameState.frequency - gameState.targetFrequency);
+  const quality = Math.max(0, 1 - diff/220);
+  gameState.signalQuality = quality;
+  return quality;
+}
+
+// Frequency drift system - target frequency shifts randomly based on signal quality
+let lastDriftTime = 0;
+function updateFrequencyDrift(dt){
+  if(!gameState.broadcasting) return;
+  
+  const q = gameState.signalQuality;
+  let driftInterval, driftAmount;
+  
+  // Higher signal quality = more frequent and larger drifts (instability)
+  if(q > 0.7){
+    // Very high quality: very unstable
+    driftInterval = 1.5;  // Every 1.5 seconds
+    driftAmount = 50;      // Large drift: -25 to +25
+  } else if(q > 0.5){
+    // Good quality: moderately unstable
+    driftInterval = 2.0;  // Every 2 seconds
+    driftAmount = 40;      // Medium drift: -20 to +20
+  } else if(q > 0.3){
+    // Medium quality: some instability
+    driftInterval = 3.0;  // Every 3 seconds
+    driftAmount = 25;      // Small drift: -12.5 to +12.5
+  } else {
+    // Low quality: minimal drift
+    driftInterval = 5.0;  // Every 5 seconds
+    driftAmount = 15;      // Very small drift: -7.5 to +7.5
+  }
+  
+  lastDriftTime += dt;
+  if(lastDriftTime > driftInterval){
+    lastDriftTime = 0;
+    // Random drift left or right
+    const drift = (Math.random() - 0.5) * driftAmount;
+    gameState.targetFrequency = clamp(gameState.targetFrequency + drift, 50, 950);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   7. WAVEFORM RENDER
+--------------------------------------------------------------------- */
+const waveCanvas = $("waveCanvas");
+const waveCtx = waveCanvas.getContext("2d");
+let wavePhase=0;
+function resizeWaveCanvas(){
+  waveCanvas.width = waveCanvas.clientWidth * devicePixelRatio;
+  waveCanvas.height = waveCanvas.clientHeight * devicePixelRatio;
+}
+function renderWave(){
+  const w=waveCanvas.width, h=waveCanvas.height;
+  waveCtx.clearRect(0,0,w,h);
+  waveCtx.strokeStyle = gameState.signalQuality>0.85 ? "#39FF14" : "#2a7a12";
+  waveCtx.lineWidth = 2*devicePixelRatio;
+  waveCtx.beginPath();
+  const noiseAmt = (1-gameState.signalQuality) * (h*0.35);
+  for(let x=0;x<w;x+=2){
+    const t = x/w*Math.PI*8 + wavePhase;
+    let y = h/2 + Math.sin(t)*(h*0.28)*(0.4+gameState.signalQuality*0.6);
+    y += (Math.random()-0.5)*noiseAmt* (gameState.broadcasting?1:0.4);
+    if(x===0) waveCtx.moveTo(x,y); else waveCtx.lineTo(x,y);
+  }
+  waveCtx.stroke();
+  if(gameState.signalQuality>0.85){
+    waveCtx.shadowColor="#39FF14"; waveCtx.shadowBlur=12*devicePixelRatio;
+    waveCtx.stroke();
+    waveCtx.shadowBlur=0;
+  }
+  wavePhase += 0.08 + gameState.signalQuality*0.05;
+}
+
+/* ---------------------------------------------------------------------
+   8. MAP RENDER
+--------------------------------------------------------------------- */
+const mapCanvas = $("mapCanvas");
+const mapCtx = mapCanvas.getContext("2d");
+function resizeMapCanvas(){
+  mapCanvas.width = mapCanvas.clientWidth * devicePixelRatio;
+  mapCanvas.height = mapCanvas.clientHeight * devicePixelRatio;
+}
+let rippleTime=0;
+
+function renderMap(){
+  const w=mapCanvas.width, h=mapCanvas.height;
+  mapCtx.fillStyle="#060a06";
+  mapCtx.fillRect(0,0,w,h);
+
+  // faint building grid
+  mapCtx.strokeStyle="rgba(57,255,20,0.06)";
+  mapCtx.lineWidth=1;
+  const gridSize = 34*devicePixelRatio;
+  for(let x=0;x<w;x+=gridSize){
+    mapCtx.beginPath(); mapCtx.moveTo(x,0); mapCtx.lineTo(x,h); mapCtx.stroke();
+  }
+  for(let y=0;y<h;y+=gridSize){
+    mapCtx.beginPath(); mapCtx.moveTo(0,y); mapCtx.lineTo(w,y); mapCtx.stroke();
+  }
+  // scattered blocks (buildings)
+  mapCtx.fillStyle="rgba(20,30,20,0.6)";
+  for(let i=0;i<26;i++){
+    const bx = (i*53%100)/100*w, by=(i*97%100)/100*h;
+    mapCtx.fillRect(bx, by, gridSize*0.6, gridSize*0.6);
+  }
+
+  // British HQ + radar
+  const hqx = BRITISH_HQ.x*w, hqy = BRITISH_HQ.y*h;
+  const radarRadius = (gameState.detection/100) * (Math.min(w,h)*0.85);
+  const pulse = 1 + Math.sin(rippleTime*(1+gameState.detection/40))*0.04;
+  mapCtx.beginPath();
+  mapCtx.arc(hqx,hqy,radarRadius*pulse,0,Math.PI*2);
+  mapCtx.strokeStyle="rgba(255,85,85,"+(0.25+gameState.detection/200)+")";
+  mapCtx.lineWidth=2*devicePixelRatio;
+  mapCtx.stroke();
+  mapCtx.fillStyle="rgba(255,85,85,0.05)";
+  mapCtx.fill();
+  mapCtx.fillStyle="#FF5555";
+  mapCtx.beginPath(); mapCtx.arc(hqx,hqy,5*devicePixelRatio,0,Math.PI*2); mapCtx.fill();
+
+  // radio position + coverage ripple
+  const rx = RADIO_POS.x*w, ry = RADIO_POS.y*h;
+  if(gameState.broadcasting){
+    for(let i=0;i<3;i++){
+      const rr = ((rippleTime*40 + i*60) % 200) * devicePixelRatio * (0.5+gameState.signalQuality);
+      mapCtx.beginPath();
+      mapCtx.arc(rx,ry,rr,0,Math.PI*2);
+      mapCtx.strokeStyle = "rgba(57,255,20,"+Math.max(0,(0.5-rr/(240*devicePixelRatio)))+")";
+      mapCtx.lineWidth=2*devicePixelRatio;
+      mapCtx.stroke();
+    }
+  }
+  mapCtx.beginPath();
+  mapCtx.arc(rx,ry, gameState.coverageRadius*Math.min(w,h), 0, Math.PI*2);
+  mapCtx.fillStyle="rgba(57,255,20,0.05)";
+  mapCtx.fill();
+
+  mapCtx.fillStyle="#39FF14";
+  mapCtx.beginPath(); mapCtx.arc(rx,ry,6*devicePixelRatio,0,Math.PI*2); mapCtx.fill();
+  mapCtx.font=(10*devicePixelRatio)+"px monospace";
+  mapCtx.fillText("TX", rx+8*devicePixelRatio, ry-8*devicePixelRatio);
+
+  // neighborhoods
+  const t = translations[lang];
+  NEIGHBORHOODS.forEach((n,i)=>{
+    const nx=n.x*w, ny=n.y*h;
+    mapCtx.beginPath();
+    mapCtx.arc(nx,ny,7*devicePixelRatio,0,Math.PI*2);
+    mapCtx.fillStyle = n.reached ? "#39FF14" : "#3a5a30";
+    mapCtx.fill();
+    mapCtx.strokeStyle = n.reached ? "#aaffaa" : "#1c2b17";
+    mapCtx.stroke();
+    mapCtx.fillStyle="#8ad678";
+    mapCtx.font=(9*devicePixelRatio)+"px monospace";
+    mapCtx.fillText((t.node)+" "+(i+1), nx+9*devicePixelRatio, ny+3*devicePixelRatio);
+  });
+
+  rippleTime += 0.03;
+}
+
+/* ---------------------------------------------------------------------
+   9. GAME LOOP
+--------------------------------------------------------------------- */
+let lastFrame=performance.now();
+function gameLoop(now){
+  const dt = Math.min(0.05, (now-lastFrame)/1000);
+  lastFrame = now;
+  if(gameState.running && !gameState.paused && !gameState.ended){
+    updateGame(dt);
+  }
+  renderWave();
+  renderMap();
+  requestAnimationFrame(gameLoop);
+}
+
+function updateGame(dt){
+  gameState.gameTime += dt;
+  updateSignalQuality();
+  updateFrequencyDrift(dt);
+  const q = gameState.signalQuality;
+
+    if(gameState.broadcasting){
+        // Pertumbuhan moral dan deteksi lebih lambat
+        gameState.morale = clamp(gameState.morale + dt*(0.6 + q*1.2), 0, 100);   // 1.2→0.6, 2.5→1.2
+        gameState.detection = clamp(gameState.detection + dt*(0.8 + q*0.8), 0, 100); // 1.5→0.8, 1.5→0.8
+        // Jangkauan tumbuh lebih lambat dan hanya jika kualitas sangat baik
+        if(q>0.65){  // naikkan ambang batas dari 0.55 ke 0.65 agar lebih sulit
+            gameState.coverageRadius = clamp(gameState.coverageRadius + dt*0.012, 0, 0.9); // 0.025→0.012
+        }
+    } else {
+        // Penurunan moral juga diperlambat
+        gameState.morale = clamp(gameState.morale - dt*0.3, 0, 100);   // 0.6→0.3
+        // Deteksi turun lebih lambat agar tidak cepat aman
+        gameState.detection = clamp(gameState.detection - dt*2.0, 0, 100); // 4→2
+        // Jangkauan menyusut lebih pelan
+        gameState.coverageRadius = clamp(gameState.coverageRadius - dt*0.01, 0, 0.9); // 0.02→0.01
+    }
+
+  // check neighborhoods reached
+  NEIGHBORHOODS.forEach(n=>{
+    if(!n.reached){
+      // Use hitboxOffset if available for custom hitbox positioning
+      const hitboxX = n.hitboxOffset ? n.x + n.hitboxOffset.x : n.x;
+      const hitboxY = n.hitboxOffset ? n.y + n.hitboxOffset.y : n.y;
+      const dx = hitboxX-RADIO_POS.x, dy = hitboxY-RADIO_POS.y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      // Ensure coverage radius actually reaches the neighborhood hitbox
+      if(gameState.coverageRadius >= dist){
+        n.reached = true;
+        gameState.neighborhoodsReached++;
+        gameState.morale = clamp(gameState.morale+8,0,100);
+        unlockCodexEntry();
+      }
+    }
+  });
+
+  updateAudioParams();
+  updateHUD();
+
+  // warning banner
+  const warn = $("warningBanner");
+  warn.classList.toggle("show", gameState.detection>=70);
+
+  // courier event trigger (longer interval for extended gameplay)
+  if(gameState.gameTime - gameState.lastCourierTime > 40 && !gameState.currentEvent && gameState.neighborhoodsReached < 5){
+    triggerCourierEvent();
+  }
+
+  // bombardment
+  if(gameState.detection>=100){
+    triggerBombardment();
+    return;
+  }
+
+  checkWinCondition();
+}
+
+function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
+
+function updateHUD(){
+  $("freqDisplay").textContent =
+    "T:"+gameState.targetFrequency.toFixed(2)+"  C:"+gameState.frequency.toFixed(2)+" MHz";
+  $("moraleBar").style.width = gameState.morale+"%";
+  $("moraleVal").textContent = Math.round(gameState.morale)+"%";
+  $("detectionBar").style.width = gameState.detection+"%";
+  $("detectionVal").textContent = Math.round(gameState.detection)+"%";
+  $("signalBar").style.width = (gameState.signalQuality*100)+"%";
+  $("signalVal").textContent = Math.round(gameState.signalQuality*100)+"%";
+  $("nodeCountDisplay").textContent = gameState.neighborhoodsReached+"/5";
+  const mins = Math.floor(gameState.gameTime/60).toString().padStart(2,"0");
+  const secs = Math.floor(gameState.gameTime%60).toString().padStart(2,"0");
+  $("timeDisplay").textContent = mins+":"+secs;
+
+  const t = translations[lang];
+  const lockEl = $("lockStatus");
+  if(gameState.signalQuality>0.85){
+    lockEl.textContent = t.signalLocked; lockEl.classList.add("locked");
+  } else {
+    lockEl.textContent = gameState.broadcasting ? t.signalSearching : "";
+    lockEl.classList.remove("locked");
+  }
+}
+
+/* ---------------------------------------------------------------------
+   10. COURIER / MORAL DILEMMA
+--------------------------------------------------------------------- */
+function triggerCourierEvent(){
+  const t = translations[lang];
+  const events = t.courierEvents;
+  const ev = events[gameState.courierIndex % events.length];
+  gameState.courierIndex++;
+  gameState.currentEvent = ev;
+  gameState.lastCourierTime = gameState.gameTime;
+  gameState.paused = true;
+
+  $("courierText").textContent = ev.text;
+  const choicesEl = $("courierChoices");
+  choicesEl.innerHTML="";
+  ev.choices.forEach(choice=>{
+    const btn = document.createElement("button");
+    btn.className="choice-btn";
+    btn.innerHTML = choice.label + '<span class="choice-effects">'+choice.effects+'</span>';
+    btn.onclick = ()=>resolveCourierChoice(choice);
+    choicesEl.appendChild(btn);
+  });
+  showOverlay("courier");
+}
+
+function resolveCourierChoice(choice){
+  gameState.morale = clamp(gameState.morale + choice.morale, 0, 100);
+  gameState.detection = clamp(gameState.detection + choice.detection, 0, 100);
+  if(choice.note==="assist" || choice.note==="courier") gameState.civiliansHelped++;
+  gameState.currentEvent=null;
+  gameState.paused=false;
+  hideOverlay("courier");
+}
+
+/* ---------------------------------------------------------------------
+   11. BOMBARDMENT EVENT
+--------------------------------------------------------------------- */
+function triggerBombardment(){
+  gameState.paused = true;
+  const app = $("app");
+  app.classList.add("shake");
+  $("redFlash").classList.add("flash");
+  document.body.classList.add("glitch");
+  playPing();
+  setTimeout(()=>{
+    app.classList.remove("shake");
+    document.body.classList.remove("glitch");
+  }, 500);
+  // damage: reduce coverage, reset detection partially
+  gameState.coverageRadius *= 0.4;
+  gameState.detection = 60;
+  gameState.civiliansHelped = Math.max(0, gameState.civiliansHelped-1);
+  showOverlay("bombardment");
+}
+
+$("btn-bomb-continue").onclick = ()=>{
+  hideOverlay("bombardment");
+  gameState.paused=false;
+  if(gameState.morale <= 15){
+    endGame("fallen");
+  }
+};
+
+/* ---------------------------------------------------------------------
+   12. WIN / END CONDITIONS
+--------------------------------------------------------------------- */
+function checkWinCondition(){
+  if(gameState.neighborhoodsReached>=5 && gameState.morale>=60){
+    let ending = "survives";
+    if(gameState.detection>=75) ending="flame";
+    endGame(ending);
+  } else if(gameState.neighborhoodsReached>=5 && gameState.morale<60){
+    endGame("silence");
+  }
+}
+
+function computeScore(){
+  const s = gameState.neighborhoodsReached*15
+    + gameState.morale*0.8
+    - gameState.detection*0.3
+    + gameState.civiliansHelped*10
+    + Math.min(gameState.gameTime,300)*0.2;
+  gameState.score = Math.round(Math.max(0,s));
+  return gameState.score;
+}
+function rankFromScore(score){
+  if(score>=140) return "S";
+  if(score>=110) return "A";
+  if(score>=80) return "B";
+  if(score>=50) return "C";
+  return "D";
+}
+
+function endGame(key){
+  if(gameState.ended) return;
+  gameState.ended = true;
+  gameState.running = false;
+  
+  // Stop audio when game ends
+  stopAudio();
+  
+  const t = translations[lang];
+  const ending = t.endings[key];
+  $("endingTitle").textContent = ending.title;
+  $("endingBody").textContent = ending.body;
+  const score = computeScore();
+  const rank = rankFromScore(score);
+  $("endingRank").textContent = rank;
+  $("endingScore").innerHTML =
+    (lang==="id"?"Kampung terjangkau":"Neighborhoods reached")+": "+gameState.neighborhoodsReached+"/5<br>"+
+    (lang==="id"?"Semangat":"Morale")+": "+Math.round(gameState.morale)+"%<br>"+
+    (lang==="id"?"Radar":"Detection")+": "+Math.round(gameState.detection)+"%<br>"+
+    (lang==="id"?"Warga dibantu":"Civilians assisted")+": "+gameState.civiliansHelped+"<br>"+
+    (lang==="id"?"Skor Perlawanan":"Resistance Score")+": "+score;
+  showOverlay("ending");
+}
+
+/* ---------------------------------------------------------------------
+   13. CODEX
+--------------------------------------------------------------------- */
+function unlockCodexEntry(){
+  const idx = gameState.historicalEntriesUnlocked.length;
+  const entries = (translations[lang] && translations[lang].codexEntries) || translations.en.codexEntries;
+  if(idx < entries.length){
+    gameState.historicalEntriesUnlocked.push(idx);
+  }
+}
+function renderCodex(){
+  const t = translations[lang] || translations.en;
+  const entries = t.codexEntries || translations.en.codexEntries;
+  const body = $("codexBody");
+  body.innerHTML="";
+  entries.forEach((entry,i)=>{
+    const unlocked = i===0 || gameState.historicalEntriesUnlocked.includes(i) || gameState.historicalEntriesUnlocked.length===0;
+    const div = document.createElement("div");
+    div.className="codex-entry";
+    const tagLabel = entry.tag==="record" ? (lang==="id"?"REKAM SEJARAH":"HISTORICAL RECORD") : (lang==="id"?"ABSTRAKSI GAME":"GAME ABSTRACTION");
+    div.innerHTML = '<span class="codex-tag '+entry.tag+'">'+tagLabel+'</span><br><b>'+entry.title+'</b><p>'+entry.text+'</p>';
+    body.appendChild(div);
+  });
+}
+function renderHowTo(){
+  const t = translations[lang] || translations.en;
+  $("howToBody").innerHTML = t.howToBody;
+}
+
+/* ---------------------------------------------------------------------
+   14. TUTORIAL
+--------------------------------------------------------------------- */
+let tutStep=0;
+function startTutorial(){
+  tutStep=0;
+  showTutorialStep();
+  showOverlay("tutorial");
+}
+function showTutorialStep(){
+  const steps = translations[lang].tutorialSteps;
+  $("tutStepText").textContent = "["+(tutStep+1)+"/"+steps.length+"] "+steps[tutStep];
+}
+$("btn-tut-next").onclick = ()=>{
+  tutStep++;
+  const steps = translations[lang].tutorialSteps;
+  if(tutStep>=steps.length){
+    hideOverlay("tutorial");
+    beginGameplay();
+  } else {
+    showTutorialStep();
+  }
+};
+$("btn-tut-skip").onclick = ()=>{
+  hideOverlay("tutorial");
+  beginGameplay();
+};
+
+/* ---------------------------------------------------------------------
+   15. RESET / START
+--------------------------------------------------------------------- */
+function resetGameState(){
+  gameState.frequency=500;
+  newTargetFrequency();
+  gameState.signalQuality=0;
+  gameState.morale=50;
+  gameState.detection=0;
+  gameState.broadcasting=false;
+  gameState.connectedNodes=[];
+  gameState.neighborhoodsReached=0;
+  gameState.civiliansHelped=0;
+  gameState.historicalEntriesUnlocked=[];
+  gameState.currentEvent=null;
+  gameState.gameTime=0;
+  gameState.score=0;
+  gameState.paused=false;
+  gameState.running=false;
+  gameState.coverageRadius=0;
+  gameState.lastCourierTime=0;
+  gameState.courierIndex=0;
+  gameState.ended=false;
+  NEIGHBORHOODS.forEach(n=>n.reached=false);
+  $("freqSlider").value=500;
+}
+
+function playIntroThenGame(){
+  showScreen("intro");
+  const lines = translations[lang].introLines;
+  const el = $("introText");
+  el.textContent="";
+  let i=0;
+  function next(){
+    if(i>=lines.length){
+      setTimeout(()=>{
+        showScreen("game");
+        resizeMapCanvas();
+        resizeWaveCanvas();
+        startTutorial();
+      }, 700);
+      return;
+    }
+    el.textContent += (i>0?"\n":"") + lines[i];
+    i++;
+    setTimeout(next, lines[i-1]===""?250:900);
+  }
+  next();
+}
+
+function beginGameplay(){
+  gameState.running=true;
+  schedulePing();
+}
+
+/* ---------------------------------------------------------------------
+   16. EVENT LISTENERS
+--------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------
+   LANGUAGE SEARCH BAR (replaces the old ID/EN left-right toggle)
+--------------------------------------------------------------------- */
+const LANGUAGES = [
+  { code:'id', name:'Bahasa Indonesia', englishName:'Indonesian' },
+  { code:'en', name:'English', englishName:'English' },
+  { code:'zh', name:'中文', englishName:'Mandarin Chinese' },
+  { code:'hi', name:'हिन्दी', englishName:'Hindi' },
+  { code:'es', name:'Español', englishName:'Spanish' },
+  { code:'ar', name:'العربية', englishName:'Arabic' },
+  { code:'fr', name:'Français', englishName:'French' },
+  { code:'bn', name:'বাংলা', englishName:'Bengali' },
+  { code:'pt', name:'Português', englishName:'Portuguese' },
+  { code:'ru', name:'Русский', englishName:'Russian' }
+];
+
+function setupLangSearch(rootEl){
+  if(!rootEl) return null;
+  const input = rootEl.querySelector('.lang-search-input');
+  const list = rootEl.querySelector('.lang-search-list');
+  const currentLabel = rootEl.querySelector('.lang-search-current');
+
+  function renderList(filter){
+    const q = (filter||'').trim().toLowerCase();
+    list.innerHTML = '';
+    LANGUAGES.forEach(l=>{
+      const hay = (l.name+' '+l.englishName+' '+l.code).toLowerCase();
+      if(q && hay.indexOf(q) === -1) return;
+      const item = document.createElement('div');
+      item.className = 'lang-opt' + (l.code === lang ? ' active' : '');
+      item.setAttribute('role','option');
+      item.dataset.code = l.code;
+      item.innerHTML = '<span class="lang-opt-native">'+l.name+'</span><span class="lang-opt-en">'+l.englishName+'</span>';
+      item.addEventListener('click', ()=> choose(l.code));
+      list.appendChild(item);
+    });
+    if(!list.children.length){
+      const empty = document.createElement('div');
+      empty.className = 'lang-opt lang-opt-empty';
+      empty.textContent = 'No matching language';
+      list.appendChild(empty);
+    }
+  }
+  function open(){ rootEl.classList.add('open'); renderList(input.value); }
+  function close(){ rootEl.classList.remove('open'); }
+  function choose(code){
+    switchLanguage(code);
+    input.value = '';
+    close();
+    input.blur();
+  }
+  function refreshCurrent(){
+    const cur = LANGUAGES.find(l=>l.code===lang);
+    if(currentLabel && cur) currentLabel.textContent = cur.name;
+  }
+
+  input.addEventListener('focus', open);
+  input.addEventListener('click', open);
+  input.addEventListener('input', ()=>{ renderList(input.value); if(!rootEl.classList.contains('open')) open(); });
+  input.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape'){ close(); input.blur(); }
+    if(e.key === 'Enter'){
+      const first = list.querySelector('.lang-opt:not(.lang-opt-empty)');
+      if(first) choose(first.dataset.code);
+      e.preventDefault();
+    }
+  });
+  document.addEventListener('click', (e)=>{
+    if(!rootEl.contains(e.target)) close();
+  });
+
+  refreshCurrent();
+  return refreshCurrent;
+}
+
+const langSearchInstances = [
+  setupLangSearch($("lang-search-menu")),
+  setupLangSearch($("lang-search-game"))
+].filter(Boolean);
+
+function updateLangSearchActive(){
+  langSearchInstances.forEach(fn=>fn());
+}
+
+$("btn-start").onclick=()=>{
+  if(!audioReady){
+    showOverlay("audioEnable");
+  } else {
+    resetGameState();
+    playIntroThenGame();
+  }
+};
+$("btn-enable-audio").onclick=()=>{
+  initAudio();
+  hideOverlay("audioEnable");
+  resetGameState();
+  playIntroThenGame();
+};
+$("btn-codex").onclick=()=>{ renderCodex(); showOverlay("codex"); };
+$("btn-close-codex").onclick=()=>hideOverlay("codex");
+$("btn-howto").onclick=()=>{ renderHowTo(); showOverlay("howto"); };
+$("btn-close-howto").onclick=()=>hideOverlay("howto");
+
+$("btn-pause").onclick=()=>togglePause();
+$("btn-resume").onclick=()=>togglePause();
+$("btn-pause-howto").onclick=()=>{ renderHowTo(); showOverlay("howto"); };
+$("btn-pause-codex").onclick=()=>{ renderCodex(); showOverlay("codex"); };
+$("btn-pause-menu").onclick=()=>{ hideOverlay("pause"); gameState.running=false; showScreen("menu"); };
+
+function togglePause(){
+  if(!gameState.running || gameState.ended) return;
+  gameState.paused = !gameState.paused;
+  if(gameState.paused) showOverlay("pause"); else hideOverlay("pause");
+}
+
+$("broadcastBtn").onclick=()=>toggleBroadcast();
+function toggleBroadcast(){
+  if(!gameState.running || gameState.paused || gameState.ended) return;
+  gameState.broadcasting = !gameState.broadcasting;
+  const t = translations[lang];
+  $("broadcastBtn").textContent = gameState.broadcasting ? t.btnBroadcastOff : t.btnBroadcastOn;
+  $("broadcastBtn").classList.toggle("on", gameState.broadcasting);
+  $("statusLine").textContent = gameState.broadcasting ? t.statusOn : t.statusOff;
+}
+
+$("btn-relocate").onclick=()=>relocate();
+function relocate(){
+  if(!gameState.running || gameState.paused || gameState.ended) return;
+  gameState.detection = clamp(gameState.detection-25,0,100);
+  gameState.broadcasting=false;
+  const t = translations[lang];
+  $("broadcastBtn").textContent = t.btnBroadcastOn;
+  $("broadcastBtn").classList.remove("on");
+  $("statusLine").textContent = t.statusOff;
+  newTargetFrequency();
+}
+
+$("btn-mute").onclick=()=>{
+  gameState.muted = !gameState.muted;
+};
+
+$("freqSlider").oninput = (e)=>{
+  gameState.frequency = parseFloat(e.target.value);
+};
+
+document.addEventListener("keydown",(e)=>{
+  if(!gameState.running) return;
+  if(e.code==="Space"){ e.preventDefault(); toggleBroadcast(); }
+  if(e.key==="r"||e.key==="R"){ relocate(); }
+  if(e.key==="m"||e.key==="M"){ gameState.muted=!gameState.muted; }
+  if(e.key==="l"||e.key==="L"){ switchLanguage(lang==="id"?"en":"id"); }
+  if(e.key==="Escape"){ togglePause(); }
+  if(e.key==="a"||e.key==="A"){ gameState.frequency=clamp(gameState.frequency-6,0,1000); $("freqSlider").value=gameState.frequency; }
+  if(e.key==="d"||e.key==="D"){ gameState.frequency=clamp(gameState.frequency+6,0,1000); $("freqSlider").value=gameState.frequency; }
+});
+
+$("btn-ending-history").onclick=()=>{
+  const t=translations[lang];
+  alert(
+    (lang==="id"?"SEJARAH NYATA":"REAL HISTORY")+"\n\n"+t.realHistory.real+
+    "\n\n"+(lang==="id"?"ABSTRAKSI GAME":"GAME ABSTRACTION")+"\n\n"+t.realHistory.abstraction
+  );
+};
+$("btn-restart").onclick=()=>{
+  hideOverlay("ending");
+  resetGameState();
+  playIntroThenGame();
+};
+$("btn-ending-menu").onclick=()=>{
+  hideOverlay("ending");
+  gameState.running=false;
+  showScreen("menu");
+};
+
+window.addEventListener("resize", ()=>{ resizeMapCanvas(); resizeWaveCanvas(); });
+
+/* ---------------------------------------------------------------------
+   17. CINEMATIC INTRO WAVE ANIMATION
+--------------------------------------------------------------------- */
+let introWaveCtx = null;
+let introWaveCanvas = null;
+let introWavePhase = 0;
+let introWaveTime = 0;
+let introWaveRunning = false;
+let introWaveFrameId = null;
+
+function initIntroWave(){
+  introWaveCanvas = $("introWaveCanvas");
+  introWaveCtx = introWaveCanvas.getContext("2d");
+  resizeIntroWaveCanvas();
+}
+
+function resizeIntroWaveCanvas(){
+  if(!introWaveCanvas) return;
+  introWaveCanvas.width = window.innerWidth * devicePixelRatio;
+  introWaveCanvas.height = window.innerHeight * devicePixelRatio;
+}
+
+function renderIntroWave(){
+  if(!introWaveRunning || !introWaveCtx) return;
+  
+  const w = introWaveCanvas.width;
+  const h = introWaveCanvas.height;
+  
+  // Clear with fade effect
+  introWaveCtx.fillStyle = "rgba(10, 10, 10, 0.1)";
+  introWaveCtx.fillRect(0, 0, w, h);
+  
+  // Draw expanding radio waves
+  introWaveTime += 0.03;
+  const centerX = w / 2;
+  const centerY = h / 2;
+  
+  for(let i = 0; i < 5; i++){
+    const offset = i * 0.8;
+    const radius = ((introWaveTime * 100 + offset * 80) % (Math.min(w, h) * 0.6)) * devicePixelRatio;
+    const alpha = Math.max(0, 1 - radius / (Math.min(w, h) * 0.4));
+    
+    introWaveCtx.beginPath();
+    introWaveCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    introWaveCtx.strokeStyle = `rgba(57, 255, 20, ${alpha * 0.6})`;
+    introWaveCtx.lineWidth = 2 * devicePixelRatio;
+    introWaveCtx.stroke();
+  }
+  
+  // Draw noise/static
+  for(let i = 0; i < 50; i++){
+    const x = Math.random() * w;
+    const y = Math.random() * h;
+    const size = Math.random() * 3 * devicePixelRatio;
+    introWaveCtx.fillStyle = `rgba(57, 255, 20, ${Math.random() * 0.3})`;
+    introWaveCtx.fillRect(x, y, size, size);
+  }
+  
+  introWaveFrameId = requestAnimationFrame(renderIntroWave);
+}
+
+function playCinematicIntro(){
+  // Hide entry gate
+  $("entry-gate").classList.add("hidden");
+  
+  // Show intro wave layer
+  $("introWaveLayer").classList.add("active");
+  
+  // Initialize and start wave animation
+  initIntroWave();
+  introWaveRunning = true;
+  introWaveTime = 0;
+  renderIntroWave();
+  
+  // Show climax text after 2 seconds
+  setTimeout(() => {
+    const climaxText = $("introClimaxText");
+    climaxText.textContent = "SUARA PERLAWANAN";
+    climaxText.classList.add("show");
+    
+    // Add shake effect
+    setTimeout(() => {
+      $("introWaveLayer").classList.add("shake");
+    }, 500);
+  }, 2000);
+  
+  // End animation and show menu after 4.5 seconds
+  setTimeout(() => {
+    introWaveRunning = false;
+    if(introWaveFrameId) cancelAnimationFrame(introWaveFrameId);
+    
+    $("introWaveLayer").classList.remove("active");
+    $("introWaveLayer").classList.remove("shake");
+    $("introClimaxText").classList.remove("show");
+    
+    // Show main menu
+    showScreen("menu");
+  }, 4500);
+}
+
+/* ---------------------------------------------------------------------
+   18. INIT
+--------------------------------------------------------------------- */
+function init(){
+  resizeMapCanvas();
+  resizeWaveCanvas();
+  newTargetFrequency();
+  applyLanguage();
+  requestAnimationFrame(gameLoop);
+  
+  // Bind entry gate button
+  $("entryGateBtn").onclick = () => {
+    initAudio();
+    playCinematicIntro();
+  };
+}
+init();
+</script>
+</body>
+</html>

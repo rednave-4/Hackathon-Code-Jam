@@ -11,47 +11,55 @@ window.PJ = window.PJ || {};
 
 PJ.MapController = (function () {
   const missions = PJ.MISSIONS;
-  let progress = loadProgress(); // Set of completed ids
-  let selectedId = null;
 
-  // ---------- persistence ----------
-  function loadProgress() {
-    try {
-      const raw = localStorage.getItem(PJ.STORAGE_KEY);
-      if (!raw) return new Set();
-      const arr = JSON.parse(raw);
-      if (!Array.isArray(arr)) return new Set();
-      return new Set(arr);
-    } catch (e) {
-      console.warn("PERJUANGAN: gagal membaca progres, mulai baru.", e);
-      return new Set();
-    }
+  function tField(obj) {
+    if (!obj) return "";
+    if (typeof obj === "string") return obj;
+    const lang = (PJ.I18N && PJ.I18N.getLang()) || "id";
+    if (obj[lang]) return obj[lang];
+    if (lang !== "id" && obj.en) return obj.en;
+    return obj.id || obj.en || "";
   }
 
-  function saveProgress() {
-    try {
-      localStorage.setItem(PJ.STORAGE_KEY, JSON.stringify(Array.from(progress)));
-    } catch (e) {
-      console.warn("PERJUANGAN: gagal menyimpan progres.", e);
+  let selectedId = null;
+
+  // ---------- progress helpers (delegates to PJ.Progress) ----------
+  function getProgressSet() {
+    if (PJ.Progress && typeof PJ.Progress.getCompletedSet === "function") {
+      return PJ.Progress.getCompletedSet();
     }
+    try {
+      const raw = localStorage.getItem(PJ.STORAGE_KEY || "perjuangan_v2_progress");
+      if (!raw) return new Set();
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return new Set(data);
+      if (data && Array.isArray(data.completed)) return new Set(data.completed);
+    } catch (e) {}
+    return new Set();
   }
 
   function resetProgress() {
-    progress = new Set();
-    saveProgress();
+    if (PJ.Progress && typeof PJ.Progress.reset === "function") {
+      PJ.Progress.reset();
+    }
     render();
     closePanel();
   }
 
   // ---------- state helpers ----------
   function stateOf(mission, index) {
+    const progress = getProgressSet();
     if (progress.has(mission.id)) return "completed";
     if (index === 0) return "available";
+    if (PJ.Difficulty && typeof PJ.Difficulty.isUnlocked === "function") {
+      return PJ.Difficulty.isUnlocked(index, progress) ? "available" : "locked";
+    }
     const prev = missions[index - 1];
     return progress.has(prev.id) ? "available" : "locked";
   }
 
   function completedCount() {
+    const progress = getProgressSet();
     return missions.filter((m) => progress.has(m.id)).length;
   }
 
@@ -99,19 +107,43 @@ PJ.MapController = (function () {
   function cacheEls() {
     els.svg = document.getElementById("routeSvg");
     els.routeBase = document.getElementById("routeBase");
+    els.routeNext = document.getElementById("routeNext");
     els.routeProgress = document.getElementById("routeProgress");
     els.nodesLayer = document.getElementById("nodesLayer");
     els.panel = document.getElementById("detailPanel");
     els.panelClose = document.getElementById("panelClose");
     els.progressLabel = document.getElementById("progressLabel");
+    els.progressFill = document.getElementById("progressFill");
     els.resetBtn = document.getElementById("resetBtn");
     els.mapWrap = document.getElementById("mapWrap");
+    els.embersLayer = document.getElementById("embersLayer");
+  }
+
+  // ---------- ambient embers (purely decorative, spawned once) ----------
+  function spawnEmbers() {
+    if (!els.embersLayer || els.embersLayer.children.length > 0) return;
+    const COUNT = 14;
+    for (let i = 0; i < COUNT; i++) {
+      const el = document.createElement("span");
+      el.className = "ember";
+      el.style.left = Math.random() * 100 + "%";
+      el.style.setProperty("--ember-size", 2 + Math.random() * 2.5 + "px");
+      el.style.setProperty("--ember-duration", 10 + Math.random() * 10 + "s");
+      el.style.setProperty("--ember-delay", -Math.random() * 20 + "s");
+      el.style.setProperty("--ember-drift", (Math.random() * 8 - 4).toFixed(1) + "vw");
+      els.embersLayer.appendChild(el);
+    }
   }
 
   // ---------- render ----------
   function render() {
     // header progress
-    els.progressLabel.textContent = `${completedCount()} / ${missions.length} MISI`;
+    const total = missions.length;
+    const done = completedCount();
+    els.progressLabel.textContent = `${done} / ${total} ${PJ.I18N ? PJ.I18N.t("progress_misi") : "MISI"}`;
+    if (els.progressFill) {
+      els.progressFill.style.width = `${Math.round((done / total) * 100)}%`;
+    }
 
     // route paths
     const points = missions.map((m) => ({ x: m.x, y: m.y }));
@@ -119,6 +151,7 @@ PJ.MapController = (function () {
     els.routeBase.setAttribute("d", fullPath);
 
     // "progress" route only spans completed contiguous segments
+    const progress = getProgressSet();
     let lastCompletedIdx = -1;
     for (let i = 0; i < missions.length; i++) {
       if (progress.has(missions[i].id)) lastCompletedIdx = i;
@@ -132,6 +165,19 @@ PJ.MapController = (function () {
       els.routeProgress.style.opacity = 0;
     }
 
+    // highlight the single next segment leading to the currently available
+    // mission, so it's obvious at a glance where to go next
+    if (els.routeNext) {
+      const nextIdx = lastCompletedIdx + 1;
+      if (lastCompletedIdx >= 0 && nextIdx < missions.length) {
+        const segment = [points[lastCompletedIdx], points[nextIdx]];
+        els.routeNext.setAttribute("d", buildSmoothPath(segment));
+        els.routeNext.style.opacity = 1;
+      } else {
+        els.routeNext.style.opacity = 0;
+      }
+    }
+
     // nodes
     els.nodesLayer.innerHTML = "";
     missions.forEach((mission, index) => {
@@ -143,14 +189,17 @@ PJ.MapController = (function () {
       btn.setAttribute("data-id", mission.id);
       btn.setAttribute(
         "aria-label",
-        `${mission.title}, ${mission.date}. Status: ${labelForState(state)}`
+        `${tField(mission.title)}, ${tField(mission.date)}. Status: ${labelForState(state)}`
       );
       btn.setAttribute("aria-pressed", selectedId === mission.id ? "true" : "false");
       btn.innerHTML = `
-        <span class="node__ring"></span>
-        <span class="node__icon">${iconSvg(mission.icon)}</span>
-        <span class="node__order">${String(mission.order).padStart(2, "0")}</span>
-        <span class="node__label">${mission.title}</span>
+        <span class="node__ring">
+          <span class="node__shadow"></span>
+          <span class="node__orbit"></span>
+          <span class="node__icon">${iconSvg(mission.icon)}</span>
+          <span class="node__order">${String(mission.order).padStart(2, "0")}</span>
+        </span>
+        <span class="node__label">${tField(mission.title)}</span>
       `;
       btn.addEventListener("click", () => selectMission(mission.id));
       els.nodesLayer.appendChild(btn);
@@ -160,9 +209,9 @@ PJ.MapController = (function () {
   }
 
   function labelForState(state) {
-    if (state === "completed") return "Selesai";
-    if (state === "available") return "Tersedia";
-    return "Terkunci";
+    if (state === "completed") return PJ.I18N ? PJ.I18N.t("status_completed") : "Selesai";
+    if (state === "available") return PJ.I18N ? PJ.I18N.t("status_available") : "Tersedia";
+    return PJ.I18N ? PJ.I18N.t("status_locked") : "Terkunci";
   }
 
   // ---------- panel ----------
@@ -194,12 +243,21 @@ PJ.MapController = (function () {
       state
     )}</div>
       <div class="panel__icon">${iconSvg(mission.icon)}</div>
-      <h2 class="panel__title">${mission.title}</h2>
-      <div class="panel__subtitle">${mission.subtitle}</div>
-      <div class="panel__date">${mission.date}</div>
-      <p class="panel__blurb">${mission.blurb}</p>
+      <h2 class="panel__title">${tField(mission.title)}</h2>
+      <div class="panel__subtitle">${tField(mission.subtitle)}</div>
+      <div class="panel__date">${tField(mission.date)}</div>
+      <p class="panel__blurb">${tField(mission.blurb)}</p>
+      ${
+        !locked
+          ? `<p class="panel__diff-hint">${
+              PJ.Difficulty && PJ.Difficulty.hintFor
+                ? PJ.Difficulty.hintFor(mission.id)
+                : ""
+            }</p>`
+          : ""
+      }
       <button class="btn btn--primary panel__cta" id="startBtn" ${locked ? "disabled" : ""}>
-        ${locked ? "TERKUNCI" : "MULAI MISI"}
+        ${locked ? (PJ.I18N ? PJ.I18N.t("terkunci") : "TERKUNCI") : (PJ.I18N ? PJ.I18N.t("mulai_misi") : "MULAI MISI")}
       </button>
       ${
         !locked && state !== "completed"
@@ -227,10 +285,10 @@ PJ.MapController = (function () {
   // ---------- reset confirm modal ----------
   function confirmReset() {
     PJ.Modal.confirm({
-      title: "Ulangi Perjuangan?",
-      body: "Seluruh progres misi akan dihapus dan tidak dapat dikembalikan.",
-      confirmLabel: "YA, RESET",
-      cancelLabel: "BATAL",
+      title: PJ.I18N ? PJ.I18N.t("reset_title") : "Ulangi Perjuangan?",
+      body: PJ.I18N ? PJ.I18N.t("reset_body") : "Seluruh progres misi akan dihapus.",
+      confirmLabel: PJ.I18N ? PJ.I18N.t("ya_reset") : "YA, RESET",
+      cancelLabel: PJ.I18N ? PJ.I18N.t("batal") : "BATAL",
       onConfirm: resetProgress,
     });
   }
@@ -238,6 +296,7 @@ PJ.MapController = (function () {
   // ---------- init ----------
   function init() {
     cacheEls();
+    spawnEmbers();
     els.resetBtn.addEventListener("click", confirmReset);
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closePanel();
@@ -245,21 +304,60 @@ PJ.MapController = (function () {
     document.addEventListener("pj:devmodechange", () => {
       if (selectedId) renderPanel(selectedId);
     });
+    if (PJ.Progress && typeof PJ.Progress.onChange === "function") {
+      PJ.Progress.onChange(() => {
+        render();
+        if (selectedId) renderPanel(selectedId);
+      });
+    }
     render();
   }
 
-  // ---------- public hooks (future stage integration) ----------
+  // ---------- public hooks (stage integration) ----------
+  const EXTERNAL_STAGES = {
+    "proklamasi": "last_typing.html",
+    "surabaya": "suara_perlawanan.html",
+    "agresi-gerilya": "Dutch_Aggression.html",
+  };
+
   window.startMission = function (stageId) {
     const mission = missions.find((m) => m.id === stageId);
+
+    if (PJ.Difficulty && typeof PJ.Difficulty.recordAttempt === "function") {
+      PJ.Difficulty.recordAttempt(stageId);
+    }
+    try {
+      sessionStorage.setItem("pj_difficulty", PJ.Difficulty ? PJ.Difficulty.effective() : "normal");
+      sessionStorage.setItem("pj_diff_mode", PJ.Difficulty ? PJ.Difficulty.getMode() : "normal");
+    } catch (e) {}
+
+    if (EXTERNAL_STAGES[stageId]) {
+      let url = EXTERNAL_STAGES[stageId];
+      if (PJ.Difficulty && typeof PJ.Difficulty.appendQuery === "function") {
+        url = PJ.Difficulty.appendQuery(url);
+      }
+      console.log(`[PERJUANGAN] startMission("${stageId}") → ${url}`);
+      try {
+        sessionStorage.setItem("pj_last_mission", stageId);
+      } catch (e) {}
+      window.location.href = url;
+      return;
+    }
+
+    if (PJ.Stages && PJ.Stages[stageId] && typeof PJ.Stages[stageId].open === "function") {
+      PJ.Stages[stageId].open({
+        onComplete: () => window.markMissionComplete(stageId),
+        difficulty: PJ.Difficulty ? PJ.Difficulty.effective() : "normal",
+      });
+      console.log(`[PERJUANGAN] startMission("${stageId}") — launching registered stage.`);
+      return;
+    }
+
     PJ.Modal.info({
-      title: mission ? mission.title : "Misi",
-      body:
-        "Gameplay tahap ini sedang disiapkan dan akan hadir segera. Nantikan pembaruan berikutnya, Pejuang.",
-      note: "Stage gameplay coming soon",
+      title: mission ? tField(mission.title) : (PJ.I18N ? PJ.I18N.t("coming_title") : "Misi"),
+      body: PJ.I18N ? PJ.I18N.t("coming_body") : "Gameplay tahap ini sedang disiapkan.",
+      note: PJ.I18N ? PJ.I18N.t("coming_note") : "Stage gameplay coming soon",
     });
-    // Hook for future stage implementations. Example:
-    // window.markMissionComplete(stageId) should be called by the actual
-    // stage code upon successful completion of that stage's gameplay.
     console.log(`[PERJUANGAN] startMission("${stageId}") — stub only.`);
   };
 
@@ -269,12 +367,29 @@ PJ.MapController = (function () {
       console.warn(`[PERJUANGAN] markMissionComplete: unknown stageId "${stageId}"`);
       return;
     }
-    progress.add(stageId);
-    saveProgress();
+    if (PJ.Progress && typeof PJ.Progress.markComplete === "function") {
+      PJ.Progress.markComplete(stageId);
+    }
+    if (PJ.Difficulty && typeof PJ.Difficulty.clearAttempt === "function") {
+      PJ.Difficulty.clearAttempt(stageId);
+    }
+    if (PJ.Achievements && typeof PJ.Achievements.evaluate === "function") {
+      PJ.Achievements.evaluate();
+    }
     render();
     if (selectedId === stageId) renderPanel(stageId);
     console.log(`[PERJUANGAN] markMissionComplete("${stageId}")`);
   };
 
-  return { init, resetProgress };
+  function applyI18n() {
+    render();
+    const ver = document.getElementById("gameBrandVersion");
+    if (ver && PJ.I18N) ver.textContent = PJ.I18N.t("brand_version_game");
+    const rb = document.getElementById("resetBtn");
+    if (rb && PJ.I18N) rb.textContent = PJ.I18N.t("reset_progress");
+    const bb = document.getElementById("gameBackBtn");
+    if (bb && PJ.I18N) bb.textContent = PJ.I18N.t("back_modes");
+  }
+
+  return { init, resetProgress, applyI18n, render };
 })();

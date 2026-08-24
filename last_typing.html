@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>1945: Ketikan Terakhir — The Final Type</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Noto+Serif:ital,wght@0,400;0,600;1,400&family=Inter:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+    <style>
+        /* ===== root & reset ===== */
+        :root {
+            --paper: #EAE0C8;
+            --paper-dark: #D9CBA6;
+            --paper-line: #c9b98d;
+            --ink: #2a2118;
+            --body-dark: #151109;
+            --body-mid: #211a12;
+            --body-light: #332821;
+            --brass: #a9843f;
+            --brass-light: #d3ac66;
+            --red: #a32126;
+            --red-dark: #711619;
+            --cream: #f3ead3;
+            --muted: #9c8f74;
+            --shadow: rgba(0, 0, 0, .55);
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html,
+        body {
+            height: 100%;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(ellipse at 50% -10%, #3a2c1c 0%, var(--body-dark) 55%), var(--body-dark);
+            color: var(--cream);
+            font-family: 'Noto Serif', serif;
+            overflow-x: hidden;
+            cursor: default;
+        }
+        body.has-follower {
+            cursor: none;
+        }
+        .en {
+            font-family: 'Inter', sans-serif;
+            font-style: italic;
+            font-weight: 400;
+            color: var(--muted);
+            display: block;
+        }
+
+        /* ===== language search bar (translates only the .en / secondary text) ===== */
+        #lang-search {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1200;
+            width: 176px;
+            font-family: 'Inter', sans-serif;
+        }
+        #lang-search-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(21, 17, 9, .85);
+            border: 1px solid var(--brass);
+            border-radius: 4px;
+            padding: 6px 9px;
+            box-shadow: 0 2px 10px var(--shadow);
+            cursor: text;
+            backdrop-filter: blur(2px);
+        }
+        #lang-search.open #lang-search-box { border-color: var(--brass-light); }
+        #lang-search-icon { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+        #lang-search-input {
+            flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+            color: var(--cream); font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: .2px;
+        }
+        #lang-search-input::placeholder { color: var(--muted); }
+        #lang-search-current {
+            font-size: 9px; color: var(--brass-light); text-transform: uppercase; letter-spacing: .5px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 58px; flex-shrink: 0;
+        }
+        #lang-search.open #lang-search-current { display: none; }
+        #lang-search-list {
+            display: none; position: absolute; top: calc(100% + 4px); right: 0; width: 100%;
+            max-height: 250px; overflow-y: auto; background: rgba(21, 17, 9, .95); border: 1px solid var(--brass);
+            border-radius: 4px; box-shadow: 0 2px 10px var(--shadow); z-index: 1201;
+        }
+        #lang-search.open #lang-search-list { display: block; }
+        .lang-opt {
+            display: flex; justify-content: space-between; align-items: center; gap: 8px;
+            padding: 8px 10px; font-size: 11.5px; cursor: pointer; border-bottom: 1px solid rgba(169,132,63,.2);
+        }
+        .lang-opt:last-child { border-bottom: none; }
+        .lang-opt:hover, .lang-opt.active { background: rgba(169, 132, 63, .18); }
+        .lang-opt.active { border-left: 2px solid var(--red); }
+        .lang-opt-native { color: var(--cream); }
+        .lang-opt-en { color: var(--muted); font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px; }
+        .lang-opt-empty { color: var(--muted); cursor: default; justify-content: center; }
+        .lang-opt-empty:hover { background: transparent; }
+        @media (max-width: 480px) {
+            #lang-search { top: 6px; right: 6px; width: 140px; }
+            #lang-search-current { display: none; }
+            .lang-opt { padding: 10px 12px; }
+        }
+
+        /* grain overlay */
+        .grain {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 999;
+            opacity: .05;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* cursor follower */
+        #follower {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 1.5px solid var(--brass-light);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+            transition: width .15s ease, height .15s ease, border-color .15s ease, opacity .2s ease;
+            opacity: 0;
+        }
+        #follower.active {
+            opacity: .85;
+        }
+        #follower.press {
+            width: 16px;
+            height: 16px;
+            border-color: var(--red);
+            background: rgba(163, 33, 38, .25);
+        }
+
+        /* screens */
+        .screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            align-items: safe center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 24px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(18px);
+            transition: opacity .6s cubic-bezier(.4, 0, .2, 1), transform .6s cubic-bezier(.4, 0, .2, 1);
+            z-index: 10;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* splash screen khusus */
+        #screen-splash {
+            z-index: 10000;
+            background: #000;
+            color: #fff;
+            opacity: 1;
+            transform: none;
+            pointer-events: auto;
+            transition: opacity 0.9s ease;
+        }
+        #screen-splash.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #screen-splash .splash-inner {
+            text-align: center;
+            font-family: 'Special Elite', monospace;
+            font-size: clamp(26px, 5.5vw, 52px);
+            letter-spacing: .08em;
+            line-height: 1.3;
+        }
+        #screen-splash .splash-inner .caret {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: #fff;
+            vertical-align: text-bottom;
+            animation: blink 1s step-start infinite;
+            margin-left: 2px;
+        }
+        @keyframes blink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+        }
+        #screen-splash .splash-sub {
+            margin-top: 18px;
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(11px, 1.4vw, 16px);
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            color: #777;
+            opacity: 0;
+            transition: opacity .6s ease;
+        }
+        #screen-splash .splash-sub.show {
+            opacity: 1;
+        }
+
+        /* shared bits */
+        .eyebrow {
+            font-family: 'Inter', sans-serif;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            font-size: 11px;
+            color: var(--brass-light);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        h1.display {
+            font-family: 'Special Elite', monospace;
+            font-weight: 400;
+            font-size: clamp(28px, 6vw, 54px);
+            letter-spacing: .06em;
+            color: var(--cream);
+            text-align: center;
+            margin: 0 0 8px;
+            text-shadow: 0 2px 0 rgba(0, 0, 0, .5);
+        }
+        .btn {
+            font-family: 'Special Elite', monospace;
+            background: linear-gradient(180deg, #c0311f 0%, var(--red) 55%, var(--red-dark) 100%);
+            color: var(--cream);
+            border: none;
+            border-radius: 3px;
+            padding: 14px 30px;
+            font-size: 16px;
+            letter-spacing: .05em;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #4c0f11, 0 8px 14px rgba(0, 0, 0, .4);
+            transition: transform .12s ease, box-shadow .12s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #4c0f11, 0 4px 8px rgba(0, 0, 0, .4);
+        }
+        .btn.ghost {
+            background: transparent;
+            border: 1.5px solid var(--brass);
+            color: var(--brass-light);
+            box-shadow: none;
+        }
+        .btn.ghost:active {
+            transform: translateY(1px);
+        }
+        .btn:disabled {
+            opacity: .35;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== TITLE ===== */
+        #screen-title .typewriter-art {
+            width: min(360px, 70vw);
+            margin-bottom: 18px;
+            opacity: .95;
+            filter: drop-shadow(0 12px 20px rgba(0, 0, 0, .5));
+        }
+        #screen-title p.lede {
+            max-width: 560px;
+            text-align: center;
+            font-size: 16px;
+            line-height: 1.65;
+            color: var(--paper);
+            margin: 6px 0 4px;
+        }
+        #screen-title .lede .en {
+            font-size: 13px;
+            margin-top: 2px;
+        }
+        .timer-note {
+            margin-top: 22px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            color: var(--muted);
+            text-align: center;
+            max-width: 480px;
+            line-height: 1.6;
+        }
+        .timer-note .en {
+            font-size: 11.5px;
+        }
+
+        /* ===== FACTS ===== */
+        .fact-card {
+            max-width: 640px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .fact-index {
+            font-family: 'Special Elite', monospace;
+            color: var(--brass-light);
+            font-size: 13px;
+            letter-spacing: .15em;
+            margin-bottom: 14px;
+            position: relative;
+            z-index: 2;
+        }
+        .fact-text {
+            position: relative;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 1;
+            overflow: visible;
+        }
+        .fact-slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(14px);
+            transition: opacity .7s cubic-bezier(.4, 0, .2, 1), transform .7s cubic-bezier(.4, 0, .2, 1);
+            pointer-events: none;
+            width: 100%;
+            padding: 0 20px;
+        }
+        .fact-slide.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            position: relative;
+        }
+        .fact-slide p {
+            font-size: clamp(16px, 2.6vw, 20px);
+            line-height: 1.7;
+            color: var(--cream);
+            margin: 0 0 10px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .fact-slide p.en {
+            font-size: clamp(13px, 2vw, 15px);
+            line-height: 1.6;
+        }
+        .fact-controls {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 26px;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .dots {
+            display: flex;
+            gap: 8px;
+            margin-top: 22px;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--body-light);
+            border: 1px solid var(--brass);
+        }
+        .dot.on {
+            background: var(--brass-light);
+        }
+
+        /* ===== QUIZ ===== */
+        #screen-quiz .quiz-wrap {
+            max-width: 640px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        .quiz-context {
+            background: rgba(0, 0, 0, .25);
+            border-left: 3px solid var(--brass);
+            padding: 14px 18px;
+            border-radius: 2px;
+            margin-bottom: 20px;
+            font-size: 14.5px;
+            line-height: 1.6;
+            position: relative;
+            z-index: 2;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .quiz-context .en {
+            font-size: 12.5px;
+            margin-top: 4px;
+        }
+        .quiz-q {
+            text-align: center;
+            font-family: 'Special Elite', monospace;
+            font-size: 17px;
+            margin-bottom: 4px;
+            color: var(--cream);
+            position: relative;
+            z-index: 2;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .quiz-q+.en {
+            text-align: center;
+            font-size: 12.5px;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 2;
+        }
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+            position: relative;
+            z-index: 2;
+        }
+        .opt {
+            background: var(--paper);
+            color: var(--ink);
+            border: 2px solid var(--paper-dark);
+            border-radius: 4px;
+            padding: 13px 16px;
+            font-family: 'Special Elite', monospace;
+            font-size: 15px;
+            cursor: pointer;
+            text-align: left;
+            transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .opt:hover:not(:disabled) {
+            transform: translateX(3px);
+            border-color: var(--brass);
+        }
+        .opt.correct {
+            background: #dcead8;
+            border-color: #3f7a42;
+        }
+        .opt.wrong {
+            background: #f0d7d3;
+            border-color: var(--red);
+        }
+        .opt:disabled {
+            cursor: default;
+        }
+        .quiz-feedback {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 3px;
+            font-size: 13.5px;
+            line-height: 1.6;
+            background: rgba(0, 0, 0, .3);
+            border-left: 3px solid var(--brass-light);
+            display: none;
+            position: relative;
+            z-index: 2;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .quiz-feedback.show {
+            display: block;
+        }
+        .quiz-feedback .en {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .quiz-next {
+            display: flex;
+            justify-content: center;
+            margin-top: 22px;
+            position: relative;
+            z-index: 2;
+        }
+        .quiz-progress {
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            letter-spacing: .15em;
+            color: var(--muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ===== COUNTDOWN ===== */
+        #screen-countdown .count-num {
+            font-family: 'Special Elite', monospace;
+            font-size: min(30vw, 180px);
+            color: var(--red);
+            text-shadow: 0 6px 0 rgba(0, 0, 0, .5);
+        }
+        #screen-countdown p {
+            font-family: 'Inter', sans-serif;
+            color: var(--muted);
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        /* ===== TYPING GAME ===== */
+        #screen-typing {
+            padding: 24px 14px 14px;
+            padding-top: max(24px, env(safe-area-inset-top));
+        }
+        .typing-stage {
+            width: 100%;
+            max-width: 820px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .hud {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 6px;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: relative;
+            z-index: 10;
+        }
+        .clock {
+            font-family: 'Special Elite', monospace;
+            font-size: clamp(22px, 4vw, 32px);
+            color: var(--brass-light);
+            background: var(--body-mid);
+            border: 1px solid var(--brass);
+            border-radius: 30px;
+            padding: 6px 20px;
+            letter-spacing: .05em;
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, .6);
+        }
+        .clock.low {
+            color: #fff;
+            background: var(--red-dark);
+            border-color: var(--red);
+            animation: pulse .5s infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        .hud-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 10.5px;
+            color: var(--muted);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+        .hud .en {
+            font-size: 9.5px;
+        }
+
+        .carriage-wrap {
+            width: 100%;
+            max-width: 640px;
+            background: linear-gradient(180deg, #3a2f22, #241c14);
+            border-radius: 6px 6px 0 0;
+            padding: 14px 14px 0;
+            box-shadow: 0 -6px 14px rgba(0, 0, 0, .4) inset, 0 8px 18px rgba(0, 0, 0, .5);
+            position: relative;
+            overflow: hidden;
+        }
+        .roller {
+            height: 16px;
+            border-radius: 10px;
+            margin: 0 -4px 10px;
+            background: repeating-linear-gradient(90deg, #14100a 0 4px, #221b12 4px 10px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .6) inset;
+        }
+        .paper-window {
+            position: relative;
+            overflow: hidden;
+            height: min(46vh, 300px);
+            border-radius: 2px 2px 0 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, .35), transparent 30px);
+        }
+        .paper {
+            position: absolute;
+            left: 6%;
+            right: 6%;
+            top: 0;
+            background: var(--paper);
+            background-image: repeating-linear-gradient(rgba(0, 0, 0, 0) 0 27px, rgba(0, 0, 0, .03) 27px 28px);
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, .45), 0 4px 18px rgba(0, 0, 0, .5);
+            border-top: 2px solid var(--paper-dark);
+            padding: 20px 22px 40px;
+            min-height: 100%;
+            transition: transform .25s cubic-bezier(.4, 0, .2, 1);
+            font-family: 'Special Elite', monospace;
+            color: var(--ink);
+            white-space: pre-wrap;
+            font-size: clamp(11px, 1.7vw, 15px);
+            line-height: 1.85;
+            letter-spacing: .02em;
+            transform: translateY(0);
+            will-change: transform;
+        }
+        .paper.tear {
+            animation: tearOut .5s ease forwards;
+        }
+        @keyframes tearOut {
+            0% {
+                transform: translateY(0) rotate(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-60px) rotate(-8deg) translateX(60px);
+                opacity: 0;
+            }
+        }
+        .paper.fresh {
+            animation: freshIn .4s ease;
+        }
+        @keyframes freshIn {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .ch {
+            color: var(--ink);
+        }
+        .ch-pending {
+            color: rgba(42, 33, 24, .28);
+        }
+        .caret {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: var(--red);
+            vertical-align: text-bottom;
+            animation: blink 1s step-start infinite;
+            margin-left: -1px;
+        }
+
+        .stamp {
+            position: absolute;
+            top: 14%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-14deg) scale(0);
+            font-family: 'Special Elite', monospace;
+            font-size: clamp(28px, 6vw, 52px);
+            color: var(--red);
+            border: 5px solid var(--red);
+            border-radius: 8px;
+            padding: 6px 22px;
+            opacity: 0;
+            letter-spacing: .08em;
+            pointer-events: none;
+            z-index: 20;
+        }
+        .stamp.show {
+            animation: stampDown .5s cubic-bezier(.2, 1.4, .4, 1) forwards;
+        }
+        @keyframes stampDown {
+            0% {
+                transform: translate(-50%, -50%) rotate(-14deg) scale(2.6);
+                opacity: 0;
+            }
+            60% {
+                opacity: .9;
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(-10deg) scale(1);
+                opacity: .9;
+            }
+        }
+
+        .mistake-toast {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--red-dark);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 11.5px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity .3s ease;
+            white-space: nowrap;
+            z-index: 15;
+        }
+        .mistake-toast.show {
+            opacity: 1;
+        }   
+
+        /* keyboard */
+        .kbd {
+            width: 100%;
+            max-width: 760px;
+            margin-top: 16px;
+            background: linear-gradient(180deg, #241c14, #171009);
+            border-radius: 10px;
+            padding: 14px 10px 18px;
+            box-shadow: 0 14px 26px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .05);
+        }
+        .kbd-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 6px;
+            flex-wrap: nowrap;
+        }
+        .key {
+            font-family: 'Special Elite', monospace;
+            background: radial-gradient(circle at 35% 30%, #3c3226, #17120c 78%);
+            color: var(--brass-light);
+            border: 1px solid #4a3c26;
+            border-radius: 50%;
+            width: clamp(24px, 7.6vw, 42px);
+            height: clamp(24px, 7.6vw, 42px);
+            font-size: clamp(10px, 2.6vw, 15px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 3px 0 #0a0704, 0 5px 8px rgba(0, 0, 0, .5);
+            transition: transform .06s ease, box-shadow .06s ease;
+            flex: 0 0 auto;
+        }
+        .key:active,
+        .key.hit {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #0a0704, 0 2px 4px rgba(0, 0, 0, .5);
+            background: radial-gradient(circle at 35% 30%, #55442c, #221a10 78%);
+        }
+        .key.wide {
+            width: auto;
+            border-radius: 22px;
+            padding: 0 22px;
+        }
+        .key.space {
+            width: min(46vw, 280px);
+            border-radius: 22px;
+        }
+        .key.enter {
+            background: radial-gradient(circle at 35% 30%, #5a2224, #2a1112 78%);
+            color: #f0d9d5;
+        }
+
+        /* ===== GAME OVER / WIN ===== */
+        #screen-over .over-art,
+        #screen-win .win-art {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+        #screen-over h1,
+        #screen-win h1 {
+            margin-bottom: 14px;
+        }
+        .result-copy {
+            max-width: 520px;
+            text-align: center;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--paper);
+            margin-bottom: 26px;
+        }
+        .result-copy .en {
+            font-size: 13px;
+            margin-top: 3px;
+        }
+        .result-actions {
+            display: flex;
+            gap: 14px;
+        }
+        .crack {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 500;
+        }
+        .crack.flash {
+            animation: flash .5s ease;
+        }
+        @keyframes flash {
+            0% {
+                opacity: 0;
+            }
+            15% {
+                opacity: .85;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .confetti {
+            position: fixed;
+            top: -20px;
+            width: 8px;
+            height: 14px;
+            z-index: 600;
+            opacity: .9;
+            pointer-events: none;
+        }
+
+        @media (max-width: 520px) {
+            .kbd-row {
+                gap: 3px;
+            }
+            .key {
+                width: clamp(20px, 7.4vw, 30px);
+                height: clamp(20px, 7.4vw, 30px);
+                font-size: 10px;
+            }
+            .key.space {
+                width: 44vw;
+            }
+        }
+
+        @media (max-height: 768px) {
+            .screen {
+                padding: 16px;
+                padding-top: max(16px, env(safe-area-inset-top));
+            }
+            #screen-typing {
+                padding: 16px 14px 14px;
+                padding-top: max(16px, env(safe-area-inset-top));
+            }
+            .typing-stage {
+                max-width: 720px;
+            }
+            .hud {
+                margin-bottom: 8px;
+                gap: 6px;
+            }
+            .clock {
+                font-size: clamp(18px, 3.5vw, 28px);
+                padding: 4px 16px;
+            }
+            .hud-label {
+                font-size: 9px;
+            }
+            .carriage-wrap {
+                padding: 10px 10px 0;
+            }
+            .paper-window {
+                height: min(40vh, 260px);
+            }
+            .paper {
+                padding: 16px 18px 32px;
+            }
+            .kbd {
+                margin-top: 12px;
+                padding: 10px 8px 14px;
+            }
+            .key {
+                width: clamp(22px, 7.2vw, 38px);
+                height: clamp(22px, 7.2vw, 38px);
+                font-size: clamp(9px, 2.4vw, 14px);
+            }
+            .kbd-row {
+                margin-bottom: 4px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            .screen {
+                padding: 12px;
+                padding-top: max(12px, env(safe-area-inset-top));
+            }
+            #screen-typing {
+                padding: 12px 14px 14px;
+                padding-top: max(12px, env(safe-area-inset-top));
+            }
+            .hud {
+                margin-bottom: 6px;
+            }
+            .clock {
+                font-size: clamp(16px, 3vw, 24px);
+                padding: 3px 12px;
+            }
+            .paper-window {
+                height: min(35vh, 220px);
+            }
+            .kbd {
+                margin-top: 8px;
+                padding: 8px 6px 10px;
+            }
+            .key {
+                width: clamp(20px, 6.8vw, 34px);
+                height: clamp(20px, 6.8vw, 34px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ============ LANGUAGE SEARCH BAR (always visible; translates only the secondary/English text — the Indonesian text never changes) ============ -->
+    <div id="lang-search" role="combobox" aria-haspopup="listbox" aria-expanded="false">
+        <div id="lang-search-box">
+            <span id="lang-search-icon" aria-hidden="true">&#9906;</span>
+            <input id="lang-search-input" type="search" autocomplete="off" spellcheck="false"
+                   placeholder="Language..." aria-label="Search and select secondary language">
+            <span id="lang-search-current"></span>
+        </div>
+        <div id="lang-search-list" role="listbox" aria-label="Available secondary languages"></div>
+    </div>
+    <div class="grain"></div>
+    <div id="follower"></div>
+    <div class="crack" id="crack"></div>
+
+    <!-- ============ SPLASH (animasi masuk) ============ -->
+    <section class="screen active" id="screen-splash">
+        <div class="splash-inner">
+            <span id="splash-text"></span><span class="caret"></span>
+        </div>
+        <div class="splash-sub" id="splash-sub">Mengetik sejarah · <span data-sec="splashSub">Typing history</span></div>
+    </section>
+
+    <!-- ============ TITLE ============ -->
+    <section class="screen" id="screen-title">
+        <div class="eyebrow">17 Agustus 1945 · Menjelang Proklamasi</div>
+        <svg class="typewriter-art" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="20" width="160" height="14" rx="3" fill="#c9b98d"/>
+            <rect x="10" y="55" width="180" height="55" rx="8" fill="#241c14" stroke="#a9843f" stroke-width="1.5"/>
+            <rect x="10" y="102" width="180" height="14" rx="4" fill="#17120c"/>
+            <circle cx="30" cy="82" r="8" fill="#a32126"/>
+            <circle cx="170" cy="82" r="8" fill="#a32126"/>
+            <g fill="#d3ac66">
+                <circle cx="55" cy="90" r="5"/><circle cx="68" cy="90" r="5"/><circle cx="81" cy="90" r="5"/>
+                <circle cx="94" cy="90" r="5"/><circle cx="107" cy="90" r="5"/><circle cx="120" cy="90" r="5"/>
+                <circle cx="133" cy="90" r="5"/><circle cx="146" cy="90" r="5"/>
+            </g>
+        </svg>
+        <h1 class="display">1945: Ketikan Terakhir<span class="en" data-sec="titleEn" style="font-size:15px;margin-top:2px;">The Final Type</span></h1>
+        <p class="lede">Pinjam mesin tik. Kejar waktu. Ketik naskah yang akan mengubah sejarah.
+            <span class="en" data-sec="lede">Borrow a typewriter. Race the clock. Type the text that will change history.</span>
+        </p>
+        <button class="btn" id="btn-start" style="margin-top:22px;">MULAI · <span data-sec="start">START</span></button>
+        <p class="timer-note">Kamu akan diberi 1 menit 30 detik — merepresentasikan sekitar 1 jam 30 menit persiapan naskah proklamasi sebelum dibacakan di depan umum.
+            <span class="en" data-sec="timerNote">You'll get 1 minute 30 seconds — representing roughly 1.5 hours of preparing the proclamation text before it was read aloud in public.</span>
+        </p>
+    </section>
+
+    <!-- ============ FACTS ============ -->
+    <section class="screen" id="screen-facts">
+        <div class="fact-card">
+            <div class="fact-index" id="fact-index">FAKTA 1 / 4</div>
+            <div class="fact-text" id="fact-text"></div>
+            <div class="dots" id="fact-dots"></div>
+            <div class="fact-controls">
+                <button class="btn ghost" id="btn-fact-skip">LEWATI · <span data-sec="skip">SKIP</span></button>
+                <button class="btn" id="btn-fact-next">LANJUT · <span data-sec="next">NEXT</span></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ QUIZ ============ -->
+    <section class="screen" id="screen-quiz">
+        <div class="quiz-wrap">
+            <div class="quiz-progress" id="quiz-progress">PERTANYAAN 1 / 2 · QUESTION 1 / 2</div>
+            <div class="quiz-context" id="quiz-context"></div>
+            <div class="quiz-q" id="quiz-q"></div>
+            <div class="en" id="quiz-q-en" style="text-align:center;font-size:12.5px;margin-bottom:14px;"></div>
+            <div class="quiz-options" id="quiz-options"></div>
+            <div class="quiz-feedback" id="quiz-feedback"></div>
+            <div class="quiz-next">
+                <button class="btn" id="btn-quiz-next" disabled>LANJUT · NEXT</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ COUNTDOWN ============ -->
+    <section class="screen" id="screen-countdown">
+        <div class="count-num" id="count-num">3</div>
+        <p>Bersiap mengetik · <span data-sec="readyType">Get ready to type</span></p>
+    </section>
+
+    <!-- ============ TYPING GAME ============ -->
+    <section class="screen" id="screen-typing">
+        <div class="typing-stage">
+            <div class="hud">
+                <div>
+                    <div class="hud-label">Kertas ke- · <span data-sec="paperNo">Paper no.</span></div>
+                    <div style="font-family:'Special Elite',monospace;font-size:20px;" id="paper-count">1</div>
+                </div>
+                <div class="clock" id="clock">03:00</div>
+                <div style="text-align:right;">
+                    <div class="hud-label">Karakter · <span data-sec="characters">Characters</span></div>
+                    <div style="font-family:'Special Elite',monospace;font-size:20px;" id="char-count">0 / 0</div>
+                </div>
+            </div>
+            <div class="carriage-wrap">
+                <div class="roller"></div>
+                <div class="paper-window">
+                    <div class="paper" id="paper">
+                        <div class="stamp" id="stamp">MERDEKA</div>
+                        <span id="paper-content"></span>
+                    </div>
+                    <div class="mistake-toast" id="mistake-toast"></div>
+                </div>
+            </div>
+            <div class="kbd" id="kbd"></div>
+        </div>
+    </section>
+
+    <!-- ============ GAME OVER ============ -->
+    <section class="screen" id="screen-over">
+        <div class="over-art">⏱</div>
+        <h1 class="display">Waktu Habis<span class="en" data-sec="timeUpEn" style="font-size:15px;">Time's Up</span></h1>
+        <p class="result-copy">Ketukan terakhir belum sempat selesai. Sayuti Melik sendiri mengetik di bawah tekanan waktu yang nyata sebelum upacara dimulai — coba lagi dan rasakan ketegangannya.
+            <span class="en" data-sec="loseText">The final keystrokes weren't finished in time. Sayuti Melik himself typed under real time pressure before the ceremony began — try again and feel the tension.</span>
+        </p>
+        <div class="result-actions">
+            <button class="btn" id="btn-retry-over">COBA LAGI · <span data-sec="retry">RETRY</span></button>
+            <button class="btn ghost" id="btn-menu-over">MENU</button>
+        </div>
+    </section>
+
+    <!-- ============ WIN ============ -->
+    <section class="screen" id="screen-win">
+        <div class="win-art">🇮🇩</div>
+        <h1 class="display">Naskah Selesai<span class="en" data-sec="doneEn" style="font-size:15px;">The Text Is Done</span></h1>
+        <p class="result-copy" id="win-copy"></p>
+        <div class="result-actions">
+            <button class="btn" id="btn-retry-win">KETIK LAGI · <span data-sec="typeAgain">TYPE AGAIN</span></button>
+        </div>
+    </section>
+
+    <script>
+        (function() {
+            "use strict";
+
+            /* ---------- cursor follower ---------- */
+            var follower = document.getElementById('follower');
+            var canFollow = window.matchMedia('(pointer: fine)').matches && window.matchMedia('(hover: hover)')
+            .matches;
+            if (canFollow) {
+                document.body.classList.add('has-follower');
+                var fx = 0,
+                    fy = 0,
+                    tx = 0,
+                    ty = 0;
+                window.addEventListener('mousemove', function(e) {
+                    tx = e.clientX;
+                    ty = e.clientY;
+                    follower.classList.add('active');
+                });
+                document.addEventListener('mousedown', function() { follower.classList.add('press'); });
+                document.addEventListener('mouseup', function() { follower.classList.remove('press'); });
+                (function loop() {
+                    fx += (tx - fx) * 0.18;
+                    fy += (ty - fy) * 0.18;
+                    follower.style.transform = 'translate(' + fx + 'px,' + fy + 'px) translate(-50%,-50%)';
+                    requestAnimationFrame(loop);
+                })();
+            } else {
+                follower.style.display = 'none';
+            }
+
+            /* ---------- audio ---------- */
+            var ACtx = window.AudioContext || window.webkitAudioContext;
+            var actx = null;
+
+            function audio() {
+                if (!actx) actx = new ACtx();
+                if (actx.state === 'suspended') actx.resume();
+                return actx;
+            }
+
+            function noiseBuffer(ctx, dur) {
+                var n = ctx.sampleRate * dur;
+                var buf = ctx.createBuffer(1, n, ctx.sampleRate);
+                var d = buf.getChannelData(0);
+                for (var i = 0; i < n; i++) { d[i] = (Math.random() * 2 - 1); }
+                return buf;
+            }
+
+            function playClack() {
+                try {
+                    var ctx = audio();
+                    var t = ctx.currentTime;
+                    var src = ctx.createBufferSource();
+                    src.buffer = noiseBuffer(ctx, 0.045);
+                    var bp = ctx.createBiquadFilter();
+                    bp.type = 'bandpass';
+                    bp.frequency.value = 2600 + Math.random() * 800;
+                    bp.Q.value = 1.1;
+                    var g = ctx.createGain();
+                    g.gain.setValueAtTime(0.5, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+                    src.connect(bp);
+                    bp.connect(g);
+                    g.connect(ctx.destination);
+                    src.start(t);
+                    src.stop(t + 0.05);
+                    var osc = ctx.createOscillator();
+                    osc.type = 'square';
+                    osc.frequency.value = 140;
+                    var g2 = ctx.createGain();
+                    g2.gain.setValueAtTime(0.12, t);
+                    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+                    osc.connect(g2);
+                    g2.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.04);
+                } catch (e) {}
+            }
+
+            function playBell() {
+                try {
+                    var ctx = audio();
+                    var t = ctx.currentTime;
+                    var osc = ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1600, t);
+                    osc.frequency.exponentialRampToValueAtTime(1200, t + 0.35);
+                    var g = ctx.createGain();
+                    g.gain.setValueAtTime(0.25, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+                    osc.connect(g);
+                    g.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.5);
+                } catch (e) {}
+            }
+
+            function playTear() {
+                try {
+                    var ctx = audio();
+                    var t = ctx.currentTime;
+                    var src = ctx.createBufferSource();
+                    src.buffer = noiseBuffer(ctx, 0.4);
+                    var lp = ctx.createBiquadFilter();
+                    lp.type = 'lowpass';
+                    lp.frequency.setValueAtTime(3500, t);
+                    lp.frequency.exponentialRampToValueAtTime(300, t + 0.4);
+                    var g = ctx.createGain();
+                    g.gain.setValueAtTime(0.35, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                    src.connect(lp);
+                    lp.connect(g);
+                    g.connect(ctx.destination);
+                    src.start(t);
+                    src.stop(t + 0.4);
+                } catch (e) {}
+            }
+
+            function playFanfare() {
+                try {
+                    var ctx = audio();
+                    var t = ctx.currentTime;
+                    var notes = [523.25, 659.25, 783.99, 1046.5];
+                    notes.forEach(function(f, i) {
+                        var osc = ctx.createOscillator();
+                        osc.type = 'triangle';
+                        osc.frequency.value = f;
+                        var g = ctx.createGain();
+                        var start = t + i * 0.13;
+                        g.gain.setValueAtTime(0.0001, start);
+                        g.gain.exponentialRampToValueAtTime(0.22, start + 0.03);
+                        g.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
+                        osc.connect(g);
+                        g.connect(ctx.destination);
+                        osc.start(start);
+                        osc.stop(start + 0.45);
+                    });
+                } catch (e) {}
+            }
+
+            function playBuzzer() {
+                try {
+                    var ctx = audio();
+                    var t = ctx.currentTime;
+                    var osc = ctx.createOscillator();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, t);
+                    osc.frequency.exponentialRampToValueAtTime(70, t + 0.9);
+                    var g = ctx.createGain();
+                    g.gain.setValueAtTime(0.25, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+                    osc.connect(g);
+                    g.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.9);
+                } catch (e) {}
+            }
+
+            /* ---------- screen manager ---------- */
+            var screens = {};
+            ['title', 'facts', 'quiz', 'countdown', 'typing', 'over', 'win'].forEach(function(id) {
+                screens[id] = document.getElementById('screen-' + id);
+            });
+
+            function show(id) {
+                Object.keys(screens).forEach(function(k) {
+                    screens[k].classList.toggle('active', k === id);
+                });
+            }
+
+            /* ---------- SPLASH ANIMATION (masuk pertama) ---------- */
+            var splashText = "1945: Ketikan Terakhir";
+            var splashEl = document.getElementById('splash-text');
+            var splashIdx = 0;
+            var splashDone = false;
+
+            function runSplash() {
+                var sub = document.getElementById('splash-sub');
+                var iv = setInterval(function() {
+                    if (splashIdx < splashText.length) {
+                        splashEl.textContent += splashText[splashIdx];
+                        playClack();
+                        splashIdx++;
+                    } else {
+                        clearInterval(iv);
+                        sub.classList.add('show');
+                        // tunggu sebentar lalu transisi ke title
+                        setTimeout(function() {
+                            var splash = document.getElementById('screen-splash');
+                            splash.classList.add('fade-out');
+                            setTimeout(function() {
+                                splash.style.display = 'none';
+                                show('title');
+                                splashDone = true;
+                            }, 900);
+                        }, 700);
+                    }
+                }, 140);
+            }
+
+            // jalankan splash segera
+            runSplash();
+
+            /* ---------- SECONDARY LANGUAGE (search bar) ----------
+               The Indonesian text is always the primary/fixed text.
+               Only the secondary (.en-class / data-sec) text changes
+               with the language search bar below. ---------- */
+            var LANGUAGES9 = [
+                { code: "en", name: "English", englishName: "English" },
+                { code: "zh", name: "中文", englishName: "Mandarin Chinese" },
+                { code: "hi", name: "हिन्दी", englishName: "Hindi" },
+                { code: "es", name: "Español", englishName: "Spanish" },
+                { code: "ar", name: "العربية", englishName: "Arabic" },
+                { code: "fr", name: "Français", englishName: "French" },
+                { code: "bn", name: "বাংলা", englishName: "Bengali" },
+                { code: "pt", name: "Português", englishName: "Portuguese" },
+                { code: "ru", name: "Русский", englishName: "Russian" }
+            ];
+            var secondaryLang = "en";
+            var lastWinInfo = null;
+
+var SEC = {
+                en: {
+                    splashSub: "Typing history",
+                    titleEn: "The Final Type",
+                    timeUpEn: "Time's Up",
+                    doneEn: "The Text Is Done",
+                    start: "START",
+                    skip: "SKIP",
+                    next: "NEXT",
+                    startQuiz: "START QUIZ",
+                    startTyping: "START TYPING",
+                    question: "QUESTION",
+                    paperNo: "Paper no.",
+                    characters: "Characters",
+                    retry: "RETRY",
+                    typeAgain: "TYPE AGAIN",
+                    readyType: "Get ready to type",
+                    mistyped: "Mistyped — new paper",
+                    lede: "Borrow a typewriter. Race the clock. Type the text that will change history.",
+                    timerNote: "You'll get 1 minute 30 seconds — representing roughly 1.5 hours of preparing the proclamation text before it was read aloud in public.",
+                    loseText: "The final keystrokes weren't finished in time. Sayuti Melik himself typed under real time pressure before the ceremony began — try again and feel the tension.",
+                    winTemplate: function(m, s, pc) {
+                        var TIME = (m>0?(m+'m '):'')+s+'s';
+                        return 'The proclamation was typed successfully in '+TIME+', using '+pc+' sheet(s) of paper. Like Sayuti Melik that early morning, you just retyped the words that Soekarno-Hatta would read aloud before the Indonesian nation.';
+                    }
+                },
+                zh: {
+                    splashSub: "打字的历史",
+                    titleEn: "最后的打字",
+                    timeUpEn: "时间到",
+                    doneEn: "文本已完成",
+                    start: "开始",
+                    skip: "跳过",
+                    next: "下一步",
+                    startQuiz: "开始测验",
+                    startTyping: "开始打字",
+                    question: "问题",
+                    paperNo: "纸张编号",
+                    characters: "字符数",
+                    retry: "重试",
+                    typeAgain: "再次打字",
+                    readyType: "准备打字",
+                    mistyped: "打错了 — 更换新纸",
+                    lede: "借来一台打字机。与时间赛跑。打出将改变历史的文字。",
+                    timerNote: "你将获得1分30秒——大致代表宣言文本在公开宣读前约1.5小时的准备时间。",
+                    loseText: "最后的敲击未能及时完成。萨尤蒂·梅利克本人当年也是在仪式开始前的真实时间压力下打字的——再试一次，感受那份紧张。",
+                    winTemplate: function(m, s, pc) {
+                        var TIME = (m>0?(m+'分'):'')+s+'秒';
+                        return '宣言成功打字完成，用时'+TIME+'，共使用了'+pc+'张纸。就像那个凌晨的萨尤蒂·梅利克一样，你刚刚重新打出了苏加诺和哈达即将向印度尼西亚民族宣读的文字。';
+                    }
+                },
+                hi: {
+                    splashSub: "टाइपिंग का इतिहास",
+                    titleEn: "आख़िरी टाइपिंग",
+                    timeUpEn: "समय समाप्त",
+                    doneEn: "पाठ पूरा हुआ",
+                    start: "शुरू",
+                    skip: "छोड़ें",
+                    next: "अगला",
+                    startQuiz: "क्विज़ शुरू करें",
+                    startTyping: "टाइपिंग शुरू करें",
+                    question: "प्रश्न",
+                    paperNo: "पेपर संख्या",
+                    characters: "अक्षर",
+                    retry: "पुनः प्रयास",
+                    typeAgain: "फिर से टाइप करें",
+                    readyType: "टाइप करने के लिए तैयार हो जाओ",
+                    mistyped: "गलत टाइप — नया पेपर",
+                    lede: "एक टाइपराइटर उधार लो। घड़ी से होड़ करो। वह पाठ टाइप करो जो इतिहास बदल देगा।",
+                    timerNote: "तुम्हें 1 मिनट 30 सेकंड मिलेंगे — जो घोषणापत्र को सार्वजनिक रूप से पढ़े जाने से पहले लगभग 1.5 घंटे की तैयारी को दर्शाता है।",
+                    loseText: "आख़िरी टाइपिंग समय पर पूरी नहीं हो सकी। सयूती मेलिक ने भी समारोह शुरू होने से पहले असली समय के दबाव में टाइप किया था — फिर से कोशिश करो और उस तनाव को महसूस करो।",
+                    winTemplate: function(m, s, pc) {
+                        var TIME = (m>0?(m+' मिनट '):'')+s+' सेकंड';
+                        return 'घोषणापत्र सफलतापूर्वक '+TIME+' में टाइप हो गया, जिसमें '+pc+' पेपर इस्तेमाल हुए। उस भोर में सयूती मेलिक की तरह, तुमने अभी वही शब्द फिर से टाइप किए हैं जिन्हें सुकर्णो-हट्टा इंडोनेशियाई राष्ट्र के सामने पढ़ने वाले थे।';
+                    }
+                },
+                es: {
+                    splashSub: "Escribiendo la historia",
+                    titleEn: "La última mecanografía",
+                    timeUpEn: "Se acabó el tiempo",
+                    doneEn: "El texto está terminado",
+                    start: "EMPEZAR",
+                    skip: "OMITIR",
+                    next: "SIGUIENTE",
+                    startQuiz: "INICIAR CUESTIONARIO",
+                    startTyping: "EMPEZAR A ESCRIBIR",
+                    question: "PREGUNTA",
+                    paperNo: "N.º de hoja",
+                    characters: "Caracteres",
+                    retry: "REINTENTAR",
+                    typeAgain: "ESCRIBIR DE NUEVO",
+                    readyType: "Prepárate para escribir",
+                    mistyped: "Error al escribir — hoja nueva",
+                    lede: "Toma prestada una máquina de escribir. Corre contra el reloj. Escribe el texto que cambiará la historia.",
+                    timerNote: "Tendrás 1 minuto 30 segundos, lo que representa aproximadamente 1,5 horas de preparación del texto de la proclamación antes de leerse en público.",
+                    loseText: "Las últimas pulsaciones no se terminaron a tiempo. El propio Sayuti Melik escribió bajo una presión de tiempo real antes de que comenzara la ceremonia — inténtalo de nuevo y siente la tensión.",
+                    winTemplate: function(m, s, pc) {
+                        var TIME = (m>0?(m+' min '):'')+s+' s';
+                        return 'La proclamación se mecanografió con éxito en '+TIME+', usando '+pc+' hoja(s) de papel. Como Sayuti Melik aquella madrugada, acabas de volver a escribir las palabras que Soekarno-Hatta leerían ante la nación indonesia.';
+                    }
+                },
+                ar: {
+                    splashSub: "طباعة التاريخ",
+                    titleEn: "الطباعة الأخيرة",
+                    timeUpEn: "انتهى الوقت",
+                    doneEn: "اكتمل النص",
+                    start: "ابدأ",
+                    skip: "تخطٍّ",
+                    next: "التالي",
+                    startQuiz: "ابدأ الاختبار",
+                    startTyping: "ابدأ الكتابة",
+                    question: "سؤال",
+                    paperNo: "رقم الورقة",
+                    characters: "الأحرف",
+                    retry: "إعادة المحاولة",
+                    typeAgain: "اكتب مرة أخرى",
+                    readyType: "استعد للكتابة",
+                    mistyped: "خطأ في الكتابة — ورقة جديدة",
+                    lede: "استعر آلة كاتبة. سابق الزمن. اكتب النص الذي سيغيّر التاريخ.",
+                    timerNote: "ستحصل على دقيقة و30 ثانية — وهو ما يمثّل تقريبًا ساعة ونصف من تحضير نص الإعلان قبل قراءته علنًا.",
+                    loseText: "لم تكتمل الضغطات الأخيرة في الوقت المحدد. لقد كتب سايوتي مليك نفسه تحت ضغط زمني حقيقي قبل بدء المراسم — حاول مرة أخرى واشعر بالتوتر.",
+                    winTemplate: function(m, s, pc) {
+                        var TIME = (m>0?(m+' د '):'')+s+' ث';
+                        return 'تمت طباعة الإعلان بنجاح خلال '+TIME+'، باستخدام '+pc+' ورقة. مثل سايوتي مليك في ذلك الفجر، لقد أعدت للتو طباعة الكلمات التي سيقرأها سوكارنو وهاتا أمام الأمة الإندونيسية.';
+                    }
+                },
+                fr: {
+                    splashSub: "Taper l'histoire",
+                    titleEn: "La dernière frappe",
+                    timeUpEn: "Temps écoulé",
+                    doneEn: "Le texte est terminé",
+                    start: "COMMENCER",
+                    skip: "PASSER",
+                    next: "SUIVANT",
+                    startQuiz: "COMMENCER LE QUIZ",
+                    startTyping: "COMMENCER À TAPER",
+                    question: "QUESTION",
+                    paperNo: "N° de feuille",
+                    characters: "Caractères",
+                    retry: "RÉESSAYER",
+                    typeAgain: "TAPER À NOUVEAU",
+                    readyType: "Prépare-toi à taper",
+                    mistyped: "Erreur de frappe — nouvelle feuille",
+                    lede: "Emprunte une machine à écrire. Cours contre la montre. Tape le texte qui va changer l'histoire.",
+                    timerNote: "Tu auras 1 minute 30 secondes — représentant environ 1h30 de préparation du texte de la proclamation avant sa lecture publique.",
+                    loseText: "Les dernières frappes n'ont pas été terminées à temps. Sayuti Melik lui-même a tapé sous une réelle pression du temps avant le début de la cérémonie — réessaie et ressens cette tension.",
+                    winTemplate: function(m, s, pc) {
+                        var TIME = (m>0?(m+' min '):'')+s+' s';
+                        return 'La proclamation a été tapée avec succès en '+TIME+', en utilisant '+pc+' feuille(s) de papier. Comme Sayuti Melik ce matin-là, tu viens de retaper les mots que Soekarno-Hatta liraient devant la nation indonésienne.';
+                    }
+                },
+                bn: {
+                    splashSub: "ইতিহাস টাইপ করা",
+                    titleEn: "চূড়ান্ত টাইপিং",
+                    timeUpEn: "সময় শেষ",
+                    doneEn: "পাঠ্য সম্পন্ন হয়েছে",
+                    start: "শুরু",
+                    skip: "এড়িয়ে যান",
+                    next: "পরবর্তী",
+                    startQuiz: "কুইজ শুরু করুন",
+                    startTyping: "টাইপিং শুরু করুন",
+                    question: "প্রশ্ন",
+                    paperNo: "কাগজ নম্বর",
+                    characters: "অক্ষর",
+                    retry: "আবার চেষ্টা করুন",
+                    typeAgain: "আবার টাইপ করুন",
+                    readyType: "টাইপ করার জন্য প্রস্তুত হও",
+                    mistyped: "ভুল টাইপ — নতুন কাগজ",
+                    lede: "একটি টাইপরাইটার ধার নাও। ঘড়ির সঙ্গে দৌড়াও। সেই লেখা টাইপ করো যা ইতিহাস বদলে দেবে।",
+                    timerNote: "তুমি ১ মিনিট ৩০ সেকেন্ড পাবে — যা জনসমক্ষে পাঠের আগে ঘোষণাপত্র প্রস্তুত করার প্রায় দেড় ঘণ্টার প্রতিনিধিত্ব করে।",
+                    loseText: "শেষ কি-স্ট্রোকগুলো সময়মতো শেষ হয়নি। সায়ুতি মেলিক নিজেও অনুষ্ঠান শুরুর আগে প্রকৃত সময়ের চাপের মধ্যে টাইপ করেছিলেন — আবার চেষ্টা করো এবং সেই উত্তেজনা অনুভব করো।",
+                    winTemplate: function(m, s, pc) {
+                        var TIME = (m>0?(m+' মিনিট '):'')+s+' সেকেন্ড';
+                        return 'ঘোষণাপত্রটি সফলভাবে '+TIME+' সময়ে টাইপ হয়েছে, '+pc+'টি কাগজ ব্যবহার করে। সেই ভোরে সায়ুতি মেলিকের মতো, তুমি এইমাত্র সেই শব্দগুলো পুনরায় টাইপ করলে যা সুকর্নো-হাত্তা ইন্দোনেশীয় জাতির সামনে পাঠ করবেন।';
+                    }
+                },
+                pt: {
+                    splashSub: "Digitando a história",
+                    titleEn: "A digitação final",
+                    timeUpEn: "O tempo acabou",
+                    doneEn: "O texto está pronto",
+                    start: "COMEÇAR",
+                    skip: "PULAR",
+                    next: "PRÓXIMO",
+                    startQuiz: "INICIAR QUIZ",
+                    startTyping: "COMEÇAR A DIGITAR",
+                    question: "PERGUNTA",
+                    paperNo: "N.º da folha",
+                    characters: "Caracteres",
+                    retry: "TENTAR NOVAMENTE",
+                    typeAgain: "DIGITAR NOVAMENTE",
+                    readyType: "Prepare-se para digitar",
+                    mistyped: "Erro de digitação — nova folha",
+                    lede: "Peça emprestada uma máquina de escrever. Corra contra o relógio. Digite o texto que vai mudar a história.",
+                    timerNote: "Você terá 1 minuto e 30 segundos — representando aproximadamente 1h30 de preparação do texto da proclamação antes de ser lido em público.",
+                    loseText: "As últimas teclas não foram concluídas a tempo. O próprio Sayuti Melik digitou sob pressão real de tempo antes do início da cerimônia — tente novamente e sinta a tensão.",
+                    winTemplate: function(m, s, pc) {
+                        var TIME = (m>0?(m+' min '):'')+s+' s';
+                        return 'A proclamação foi digitada com sucesso em '+TIME+', usando '+pc+' folha(s) de papel. Como Sayuti Melik naquela madrugada, você acabou de redigitar as palavras que Soekarno-Hatta leriam diante da nação indonésia.';
+                    }
+                },
+                ru: {
+                    splashSub: "Печатая историю",
+                    titleEn: "Последняя печать",
+                    timeUpEn: "Время вышло",
+                    doneEn: "Текст готов",
+                    start: "НАЧАТЬ",
+                    skip: "ПРОПУСТИТЬ",
+                    next: "ДАЛЕЕ",
+                    startQuiz: "НАЧАТЬ ВИКТОРИНУ",
+                    startTyping: "НАЧАТЬ ПЕЧАТЬ",
+                    question: "ВОПРОС",
+                    paperNo: "№ листа",
+                    characters: "Символы",
+                    retry: "ПОВТОРИТЬ",
+                    typeAgain: "ПЕЧАТАТЬ СНОВА",
+                    readyType: "Приготовься печатать",
+                    mistyped: "Опечатка — новый лист",
+                    lede: "Одолжи печатную машинку. Спеши наперегонки со временем. Напечатай текст, который изменит историю.",
+                    timerNote: "У тебя будет 1 минута 30 секунд — это примерно соответствует полутора часам подготовки текста прокламации перед его публичным оглашением.",
+                    loseText: "Последние удары по клавишам не были завершены вовремя. Сам Сайюти Мелик печатал под реальным давлением времени перед началом церемонии — попробуй снова и почувствуй это напряжение.",
+                    winTemplate: function(m, s, pc) {
+                        var TIME = (m>0?(m+' мин '):'')+s+' с';
+                        return 'Прокламация была успешно напечатана за '+TIME+', с использованием '+pc+' листа(ов) бумаги. Как и Сайюти Мелик тем ранним утром, ты только что перепечатал слова, которые Сукарно и Хатта зачитают перед индонезийской нацией.';
+                    }
+                }
+            };
+
+            function secLabel(key) {
+                var d = SEC[secondaryLang] || SEC.en;
+                return (d[key] !== undefined ? d[key] : SEC.en[key]);
+            }
+
+            function applySecondaryLang() {
+                document.documentElement.dir = (secondaryLang === "ar") ? "rtl" : "ltr";
+                document.querySelectorAll("[data-sec]").forEach(function(el) {
+                    var key = el.getAttribute("data-sec");
+                    el.textContent = secLabel(key);
+                });
+                // re-render whatever dynamic screens exist so their secondary text updates too
+                if (typeof FACTS !== "undefined" && document.getElementById("fact-text")) renderFacts();
+                if (typeof QUIZ !== "undefined" && document.getElementById("quiz-context")) renderQuiz();
+                renderWinCopy();
+                if (typeof updateLangSearchActive === "function") updateLangSearchActive();
+            }
+
+            (function initLangSearch() {
+                var root = document.getElementById("lang-search");
+                if (!root) return;
+                var input = document.getElementById("lang-search-input");
+                var list = document.getElementById("lang-search-list");
+                var currentLabel = document.getElementById("lang-search-current");
+
+                function renderList(filter) {
+                    var q = (filter || "").trim().toLowerCase();
+                    list.innerHTML = "";
+                    LANGUAGES9.forEach(function(l) {
+                        var hay = (l.name + " " + l.englishName + " " + l.code).toLowerCase();
+                        if (q && hay.indexOf(q) === -1) return;
+                        var item = document.createElement("div");
+                        item.className = "lang-opt" + (l.code === secondaryLang ? " active" : "");
+                        item.setAttribute("role", "option");
+                        item.dataset.code = l.code;
+                        item.innerHTML = '<span class="lang-opt-native">' + l.name + '</span><span class="lang-opt-en">' + l.englishName + '</span>';
+                        item.addEventListener("click", function() { choose(l.code); });
+                        list.appendChild(item);
+                    });
+                    if (!list.children.length) {
+                        var empty = document.createElement("div");
+                        empty.className = "lang-opt lang-opt-empty";
+                        empty.textContent = "No matching language";
+                        list.appendChild(empty);
+                    }
+                }
+                function open() { root.classList.add("open"); renderList(input.value); }
+                function close() { root.classList.remove("open"); }
+                function choose(code) {
+                    secondaryLang = code;
+                    applySecondaryLang();
+                    input.value = "";
+                    close();
+                    input.blur();
+                }
+                window.updateLangSearchActive = function() {
+                    var cur = LANGUAGES9.find(function(l) { return l.code === secondaryLang; });
+                    if (currentLabel && cur) currentLabel.textContent = cur.name;
+                };
+                input.addEventListener("focus", open);
+                input.addEventListener("click", open);
+                input.addEventListener("input", function() { renderList(input.value); if (!root.classList.contains("open")) open(); });
+                input.addEventListener("keydown", function(e) {
+                    if (e.key === "Escape") { close(); input.blur(); }
+                    if (e.key === "Enter") {
+                        var first = list.querySelector(".lang-opt:not(.lang-opt-empty)");
+                        if (first) choose(first.dataset.code);
+                        e.preventDefault();
+                    }
+                });
+                document.addEventListener("click", function(e) {
+                    if (!root.contains(e.target)) close();
+                });
+                updateLangSearchActive();
+            })();
+
+            /* ---------- FACTS ---------- */
+            var FACTS = [
+                {
+                    id: "Menjelang dini hari 17 Agustus 1945, naskah proklamasi yang ditulis tangan oleh Bung Karno harus segera diketik ulang agar bisa dibacakan dan disebarluaskan ke seluruh negeri.",
+                    tr: { en: "Just before dawn on August 17, 1945, Bung Karno's handwritten proclamation draft had to be retyped so it could be read aloud and distributed across the country.",
+                          zh: "1945年8月17日凌晨，布恩·卡尔诺手写的宣言草稿必须重新打字，才能被朗读并传播到全国各地。",
+                          hi: "17 अगस्त 1945 की सुबह होने से ठीक पहले, बुंग कर्णो के हाथ से लिखे घोषणापत्र के मसौदे को फिर से टाइप करना ज़रूरी था ताकि इसे पढ़ा जा सके और पूरे देश में वितरित किया जा सके।",
+                          es: "Justo antes del amanecer del 17 de agosto de 1945, el borrador manuscrito de la proclamación de Bung Karno tuvo que volver a mecanografiarse para poder leerse en voz alta y distribuirse por todo el país.",
+                          ar: "قبيل فجر يوم 17 أغسطس 1945، تعيّن إعادة طباعة مسودة إعلان الاستقلال المكتوبة بخط يد بونغ كارنو حتى يمكن تلاوتها وتوزيعها في جميع أنحاء البلاد.",
+                          fr: "Juste avant l'aube du 17 août 1945, le brouillon manuscrit de la proclamation de Bung Karno dut être retapé pour pouvoir être lu à voix haute et diffusé dans tout le pays.",
+                          bn: "১৯৪৫ সালের ১৭ আগস্ট ভোর হওয়ার ঠিক আগে, বুং কর্নোর হাতে লেখা ঘোষণাপত্রের খসড়া পুনরায় টাইপ করা প্রয়োজন হয়ে পড়েছিল, যাতে এটি পাঠ করা যায় এবং সারা দেশে বিতরণ করা যায়।",
+                          pt: "Pouco antes do amanhecer de 17 de agosto de 1945, o rascunho manuscrito da proclamação de Bung Karno teve que ser digitado novamente para poder ser lido em voz alta e distribuído por todo o país.",
+                          ru: "Незадолго до рассвета 17 августа 1945 года рукописный черновик прокламации Бунг Карно нужно было перепечатать, чтобы его можно было зачитать вслух и распространить по всей стране."
+                    }
+                },
+                {
+                    id: "Mesin tik yang dipakai bukan milik pribadi atau kantor berita. Sayuti Melik meminjamnya dari Kolonel Kandeler, seorang perwira Angkatan Laut Jerman (Kriegsmarine) yang berkantor tak jauh dari lokasi perumusan naskah.",
+                    tr: { en: "The typewriter used wasn't personal property or a news office's. Sayuti Melik borrowed it from Colonel Kandeler, a German Navy (Kriegsmarine) officer stationed not far from where the text was drafted.",
+                          zh: "所使用的打字机既不是私人物品，也不属于新闻机构。萨尤蒂·梅利克是从科伦·坎德勒——一位驻扎在起草地点不远处的德国海军军官——那里借来的。",
+                          hi: "जिस टाइपराइटर का इस्तेमाल हुआ, वह न तो किसी की निजी संपत्ति थी और न ही किसी समाचार दफ़्तर की। सयूती मेलिक ने इसे कर्नल कांडेलर से उधार लिया था, जो जर्मन नौसेना (क्रिग्समरीने) के एक अधिकारी थे और मसौदा तैयार होने की जगह से ज़्यादा दूर तैनात नहीं थे।",
+                          es: "La máquina de escribir utilizada no era propiedad personal ni de una oficina de noticias. Sayuti Melik la pidió prestada al coronel Kandeler, un oficial de la Marina alemana (Kriegsmarine) destinado no muy lejos de donde se redactó el texto.",
+                          ar: "لم تكن الآلة الكاتبة المستخدمة ملكية شخصية ولا تابعة لمكتب إخباري. استعارها سايوتي مليك من الكولونيل كانديلر، وهو ضابط في البحرية الألمانية (كريغسمارينه) كان متمركزًا على مقربة من مكان صياغة النص.",
+                          fr: "La machine à écrire utilisée n'était ni une propriété personnelle ni celle d'un bureau de presse. Sayuti Melik l'emprunta au colonel Kandeler, un officier de la marine allemande (Kriegsmarine) stationné non loin du lieu de rédaction du texte.",
+                          bn: "যে টাইপরাইটারটি ব্যবহার করা হয়েছিল তা কোনো ব্যক্তিগত সম্পত্তি বা সংবাদ দপ্তরের ছিল না। সায়ুতি মেলিক এটি কর্নেল কান্ডেলারের কাছ থেকে ধার নিয়েছিলেন, যিনি ছিলেন একজন জার্মান নৌবাহিনীর (ক্রিগসমারিনে) কর্মকর্তা এবং যেখানে পাঠ্য রচিত হয়েছিল তার খুব বেশি দূরে কর্মরত ছিলেন না।",
+                          pt: "A máquina de escrever usada não era propriedade pessoal nem de uma agência de notícias. Sayuti Melik a pediu emprestada ao coronel Kandeler, um oficial da Marinha alemã (Kriegsmarine) estacionado não muito longe de onde o texto foi redigido.",
+                          ru: "Использованная печатная машинка не была ни личной собственностью, ни собственностью новостного бюро. Сайюти Мелик одолжил её у полковника Канделера, офицера немецкого военно-морского флота (кригсмарине), расквартированного недалеко от места составления текста."
+                    }
+                },
+                {
+                    id: "Sambil mengetik ulang tulisan tangan Bung Karno, Sayuti Melik menghaluskan beberapa hal — ejaan, sapaan, dan cara penulisan tanggal — agar naskah terdengar lebih tegas sebagai pernyataan resmi sebuah bangsa.",
+                    tr: { en: "While retyping Bung Karno's handwriting, Sayuti Melik smoothed out a few things — spelling, wording, and how the date was written — so the text read more firmly as a nation's official declaration.",
+                          zh: "在重新打出布恩·卡尔诺的手写文字时，萨尤蒂·梅利克对一些细节做了润色——拼写、措辞以及日期的写法——使这份文本更像一个国家正式宣言应有的语气。",
+                          hi: "बुंग कर्णो की हस्तलिपि को फिर से टाइप करते समय, सयूती मेलिक ने कुछ चीज़ें सुधारीं — वर्तनी, शब्द-चयन, और तारीख़ लिखने का तरीका — ताकि यह पाठ एक राष्ट्र की आधिकारिक घोषणा के रूप में अधिक दृढ़ता से पढ़ा जाए।",
+                          es: "Mientras volvía a mecanografiar la letra manuscrita de Bung Karno, Sayuti Melik pulió algunos detalles —ortografía, redacción y la forma de escribir la fecha— para que el texto sonara más firme como declaración oficial de una nación.",
+                          ar: "أثناء إعادة طباعة خط يد بونغ كارنو، عدّل سايوتي مليك بعض التفاصيل — الإملاء والصياغة وطريقة كتابة التاريخ — ليبدو النص أكثر رسوخًا كإعلان رسمي لأمة.",
+                          fr: "En retapant l'écriture manuscrite de Bung Karno, Sayuti Melik a peaufiné certains éléments — orthographe, formulation et façon d'écrire la date — pour que le texte sonne avec plus de fermeté comme déclaration officielle d'une nation.",
+                          bn: "বুং কর্নোর হাতে লেখা পুনরায় টাইপ করার সময়, সায়ুতি মেলিক কিছু বিষয় মসৃণ করেছিলেন — বানান, শব্দচয়ন এবং তারিখ লেখার ধরন — যাতে পাঠ্যটি একটি জাতির আনুষ্ঠানিক ঘোষণা হিসেবে আরও দৃঢ়ভাবে শোনায়।",
+                          pt: "Ao redigitar a caligrafia de Bung Karno, Sayuti Melik aprimorou alguns detalhes — ortografia, redação e a forma como a data foi escrita — para que o texto soasse mais firme como declaração oficial de uma nação.",
+                          ru: "Перепечатывая рукописный текст Бунг Карно, Сайюти Мелик сгладил некоторые детали — орфографию, формулировки и написание даты, — чтобы текст звучал более веско как официальное заявление нации."
+                    }
+                },
+                {
+                    id: "'Tempoh' diubah menjadi 'tempo'. Frasa 'wakil-wakil bangsa Indonesia' diubah menjadi 'Atas nama bangsa Indonesia'. Dan tanggal ditulis 'Djakarta, hari 17 boelan 8 tahoen '05' — merujuk pada tahun Jepang 2605.",
+                    tr: { en: "'Tempoh' became 'tempo'. The phrase 'wakil-wakil bangsa Indonesia' (representatives of the Indonesian people) became 'Atas nama bangsa Indonesia' (on behalf of the Indonesian people). And the date was written 'Djakarta, hari 17 boelan 8 tahoen '05' — referencing the Japanese year 2605.",
+                          zh: "「Tempoh」被改为「tempo」。短语「wakil-wakil bangsa Indonesia」（印度尼西亚人民的代表）被改为「Atas nama bangsa Indonesia」（代表印度尼西亚人民）。日期则写作「Djakarta, hari 17 boelan 8 tahoen '05」——指的是日本纪年2605年。",
+                          hi: "'Tempoh' को 'tempo' कर दिया गया। वाक्यांश 'wakil-wakil bangsa Indonesia' (इंडोनेशियाई जनता के प्रतिनिधि) को बदलकर 'Atas nama bangsa Indonesia' (इंडोनेशियाई जनता की ओर से) कर दिया गया। और तारीख़ लिखी गई 'Djakarta, hari 17 boelan 8 tahoen '05' — जो जापानी वर्ष 2605 का संदर्भ थी।",
+                          es: "'Tempoh' se convirtió en 'tempo'. La frase 'wakil-wakil bangsa Indonesia' (representantes del pueblo indonesio) se convirtió en 'Atas nama bangsa Indonesia' (en nombre del pueblo indonesio). Y la fecha se escribió 'Djakarta, hari 17 boelan 8 tahoen '05' —en referencia al año japonés 2605.",
+                          ar: "تحوّلت كلمة 'Tempoh' إلى 'tempo'. وتحوّلت عبارة 'wakil-wakil bangsa Indonesia' (ممثلو الشعب الإندونيسي) إلى 'Atas nama bangsa Indonesia' (نيابة عن الشعب الإندونيسي). وكُتب التاريخ 'Djakarta, hari 17 boelan 8 tahoen '05' — في إشارة إلى السنة اليابانية 2605.",
+                          fr: "« Tempoh » est devenu « tempo ». L'expression « wakil-wakil bangsa Indonesia » (représentants du peuple indonésien) est devenue « Atas nama bangsa Indonesia » (au nom du peuple indonésien). Et la date fut écrite « Djakarta, hari 17 boelan 8 tahoen '05 » — en référence à l'année japonaise 2605.",
+                          bn: "'Tempoh' পরিবর্তিত হয়ে হয় 'tempo'। 'wakil-wakil bangsa Indonesia' (ইন্দোনেশীয় জনগণের প্রতিনিধি) বাক্যাংশটি পরিবর্তিত হয়ে হয় 'Atas nama bangsa Indonesia' (ইন্দোনেশীয় জনগণের পক্ষ থেকে)। আর তারিখ লেখা হয়েছিল 'Djakarta, hari 17 boelan 8 tahoen '05' — যা জাপানি বর্ষপঞ্জির ২৬০৫ সালকে নির্দেশ করে।",
+                          pt: "'Tempoh' tornou-se 'tempo'. A frase 'wakil-wakil bangsa Indonesia' (representantes do povo indonésio) tornou-se 'Atas nama bangsa Indonesia' (em nome do povo indonésio). E a data foi escrita 'Djakarta, hari 17 boelan 8 tahoen '05' — referindo-se ao ano japonês 2605.",
+                          ru: "«Tempoh» превратилось в «tempo». Фраза «wakil-wakil bangsa Indonesia» (представители индонезийского народа) превратилась в «Atas nama bangsa Indonesia» (от имени индонезийского народа). А дата была написана «Djakarta, hari 17 boelan 8 tahoen '05» — со ссылкой на 2605 год по японскому летосчислению."
+                    }
+                }
+            ];
+            var factIdx = 0;
+
+            function renderFacts() {
+                var wrap = document.getElementById('fact-text');
+                wrap.innerHTML = '';
+                FACTS.forEach(function(f, i) {
+                    var div = document.createElement('div');
+                    div.className = 'fact-slide' + (i === factIdx ? ' show' : '');
+                    var secText = f.tr[secondaryLang] || f.tr.en;
+                    div.innerHTML = '<p>' + f.id + '</p><p class="en">' + secText + '</p>';
+                    wrap.appendChild(div);
+                });
+                document.getElementById('fact-index').textContent = 'FAKTA ' + (factIdx + 1) + ' / ' + FACTS.length;
+                var dots = document.getElementById('fact-dots');
+                dots.innerHTML = '';
+                FACTS.forEach(function(_, i) {
+                    var d = document.createElement('div');
+                    d.className = 'dot' + (i === factIdx ? ' on' : '');
+                    dots.appendChild(d);
+                });
+                document.getElementById('btn-fact-next').innerHTML = (factIdx === FACTS.length - 1) ?
+                    'MULAI KUIS · <span data-sec="startQuiz">' + secLabel('startQuiz') + '</span>' :
+                    'LANJUT · <span data-sec="next">' + secLabel('next') + '</span>';
+            }
+            document.getElementById('btn-fact-next').addEventListener('click', function() {
+                if (factIdx < FACTS.length - 1) { factIdx++;
+                    renderFacts(); } else { startQuiz(); }
+            });
+            document.getElementById('btn-fact-skip').addEventListener('click', startQuiz);
+
+            /* ---------- QUIZ ---------- */
+            var QUIZ = [
+                {
+                    context: { id: "Tulisan tangan asli Bung Karno memakai kata ini untuk menjelaskan seberapa cepat kekuasaan harus dipindahkan.",
+                        tr: { en: "Bung Karno's original handwriting used this word to describe how quickly power had to be transferred.",
+                              zh: "布恩·卡尔诺原始手稿中用这个词来描述权力必须多快移交。",
+                              hi: "बुंग कर्णो की मूल हस्तलिपि में इसी शब्द का इस्तेमाल यह बताने के लिए किया गया था कि सत्ता कितनी जल्दी हस्तांतरित होनी थी।",
+                              es: "El manuscrito original de Bung Karno usaba esta palabra para describir con qué rapidez debía transferirse el poder.",
+                              ar: "استخدمت مخطوطة بونغ كارنو الأصلية هذه الكلمة لوصف مدى سرعة نقل السلطة.",
+                              fr: "Le manuscrit original de Bung Karno utilisait ce mot pour décrire la rapidité avec laquelle le pouvoir devait être transféré.",
+                              bn: "বুং কর্নোর মূল হাতে লেখা পাণ্ডুলিপিতে ক্ষমতা কত দ্রুত হস্তান্তরিত হতে হবে তা বর্ণনা করতে এই শব্দটি ব্যবহার করা হয়েছিল।",
+                              pt: "O manuscrito original de Bung Karno usava esta palavra para descrever quão rapidamente o poder deveria ser transferido.",
+                              ru: "В оригинальной рукописи Бунг Карно это слово использовалось для описания того, насколько быстро должна была быть передана власть."
+                        }
+                    },
+                    q: { id: "Kata manakah yang benar dalam Bahasa Indonesia baku, dan akhirnya diketik oleh Sayuti Melik?",
+                        tr: { en: "Which word is correct standard Indonesian, and is what Sayuti Melik ultimately typed?",
+                              zh: "哪个词是正确的标准印尼语，也是萨尤蒂·梅利克最终打出来的词？",
+                              hi: "मानक इंडोनेशियाई भाषा में कौन-सा शब्द सही है, और अंततः सयूती मेलिक ने क्या टाइप किया?",
+                              es: "¿Qué palabra es la correcta en indonesio estándar, y es la que finalmente escribió Sayuti Melik?",
+                              ar: "أي كلمة صحيحة باللغة الإندونيسية الفصحى، وهي ما كتبه سايوتي مليك في النهاية؟",
+                              fr: "Quel mot est correct en indonésien standard, et est celui que Sayuti Melik a finalement tapé ?",
+                              bn: "মানক ইন্দোনেশীয় ভাষায় কোন শব্দটি সঠিক, এবং শেষ পর্যন্ত সায়ুতি মেলিক কী টাইপ করেছিলেন?",
+                              pt: "Qual palavra é o indonésio padrão correto, e é o que Sayuti Melik finalmente digitou?",
+                              ru: "Какое слово является правильным стандартным индонезийским и в итоге было напечатано Сайюти Мелик?"
+                        }
+                    },
+                    options: [
+                        { text: "tempo", correct: true },
+                        { text: "tempoh", correct: false },
+                        { text: "waktoe", correct: false }
+                    ],
+                    feedback: { id: "Kata yang benar adalah 'tempo'. 'Tempoh' bukan ejaan baku Bahasa Indonesia, sehingga Sayuti Melik meluruskannya saat mengetik.",
+                        tr: { en: "The correct word is 'tempo'. 'Tempoh' is not standard Indonesian spelling, so Sayuti Melik corrected it while typing.",
+                              zh: "正确的词是「tempo」。「Tempoh」不是标准印尼语拼写，所以萨尤蒂·梅利克在打字时对其进行了纠正。",
+                              hi: "सही शब्द है 'tempo'। 'Tempoh' मानक इंडोनेशियाई वर्तनी नहीं है, इसलिए सयूती मेलिक ने टाइप करते समय इसे ठीक किया।",
+                              es: "La palabra correcta es 'tempo'. 'Tempoh' no es la ortografía estándar del indonesio, así que Sayuti Melik la corrigió al mecanografiar.",
+                              ar: "الكلمة الصحيحة هي 'tempo'. لا تُعد 'Tempoh' إملاءً إندونيسيًا فصيحًا، لذا صححها سايوتي مليك أثناء الطباعة.",
+                              fr: "Le mot correct est « tempo ». « Tempoh » n'est pas l'orthographe indonésienne standard, donc Sayuti Melik l'a corrigé en tapant.",
+                              bn: "সঠিক শব্দটি হলো 'tempo'। 'Tempoh' মানক ইন্দোনেশীয় বানান নয়, তাই সায়ুতি মেলিক টাইপ করার সময় এটি সংশোধন করেছিলেন।",
+                              pt: "A palavra correta é 'tempo'. 'Tempoh' não é a grafia padrão do indonésio, então Sayuti Melik a corrigiu ao digitar.",
+                              ru: "Правильное слово — «tempo». «Tempoh» не является стандартным индонезийским написанием, поэтому Сайюти Мелик исправил это при печати."
+                        }
+                    }
+                },
+                {
+                    context: { id: "Bagian penutup naskah tulisan tangan menyebut siapa yang menyatakan kemerdekaan ini.",
+                        tr: { en: "The closing line of the handwritten draft named who was declaring this independence.",
+                              zh: "手写草稿的结尾一行写明了是谁在宣告这次独立。",
+                              hi: "हस्तलिखित मसौदे की अंतिम पंक्ति में यह बताया गया था कि यह स्वतंत्रता कौन घोषित कर रहा है।",
+                              es: "La línea final del borrador manuscrito indicaba quién declaraba esta independencia.",
+                              ar: "حدد السطر الختامي للمسودة المكتوبة بخط اليد من الذي يعلن هذا الاستقلال.",
+                              fr: "La dernière ligne du brouillon manuscrit indiquait qui déclarait cette indépendance.",
+                              bn: "হাতে লেখা খসড়ার শেষ লাইনে উল্লেখ করা হয়েছিল যে এই স্বাধীনতা কে ঘোষণা করছেন।",
+                              pt: "A linha final do rascunho manuscrito nomeava quem estava declarando essa independência.",
+                              ru: "В заключительной строке рукописного черновика указывалось, кто провозглашает эту независимость."
+                        }
+                    },
+                    q: { id: "Frasa apa yang akhirnya dipakai Sayuti Melik untuk menggantikan 'wakil-wakil bangsa Indonesia'?",
+                        tr: { en: "What phrase did Sayuti Melik ultimately use to replace 'wakil-wakil bangsa Indonesia' (representatives of the Indonesian people)?",
+                              zh: "萨尤蒂·梅利克最终用什么短语取代了「wakil-wakil bangsa Indonesia」（印度尼西亚人民的代表）？",
+                              hi: "सयूती मेलिक ने अंततः 'wakil-wakil bangsa Indonesia' (इंडोनेशियाई जनता के प्रतिनिधि) की जगह किस वाक्यांश का प्रयोग किया?",
+                              es: "¿Qué frase usó finalmente Sayuti Melik para reemplazar 'wakil-wakil bangsa Indonesia' (representantes del pueblo indonesio)?",
+                              ar: "ما العبارة التي استخدمها سايوتي مليك في النهاية ليحل بها محل 'wakil-wakil bangsa Indonesia' (ممثلو الشعب الإندونيسي)؟",
+                              fr: "Quelle expression Sayuti Melik a-t-il finalement utilisée pour remplacer « wakil-wakil bangsa Indonesia » (représentants du peuple indonésien) ?",
+                              bn: "'wakil-wakil bangsa Indonesia' (ইন্দোনেশীয় জনগণের প্রতিনিধি)-এর পরিবর্তে সায়ুতি মেলিক শেষ পর্যন্ত কোন বাক্যাংশ ব্যবহার করেছিলেন?",
+                              pt: "Que frase Sayuti Melik finalmente usou para substituir 'wakil-wakil bangsa Indonesia' (representantes do povo indonésio)?",
+                              ru: "Какую фразу Сайюти Мелик в итоге использовал вместо «wakil-wakil bangsa Indonesia» (представители индонезийского народа)?"
+                        }
+                    },
+                    options: [
+                        { text: "Atas nama bangsa Indonesia", correct: true },
+                        { text: "Wakil-wakil bangsa Indonesia", correct: false },
+                        { text: "Perwakilan rakyat Indonesia", correct: false }
+                    ],
+                    feedback: { id: "Frasa yang benar adalah 'Atas nama bangsa Indonesia'. Perubahan ini membuat naskah terdengar mewakili seluruh bangsa secara langsung, bukan sekadar 'wakil-wakil'.",
+                        tr: { en: "The correct phrase is 'Atas nama bangsa Indonesia' (on behalf of the Indonesian people). This change made the text speak directly for the whole nation, rather than just its 'representatives'.",
+                              zh: "正确的短语是「Atas nama bangsa Indonesia」（代表印度尼西亚人民）。这一改动使文本直接代表整个国家发声，而不只是其「代表」。",
+                              hi: "सही वाक्यांश है 'Atas nama bangsa Indonesia' (इंडोनेशियाई जनता की ओर से)। इस बदलाव ने पाठ को केवल 'प्रतिनिधियों' के बजाय सीधे पूरे राष्ट्र की आवाज़ बना दिया।",
+                              es: "La frase correcta es 'Atas nama bangsa Indonesia' (en nombre del pueblo indonesio). Este cambio hizo que el texto hablara directamente por toda la nación, en lugar de solo por sus 'representantes'.",
+                              ar: "العبارة الصحيحة هي 'Atas nama bangsa Indonesia' (نيابة عن الشعب الإندونيسي). جعل هذا التغيير النص يتحدث مباشرة باسم الأمة بأكملها، لا باسم 'ممثليها' فقط.",
+                              fr: "L'expression correcte est « Atas nama bangsa Indonesia » (au nom du peuple indonésien). Ce changement a fait parler le texte directement pour toute la nation, plutôt que pour ses seuls « représentants ».",
+                              bn: "সঠিক বাক্যাংশটি হলো 'Atas nama bangsa Indonesia' (ইন্দোনেশীয় জনগণের পক্ষ থেকে)। এই পরিবর্তনটি পাঠ্যটিকে শুধু 'প্রতিনিধিদের' পক্ষে নয়, বরং সরাসরি সমগ্র জাতির পক্ষে কথা বলার মতো করে তুলেছিল।",
+                              pt: "A frase correta é 'Atas nama bangsa Indonesia' (em nome do povo indonésio). Essa mudança fez o texto falar diretamente por toda a nação, em vez de apenas por seus 'representantes'.",
+                              ru: "Правильная фраза — «Atas nama bangsa Indonesia» (от имени индонезийского народа). Это изменение сделало так, что текст говорил напрямую от лица всей нации, а не только её «представителей»."
+                        }
+                    }
+                }
+            ];
+            var quizIdx = 0;
+            var quizAnswered = false;
+
+            function startQuiz() { quizIdx = 0;
+                show('quiz');
+                renderQuiz(); }
+
+            function renderQuiz() {
+                quizAnswered = false;
+                var item = QUIZ[quizIdx];
+                document.getElementById('quiz-progress').textContent = 'PERTANYAAN ' + (quizIdx + 1) + ' / ' + QUIZ.length +
+                    ' · ' + secLabel('question') + ' ' + (quizIdx + 1) + ' / ' + QUIZ.length;
+                var ctxSec = item.context.tr[secondaryLang] || item.context.tr.en;
+                document.getElementById('quiz-context').innerHTML = item.context.id + '<span class="en">' + ctxSec + '</span>';
+                document.getElementById('quiz-q').textContent = item.q.id;
+                document.getElementById('quiz-q-en').textContent = item.q.tr[secondaryLang] || item.q.tr.en;
+                var optWrap = document.getElementById('quiz-options');
+                optWrap.innerHTML = '';
+                item.options.forEach(function(opt) {
+                    var b = document.createElement('button');
+                    b.className = 'opt';
+                    b.textContent = opt.text;
+                    b.addEventListener('click', function() { handleQuizAnswer(opt, b); });
+                    optWrap.appendChild(b);
+                });
+                var fb = document.getElementById('quiz-feedback');
+                fb.classList.remove('show');
+                fb.innerHTML = '';
+                document.getElementById('btn-quiz-next').disabled = true;
+                document.getElementById('btn-quiz-next').innerHTML = (quizIdx === QUIZ.length - 1) ?
+                    'MULAI MENGETIK · <span data-sec="startTyping">' + secLabel('startTyping') + '</span>' :
+                    'LANJUT · <span data-sec="next">' + secLabel('next') + '</span>';
+            }
+
+            function handleQuizAnswer(opt, btnEl) {
+                if (quizAnswered) return;
+                quizAnswered = true;
+                var item = QUIZ[quizIdx];
+                var buttons = document.querySelectorAll('#quiz-options .opt');
+                buttons.forEach(function(b) { b.disabled = true; });
+                if (opt.correct) {
+                    btnEl.classList.add('correct');
+                    playClack();
+                } else {
+                    btnEl.classList.add('wrong');
+                    buttons.forEach(function(b, i) { if (item.options[i].correct) b.classList.add('correct'); });
+                    playTear();
+                }
+                var fb = document.getElementById('quiz-feedback');
+                var fbSec = item.feedback.tr[secondaryLang] || item.feedback.tr.en;
+                fb.innerHTML = item.feedback.id + '<span class="en">' + fbSec + '</span>';
+                fb.classList.add('show');
+                document.getElementById('btn-quiz-next').disabled = false;
+            }
+            document.getElementById('btn-quiz-next').addEventListener('click', function() {
+                if (quizIdx < QUIZ.length - 1) { quizIdx++;
+                    renderQuiz(); } else { runCountdown(); }
+            });
+
+            /* ---------- COUNTDOWN ---------- */
+            function runCountdown() {
+                show('countdown');
+                var n = 3;
+                var el = document.getElementById('count-num');
+                el.textContent = n;
+                playClack();
+                var iv = setInterval(function() {
+                    n--;
+                    if (n <= 0) {
+                        clearInterval(iv);
+                        startTyping();
+                        return;
+                    }
+                    el.textContent = n;
+                    el.style.animation = 'none';
+                    void el.offsetWidth;
+                    el.style.animation = '';
+                    playClack();
+                }, 700);
+            }
+
+            /* ---------- TYPING GAME ---------- */
+            var TARGET =
+                "PROKLAMASI\n\n" +
+                "Kami bangsa Indonesia dengan ini menjatakan kemerdekaan Indonesia.\n" +
+                "Hal-hal jang mengenai pemindahan kekoeasaan d.l.l., diselenggarakan dengan tjara saksama dan dalam tempo jang sesingkat-singkatnya.\n\n" +
+                "                    Djakarta, hari 17 boelan 8 tahoen '05\n" +
+                "                    Atas nama bangsa Indonesia.\n\n" +
+                "                    Soekarno/Hatta.";
+
+            var typed = 0;
+            var TYPING_DURATION = 300; // 5 menit
+            var timeLeft = TYPING_DURATION;
+            var timerIv = null;
+            var paperCount = 1;
+            var gameActive = false;
+
+            var KEY_ROWS = [
+                ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-"],
+                ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+                ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+                ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "'"]
+            ];
+
+            function buildKeyboard() {
+                var kbd = document.getElementById('kbd');
+                kbd.innerHTML = '';
+                KEY_ROWS.forEach(function(row) {
+                    var r = document.createElement('div');
+                    r.className = 'kbd-row';
+                    row.forEach(function(k) {
+                        var b = document.createElement('div');
+                        b.className = 'key';
+                        b.textContent = k;
+                        b.addEventListener('click', function() { pressKey(k);
+                            flashKey(b); });
+                        r.appendChild(b);
+                    });
+                    kbd.appendChild(r);
+                });
+                var lastRow = document.createElement('div');
+                lastRow.className = 'kbd-row';
+                var space = document.createElement('div');
+                space.className = 'key space';
+                space.textContent = 'SPASI · SPACE';
+                space.addEventListener('click', function() { pressKey(' ');
+                    flashKey(space); });
+                var enter = document.createElement('div');
+                enter.className = 'key wide enter';
+                enter.textContent = 'ENTER \u21B5';
+                enter.addEventListener('click', function() { pressKey('\n');
+                    flashKey(enter); });
+                lastRow.appendChild(space);
+                lastRow.appendChild(enter);
+                kbd.appendChild(lastRow);
+            }
+
+            function flashKey(el) {
+                el.classList.add('hit');
+                setTimeout(function() { el.classList.remove('hit'); }, 90);
+            }
+
+            /* ---------- PAPER POSITION (gulungan kertas) ---------- */
+            var paperEl = document.getElementById('paper');
+            var paperContent = document.getElementById('paper-content');
+
+            function getLineHeight() {
+                var style = window.getComputedStyle(paperEl);
+                var lh = parseFloat(style.lineHeight);
+                if (isNaN(lh) || lh <= 0) lh = 28;
+                return lh;
+            }
+
+            function getCharsPerLine() {
+                var style = window.getComputedStyle(paperEl);
+                var fs = parseFloat(style.fontSize);
+                if (isNaN(fs) || fs <= 0) fs = 14;
+                var pw = paperEl.clientWidth - 44;
+                if (pw <= 0) pw = 400;
+                var cw = fs * 0.58;
+                return Math.max(15, Math.floor(pw / cw));
+            }
+
+            function countLines(text) {
+                var parts = text.split('\n');
+                var total = 0;
+                var cpl = getCharsPerLine();
+                for (var i = 0; i < parts.length; i++) {
+                    var len = parts[i].length;
+                    if (len === 0) {
+                        total += 1;
+                    } else {
+                        total += Math.ceil(len / cpl);
+                    }
+                }
+                return total;
+            }
+
+            function updatePaperPosition() {
+                if (!paperEl) return;
+                // jika sedang animasi tear/fresh, jangan ganggu
+                if (paperEl.classList.contains('tear') || paperEl.classList.contains('fresh')) return;
+                var textSoFar = TARGET.substring(0, typed);
+                var lines = countLines(textSoFar);
+                var lh = getLineHeight();
+                // offset: baris yang sudah diketik (kecuali baris terakhir) naik ke atas
+                var offset = Math.max(0, (lines - 1) * lh * 0.92);
+                paperEl.style.transform = 'translateY(-' + offset + 'px)';
+            }
+
+            /* ---------- RENDER PAPER ---------- */
+            function renderPaper() {
+                var html = '';
+                for (var i = 0; i < TARGET.length; i++) {
+                    var c = TARGET[i];
+                    var display = c === '\n' ? '\n' : (c === ' ' ? ' ' : c);
+                    if (i < typed) {
+                        html += '<span class="ch">' + escapeHtml(display) + '</span>';
+                    } else if (i === typed) {
+                        html += '<span class="caret"></span><span class="ch-pending">' + escapeHtml(display) +
+                        '</span>';
+                    } else {
+                        html += '<span class="ch-pending">' + escapeHtml(display) + '</span>';
+                    }
+                }
+                paperContent.innerHTML = html;
+                document.getElementById('char-count').textContent = typed + ' / ' + TARGET.length;
+                updatePaperPosition();
+            }
+
+            function escapeHtml(s) {
+                return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+
+            /* ---------- KEY PRESS ---------- */
+            function pressKey(k) {
+                if (!gameActive) return;
+                var expected = TARGET[typed];
+                var match = false;
+                if (expected === '\n') { match = (k === '\n'); } else if (expected === ' ') { match = (k === ' '); } else if (
+                    /[a-zA-Z]/.test(expected)) { match = k.toLowerCase() === expected.toLowerCase(); } else { match = k ===
+                        expected; }
+
+                if (match) {
+                    typed++;
+                    renderPaper();
+                    if (expected === '\n') { playBell(); } else { playClack(); }
+                    if (typed >= TARGET.length) { winGame(); }
+                } else {
+                    mistake();
+                }
+            }
+
+            /* ---------- MISTAKE (ganti kertas) ---------- */
+            function mistake() {
+                playTear();
+                var toast = document.getElementById('mistake-toast');
+                toast.textContent = 'Salah ketik — kertas baru · ' + secLabel('mistyped');
+                toast.classList.add('show');
+                paperEl.classList.add('tear');
+                setTimeout(function() {
+                    typed = 0;
+                    paperCount++;
+                    document.getElementById('paper-count').textContent = paperCount;
+                    renderPaper();
+                    paperEl.classList.remove('tear');
+                    paperEl.classList.add('fresh');
+                    toast.classList.remove('show');
+                    setTimeout(function() {
+                        paperEl.classList.remove('fresh');
+                        updatePaperPosition();
+                    }, 420);
+                }, 480);
+            }
+
+            /* ---------- START TYPING ---------- */
+            function startTyping() {
+                show('typing');
+                buildKeyboard();
+                typed = 0;
+                timeLeft = TYPING_DURATION;
+                paperCount = 1;
+                document.getElementById('paper-count').textContent = paperCount;
+                document.getElementById('stamp').classList.remove('show');
+                updateClock();
+                renderPaper();
+                gameActive = true;
+                clearInterval(timerIv);
+                timerIv = setInterval(function() {
+                    timeLeft--;
+                    updateClock();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerIv);
+                        gameActive = false;
+                        loseGame();
+                    }
+                }, 1000);
+            }
+
+            function updateClock() {
+                var m = Math.floor(Math.max(timeLeft, 0) / 60);
+                var s = Math.max(timeLeft, 0) % 60;
+                var el = document.getElementById('clock');
+                el.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                el.classList.toggle('low', timeLeft <= 15);
+            }
+
+            /* ---------- LOSE ---------- */
+            function loseGame() {
+                var crack = document.getElementById('crack');
+                crack.classList.add('flash');
+                playBuzzer();
+                setTimeout(function() {
+                    crack.classList.remove('flash');
+                    show('over');
+                }, 450);
+            }
+
+            /* ---------- WIN ---------- */
+            function winGame() {
+                gameActive = false;
+                clearInterval(timerIv);
+                document.getElementById('stamp').classList.add('show');
+                playFanfare();
+                var elapsed = TYPING_DURATION - Math.max(timeLeft, 0);
+                var m = Math.floor(elapsed / 60),
+                    s = elapsed % 60;
+                lastWinInfo = { m: m, s: s, paperCount: paperCount };
+                renderWinCopy();
+                setTimeout(function() { launchConfetti(); }, 200);
+                setTimeout(function() { show('win'); }, 650);
+            }
+
+            function renderWinCopy() {
+                if (!lastWinInfo) return;
+                var m = lastWinInfo.m, s = lastWinInfo.s, pc = lastWinInfo.paperCount;
+                var timeStr = (m > 0 ? m + ' menit ' : '') + s + ' detik';
+                var tpl = (SEC[secondaryLang] && SEC[secondaryLang].winTemplate) || SEC.en.winTemplate;
+                document.getElementById('win-copy').innerHTML =
+                    'Naskah proklamasi berhasil diketik dalam ' + timeStr + ', menggunakan ' + pc +
+                    ' lembar kertas. Seperti Sayuti Melik pada dini hari itu, kamu baru saja mengetik ulang kalimat yang akan dibacakan Soekarno-Hatta di depan bangsa Indonesia.' +
+                    '<span class="en">' + tpl(m, s, pc) + '</span>';
+            }
+
+            function launchConfetti() {
+                var colors = ['#a32126', '#f3ead3', '#d3ac66'];
+                for (var i = 0; i < 50; i++) {
+                    (function() {
+                        var el = document.createElement('div');
+                        el.className = 'confetti';
+                        el.style.left = Math.random() * 100 + 'vw';
+                        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+                        el.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+                        document.body.appendChild(el);
+                        var duration = 2200 + Math.random() * 1400;
+                        var drift = (Math.random() - 0.5) * 200;
+                        el.animate([
+                            { transform: el.style.transform + ' translate(0,0)', opacity: 1 },
+                            { transform: 'rotate(' + (Math.random() * 720) + 'deg) translate(' + drift +
+                                    'px,110vh)', opacity: .9 }
+                        ], { duration: duration, easing: 'ease-in' });
+                        setTimeout(function() { el.remove(); }, duration + 50);
+                    })();
+                }
+            }
+
+            /* ---------- NAV BUTTONS ---------- */
+            document.getElementById('btn-start').addEventListener('click', function() {
+                audio(); // unlock
+                factIdx = 0;
+                renderFacts();
+                show('facts');
+            });
+            document.getElementById('btn-retry-over').addEventListener('click', runCountdown);
+            document.getElementById('btn-menu-over').addEventListener('click', function() { show('title'); });
+            document.getElementById('btn-retry-win').addEventListener('click', runCountdown);
+
+            /* ---------- handle resize untuk update posisi kertas ---------- */
+            var resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    if (gameActive || typed > 0) updatePaperPosition();
+                }, 150);
+            });
+
+        })();
+    </script>
+</body>
+</html>

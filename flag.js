@@ -1,140 +1,141 @@
 /* ==========================================================================
    PERJUANGAN — flag.js
-   Cloth-like Indonesian flag animation on a Canvas 2D mesh grid.
-   Approach: per-column sine displacement scaled by distance-from-pole,
-   plus a slight horizontal foreshortening per column to fake depth, plus
-   per-quad fold shading derived from local slope, plus a soft blurred
-   shadow and a tiny whole-flag sway. Loops indefinitely at ~60fps.
+   Cloth Red-White flag (matches entrance reference look).
+   Official ratio 3:2 · pinned at pole · free edge waves · solemn wind.
    ========================================================================== */
 
 window.PJ = window.PJ || {};
 
-PJ.FlagCloth = function (canvas, opts) {
-  opts = opts || {};
-  const ctx = canvas.getContext("2d");
+PJ.FlagCloth = function (canvas) {
+  const ctx = canvas.getContext("2d", { alpha: true });
 
-  let dpr = Math.min(window.devicePixelRatio || 1, 2);
-  let cols, rows;
-  let W, H; // flag logical size (css px)
-  let running = true;
+  let dpr = 1;
+  let cols = 14;
+  let rows = 10;
+  let W = 360;
+  let H = 240;
+  let viewW = 480;
+  let viewH = 360;
+  let running = false;
   let rafId = null;
-  let startTime = performance.now();
+  let startTime = 0;
 
-  // Colors (warm, not pure white — matches the design token system)
-  const RED = { r: 200, g: 16, b: 46 }; // #C8102E
-  const WHITE = { r: 245, g: 241, b: 232 }; // #F5F1E8
-
-  function isMobile() {
-    return window.innerWidth < 720;
-  }
+  const RED = { r: 200, g: 16, b: 46 };
+  const WHITE = { r: 245, g: 241, b: 232 };
 
   function configure() {
-    const rect = canvas.parentElement.getBoundingClientRect();
     dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(rect.width * dpr);
-    canvas.height = Math.round(rect.height * dpr);
-    canvas.style.width = rect.width + "px";
-    canvas.style.height = rect.height + "px";
+    const parent = canvas.parentElement;
+
+    if (parent) {
+      parent.style.removeProperty("width");
+      parent.style.removeProperty("height");
+    }
+
+    let pw = 0;
+    let ph = 0;
+    if (parent) {
+      const rect = parent.getBoundingClientRect();
+      pw = rect.width;
+      ph = rect.height;
+    }
+    if (pw < 40 || ph < 40) {
+      pw = Math.min(window.innerWidth * 0.7, 520);
+      ph = pw * 0.75;
+    }
+
+    viewW = pw;
+    viewH = ph;
+
+    canvas.width = Math.max(1, Math.round(pw * dpr));
+    canvas.height = Math.max(1, Math.round(ph * dpr));
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Flag sizing: keep a classic 3:2 ratio, scaled to fit within the panel
-    const maxW = Math.min(rect.width * 0.62, 560);
-    W = maxW;
-    H = maxW * (2 / 3);
+    // Fabric size: fill most of the box, keep 3:2
+    const maxW = Math.min(pw * 0.82, ph * 0.82 * 1.5, 480);
+    W = Math.max(160, maxW);
+    H = W * (2 / 3);
 
-    cols = isMobile() ? 10 : 16;
-    rows = isMobile() ? 6 : 10;
+    cols = window.innerWidth < 720 ? 12 : 14;
+    rows = 10;
   }
 
   function shade(base, factor) {
-    // factor in roughly [-1, 1]; positive = lighter (crest), negative = darker (trough)
     const f = Math.max(-1, Math.min(1, factor));
     const mix = f >= 0 ? 255 : 0;
-    const amt = Math.abs(f) * (f >= 0 ? 0.28 : 0.35);
-    const r = Math.round(base.r + (mix - base.r) * amt);
-    const g = Math.round(base.g + (mix - base.g) * amt);
-    const b = Math.round(base.b + (mix - base.b) * amt);
-    return `rgb(${r},${g},${b})`;
+    const amt = Math.abs(f) * (f >= 0 ? 0.22 : 0.3);
+    return (
+      "rgb(" +
+      Math.round(base.r + (mix - base.r) * amt) +
+      "," +
+      Math.round(base.g + (mix - base.g) * amt) +
+      "," +
+      Math.round(base.b + (mix - base.b) * amt) +
+      ")"
+    );
   }
 
   function render(now) {
     if (!running) return;
-    const t = (now - startTime) / 1000;
+    const t = ((now || performance.now()) - startTime) / 1000;
 
-    const rect = canvas.parentElement.getBoundingClientRect();
-    ctx.clearRect(0, 0, rect.width, rect.height);
+    ctx.clearRect(0, 0, viewW, viewH);
 
-    // Anchor: pole is pinned at this point, flag hangs/extends to the right
-    const anchorX = rect.width / 2 - W / 2;
-
-    // Whole-flag sway (1–3 degrees) around the pole line
-    const swayDeg = 1.6 * Math.sin(t * 0.22);
-    const swayRad = (swayDeg * Math.PI) / 180;
+    // Centered like the reference shot
+    const anchorX = (viewW - W) * 0.5 + 8;
+    const anchorY = (viewH - H) * 0.42;
+    const sway = Math.sin(t * 0.5) * 3;
 
     ctx.save();
-    ctx.translate(anchorX, rect.height / 2);
-    ctx.rotate(swayRad);
-    ctx.translate(0, -H / 2);
+    ctx.translate(anchorX + sway * 0.1, anchorY);
 
-    // --- Soft shadow behind the flag ---
+    // Shadow
     ctx.save();
-    ctx.filter = "blur(18px)";
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.translate(10, H * 0.15);
+    ctx.fillStyle = "rgba(0,0,0,0.32)";
     ctx.beginPath();
-    ctx.ellipse(W * 0.42, H * 0.55, W * 0.46, H * 0.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(W * 0.45, H * 0.5, W * 0.38, H * 0.14, 0.05, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 
-    // --- Precompute per-column y-offset + x-foreshorten ---
-    const colOffset = new Array(cols + 1);
-    const colScale = new Array(cols + 1);
-    const freq1 = 0.55,
-      speed1 = 1.9,
-      amp1 = 0.11 * H;
-    const freq2 = 1.35,
-      speed2 = 3.1,
-      amp2 = 0.045 * H;
-
+    // Wave — medium solemn wind
+    const amp1 = H * 0.048;
+    const amp2 = H * 0.022;
+    const colOffset = [];
+    const colScale = [];
     for (let i = 0; i <= cols; i++) {
-      const distFactor = Math.pow(i / cols, 1.4); // 0 at pole, 1 at free edge
-      const phase1 = i * freq1 - t * speed1;
-      const phase2 = i * freq2 - t * speed2 + 1.2;
-      const w1 = Math.sin(phase1) * amp1;
-      const w2 = Math.sin(phase2) * amp2;
-      colOffset[i] = (w1 + w2) * distFactor;
-      colScale[i] = 1 - 0.06 * distFactor * (1 - Math.cos(phase1)) * 0.5;
+      const dist = i / cols;
+      const phase1 = i * 0.5 - t * 1.65;
+      const phase2 = i * 1.1 - t * 2.4 + 1.0;
+      colOffset[i] = (Math.sin(phase1) * amp1 + Math.sin(phase2) * amp2) * dist;
+      colScale[i] = 1 - 0.035 * dist * (1 - Math.cos(phase1)) * 0.5;
     }
 
-    // --- Build vertex grid ---
     const verts = [];
     for (let j = 0; j <= rows; j++) {
       const row = [];
       for (let i = 0; i <= cols; i++) {
-        const baseX = (i / cols) * W * colScale[i];
-        const baseY = (j / rows) * H;
-        row.push({ x: baseX, y: baseY + colOffset[i] });
+        row.push({
+          x: (i / cols) * W * colScale[i],
+          y: (j / rows) * H + colOffset[i],
+        });
       }
       verts.push(row);
     }
 
-    // --- Draw quads with fold shading ---
+    const half = rows / 2;
     for (let j = 0; j < rows; j++) {
       for (let i = 0; i < cols; i++) {
         const p0 = verts[j][i];
         const p1 = verts[j][i + 1];
         const p2 = verts[j + 1][i + 1];
         const p3 = verts[j + 1][i];
-
-        const isRed = j < rows / 2;
-        const base = isRed ? RED : WHITE;
-
-        // Local slope from neighboring column offsets → fake fold lighting.
-        // Normalized against the wave amplitudes so shading stays a soft
-        // gradient rather than clipping to full light/dark on every quad.
-        const slope = (colOffset[Math.min(i + 1, cols)] - colOffset[i]) / (amp1 + amp2);
-        const fill = shade(base, -slope * 0.8);
-
-        ctx.fillStyle = fill;
+        const base = j < half ? RED : WHITE;
+        const slope =
+          (colOffset[Math.min(i + 1, cols)] - colOffset[i]) / (amp1 + amp2 + 0.001);
+        ctx.fillStyle = shade(base, -slope * 0.75);
         ctx.beginPath();
         ctx.moveTo(p0.x, p0.y);
         ctx.lineTo(p1.x, p1.y);
@@ -145,28 +146,36 @@ PJ.FlagCloth = function (canvas, opts) {
       }
     }
 
-    // --- Pole ---
-    ctx.fillStyle = "#8a6a2f";
-    ctx.fillRect(-6, -H * 0.12, 6, H * 1.24);
+    // Pole + finial (gold)
+    ctx.fillStyle = "#9a7a3a";
+    ctx.fillRect(-5, -H * 0.08, 5, H * 1.16);
     ctx.fillStyle = "#e8c468";
     ctx.beginPath();
-    ctx.arc(-3, -H * 0.12, 7, 0, Math.PI * 2);
+    ctx.arc(-2.5, -H * 0.08, 6, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
-
     rafId = requestAnimationFrame(render);
   }
 
   function start() {
+    if (running) return;
     running = true;
     startTime = performance.now();
+    configure();
+    requestAnimationFrame(() => {
+      configure();
+      requestAnimationFrame(() => configure());
+    });
+    setTimeout(() => configure(), 200);
+    setTimeout(() => configure(), 600);
     rafId = requestAnimationFrame(render);
   }
 
   function stop() {
     running = false;
     if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
   }
 
   configure();
