@@ -167,11 +167,11 @@
   function initEntrance1() {
     const scrollRoot = $("entranceScroll");
     const sticky = scrollRoot && scrollRoot.querySelector(".cinema-entrance__sticky");
-    const hero = $("cinemaHero");
     const credits = $("cinemaCredits");
     const hint = $("e1Hint");
     const flagWrap = $("flagWrap");
     const textBlock = $("e1Text");
+    const cta = $("ctaContinue");
 
     document.documentElement.classList.add("is-cinema-entrance");
     document.body.classList.add("is-cinema-entrance");
@@ -198,7 +198,7 @@
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let smooth = 0;
     let target = 0;
-    let rafPending = false;
+    let creditsRevealed = false;
 
     function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
     function lerp(a, b, t) { return a + (b - a) * t; }
@@ -207,78 +207,128 @@
       return x * x * (3 - 2 * x);
     }
 
-    function getDist() {
-      if (!scrollRoot) return 0;
-      const max = Math.max(1, scrollRoot.offsetHeight - window.innerHeight);
-      return clamp(-scrollRoot.getBoundingClientRect().top, 0, max);
+    function scrollMax() {
+      if (!scrollRoot) return 1;
+      return Math.max(1, scrollRoot.offsetHeight - window.innerHeight);
     }
 
-    function tick() {
-      rafPending = false;
-      if (cinemaDone) return;
-      target = getDist();
-      if (reduceMotion.matches) smooth = target;
-      else smooth = lerp(smooth, target, 0.16);
-      if (Math.abs(smooth - target) < 0.5) smooth = target;
+    function getDist() {
+      if (!scrollRoot) return 0;
+      // Prefer window scrollY while body is the scroll container
+      const byWindow = window.scrollY || document.documentElement.scrollTop || 0;
+      const byRect = -scrollRoot.getBoundingClientRect().top;
+      return clamp(Math.max(byWindow, byRect), 0, scrollMax());
+    }
 
-      const max = Math.max(1, (scrollRoot ? scrollRoot.offsetHeight : 1400) - window.innerHeight);
-      const p = clamp(smooth / max, 0, 1);
-
-      // Phase 0-0.45: hero holds, then fades up
-      const heroExit = smoothstep(0.28, 0.62, p);
-      // Phase 0.45-1: credits fade in
-      const creditsIn = smoothstep(0.48, 0.78, p);
-      const hintFade = smoothstep(0.08, 0.35, p);
+    function applyProgress(p) {
+      // Easier thresholds so credits appear mid-scroll
+      const heroExit = smoothstep(0.18, 0.55, p);
+      const creditsIn = smoothstep(0.35, 0.62, p);
+      const hintFade = smoothstep(0.05, 0.28, p);
 
       const root = document.documentElement;
       root.style.setProperty("--cin-hero-opacity", String(1 - heroExit));
-      root.style.setProperty("--cin-hero-y", (heroExit * -80).toFixed(1) + "px");
-      root.style.setProperty("--cin-hero-scale", String(1 - heroExit * 0.12));
+      root.style.setProperty("--cin-hero-y", (heroExit * -90).toFixed(1) + "px");
+      root.style.setProperty("--cin-hero-scale", String(1 - heroExit * 0.14));
       root.style.setProperty("--cin-credits-opacity", String(creditsIn));
-      root.style.setProperty("--cin-credits-y", ((1 - creditsIn) * 48).toFixed(1) + "px");
-      root.style.setProperty("--cin-hint-opacity", String(0.75 * (1 - hintFade)));
-      root.style.setProperty("--cin-hint-y", (hintFade * 24).toFixed(1) + "px");
+      root.style.setProperty("--cin-credits-y", ((1 - creditsIn) * 40).toFixed(1) + "px");
+      root.style.setProperty("--cin-hint-opacity", String(0.8 * (1 - hintFade)));
+      root.style.setProperty("--cin-hint-y", (hintFade * 20).toFixed(1) + "px");
 
+      // Hard fallback so credits never stay invisible due to CSS var issues
       if (credits) {
-        if (creditsIn > 0.55) credits.classList.add("is-interactive");
-        else credits.classList.remove("is-interactive");
-      }
-
-      if (Math.abs(smooth - target) > 0.5) {
-        if (!rafPending) {
-          rafPending = true;
-          cinemaRaf = requestAnimationFrame(tick);
+        credits.style.opacity = String(creditsIn);
+        credits.style.transform = "translate3d(0, " + ((1 - creditsIn) * 40).toFixed(1) + "px, 0)";
+        if (creditsIn > 0.4) {
+          credits.classList.add("is-interactive");
+          creditsRevealed = true;
+        } else {
+          credits.classList.remove("is-interactive");
         }
+      }
+      const heroEl = $("cinemaHero");
+      if (heroEl) {
+        heroEl.style.opacity = String(1 - heroExit);
+        heroEl.style.transform =
+          "translate3d(0, " + (heroExit * -90).toFixed(1) + "px, 0) scale(" + (1 - heroExit * 0.14) + ")";
       }
     }
 
-    function requestTick() {
-      if (rafPending || cinemaDone) return;
-      rafPending = true;
+    function tick() {
+      if (cinemaDone) return;
+      target = getDist();
+      if (reduceMotion.matches) smooth = target;
+      else smooth = lerp(smooth, target, 0.18);
+      if (Math.abs(smooth - target) < 0.4) smooth = target;
+
+      const p = clamp(smooth / scrollMax(), 0, 1);
+      applyProgress(p);
+
       cinemaRaf = requestAnimationFrame(tick);
     }
 
-    window.addEventListener("scroll", requestTick, { passive: true });
+    // Continuous RAF while cinema is active (more reliable than scroll-only)
+    if (cinemaRaf) cancelAnimationFrame(cinemaRaf);
+    cinemaRaf = requestAnimationFrame(tick);
+
     window.addEventListener("resize", () => {
       if (flagInstance) flagInstance.configure();
-      requestTick();
     });
-    requestTick();
 
-    // Optional: Space still jumps toward credits
+    function goToCredits() {
+      const max = scrollMax();
+      window.scrollTo({
+        top: max * 0.9,
+        behavior: reduceMotion.matches ? "auto" : "smooth",
+      });
+      // Force credits visible quickly even before scroll settles
+      applyProgress(0.95);
+      creditsRevealed = true;
+      if (credits) credits.classList.add("is-interactive");
+    }
+
+    function advanceFromInput(e) {
+      if (cinemaDone) return;
+      if (e) {
+        // Don't steal typing in language search
+        const t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+      }
+      const p = clamp(getDist() / scrollMax(), 0, 1);
+      if (!creditsRevealed && p < 0.55) {
+        if (e && e.preventDefault) e.preventDefault();
+        goToCredits();
+        return;
+      }
+      // Already on credits → enter mode select
+      if (e && e.preventDefault) e.preventDefault();
+      window.__pjGoMode(e);
+    }
+
     document.addEventListener("keydown", (e) => {
       if (cinemaDone) return;
-      if (e.key === " " || e.key === "Enter") {
-        if (!scrollRoot) return;
-        const max = Math.max(1, scrollRoot.offsetHeight - window.innerHeight);
-        if (getDist() < max * 0.7) {
-          e.preventDefault();
-          window.scrollTo({ top: max * 0.85, behavior: reduceMotion.matches ? "auto" : "smooth" });
-        }
-      }
+      if (e.key === " " || e.key === "Enter") advanceFromInput(e);
     });
 
-    console.log("[PERJUANGAN] cinematic entrance ready — scroll to continue");
+    // Click empty stage (not on buttons/inputs) advances
+    if (sticky) {
+      sticky.addEventListener("click", (e) => {
+        if (cinemaDone) return;
+        if (e.target.closest("button, a, input, .lang-search, .btn")) return;
+        advanceFromInput(e);
+      });
+    }
+
+    if (cta) {
+      cta.onclick = window.__pjGoMode;
+      cta.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.__pjGoMode(e);
+      });
+    }
+
+    console.log("[PERJUANGAN] cinematic entrance ready — scroll / space / click");
   }
 
   function finishCinemaEntrance() {

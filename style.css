@@ -2629,6 +2629,10 @@ body:not(.is-cinema-entrance) .cinema-entrance {
   opacity: var(--cin-credits-opacity, 0);
   transform: translate3d(0, var(--cin-credits-y, 48px), 0);
   pointer-events: none;
+  visibility: visible;
+}
+.cinema-layer--hero {
+  visibility: visible;
 }
 /* Only become interactive when mostly visible */
 .cinema-layer--credits.is-interactive {
@@ -2695,4 +2699,11 @@ body:not(.is-cinema-entrance) .cinema-entrance {
 
 @media (prefers-reduced-motion: reduce) {
   .cinema-layer { transition: none; }
+}
+
+html.is-cinema-entrance, body.is-cinema-entrance {
+  overflow-y: scroll !important;
+}
+.cinema-layer--credits .credits {
+  pointer-events: inherit;
 }
