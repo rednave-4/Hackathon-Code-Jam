@@ -2542,226 +2542,243 @@ button {
 
 
 
+
 /* ==========================================================================
-   Cinematic entrance — fixed stage, wheel/space progress (no document scroll)
+   ENTRANCE 3D — long scroll page (flag → team)
    ========================================================================== */
-.cinema-entrance {
-  position: fixed;
-  inset: 0;
+
+/* Enable page scroll only while 3D entrance is active */
+html.is-c3d,
+body.is-c3d {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  height: auto !important;
+  overscroll-behavior: none;
+}
+body.is-c3d #app {
+  height: auto !important;
+  min-height: 100vh;
+  overflow: visible !important;
+}
+body:not(.is-c3d) .cinema-3d {
+  display: none !important;
+}
+
+.cinema-3d {
+  position: relative;
+  width: 100%;
+  /* long page — scroll distance drives 3D camera */
+  height: 280vh;
   z-index: 50;
-  display: block;
-  opacity: 1;
-  visibility: visible;
+  display: block !important;
   pointer-events: auto;
 }
-.cinema-entrance.is-done {
+.cinema-3d.is-done {
   display: none !important;
+  height: 0 !important;
   pointer-events: none !important;
-  visibility: hidden !important;
 }
 
-.cinema-stage {
-  position: absolute;
-  inset: 0;
+.cinema-3d__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(120% 100% at 50% 28%, #15110e 0%, #0a0908 58%, #000 100%);
+  pointer-events: auto;
 }
 
-.cinema-bg {
+.cinema-3d__scene {
   position: absolute;
   inset: 0;
+  perspective: 1200px;
+  perspective-origin: 50% 45%;
+  background: radial-gradient(120% 100% at 50% 30%, #15110e 0%, #0a0908 60%, #000 100%);
+  overflow: hidden;
+}
+
+.cinema-3d__world {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.cinema-3d__atmos {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
   pointer-events: none;
   z-index: 0;
 }
-.cinema-stage .e1-glow--a {
+.c3d-glow {
   position: absolute;
+  border-radius: 50%;
+  filter: blur(50px);
+  pointer-events: none;
+}
+.c3d-glow--a {
   width: min(70vw, 520px);
   height: min(70vw, 520px);
   left: 50%;
-  top: 38%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(200, 16, 46, 0.2) 0%, transparent 70%);
-  filter: blur(8px);
-  opacity: 0.9;
+  top: 40%;
+  transform: translate3d(-50%, -50%, -80px);
+  background: radial-gradient(circle, rgba(200, 16, 46, 0.22) 0%, transparent 70%);
 }
-.cinema-stage .e1-glow--b {
-  position: absolute;
-  width: min(48vw, 340px);
-  height: min(48vw, 340px);
+.c3d-glow--b {
+  width: min(46vw, 320px);
+  height: min(46vw, 320px);
   left: 50%;
-  top: 42%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(234, 200, 115, 0.12) 0%, transparent 70%);
-  filter: blur(10px);
-  animation: e1GlowPulse 5s ease-in-out infinite;
+  top: 44%;
+  transform: translate3d(-50%, -50%, -40px);
+  background: radial-gradient(circle, rgba(234, 200, 115, 0.14) 0%, transparent 70%);
 }
-.cinema-rays {
+.c3d-floor {
   position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 40% 55% at 50% 18%, rgba(243, 238, 225, 0.04) 0%, transparent 70%),
-    radial-gradient(ellipse 22% 40% at 30% 65%, rgba(200, 16, 46, 0.05) 0%, transparent 70%);
+  left: 50%;
+  bottom: 6%;
+  width: min(90vw, 640px);
+  height: 26%;
+  transform: translateX(-50%) rotateX(68deg) translateZ(-120px);
+  transform-origin: center bottom;
+  background: radial-gradient(ellipse at 50% 0%, rgba(201, 162, 39, 0.1) 0%, transparent 70%);
   pointer-events: none;
 }
-.cinema-embers {
+
+.cinema-3d__panel {
   position: absolute;
   inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-.cinema-embers span {
-  position: absolute;
-  bottom: -5%;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: #eac873;
-  opacity: 0.45;
-  box-shadow: 0 0 6px rgba(234, 200, 115, 0.45);
-  animation: cinemaEmber linear infinite;
-}
-@keyframes cinemaEmber {
-  0% { transform: translateY(0) translateX(0); opacity: 0; }
-  15% { opacity: 0.55; }
-  100% { transform: translateY(-110vh) translateX(var(--dx, 0px)); opacity: 0; }
-}
-
-.cinema-stage .vignette {
-  z-index: 2;
-}
-
-.cinema-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: none;
-  will-change: opacity, transform;
-}
-.cinema-layer--hero {
-  z-index: 5;
-  pointer-events: none;
-}
-.cinema-layer--credits {
-  z-index: 6;
-  pointer-events: none;
-  opacity: 0;
-}
-.cinema-layer--credits.is-interactive {
-  pointer-events: auto;
+  transform-style: preserve-3d;
+  will-change: transform, opacity, filter;
+  padding: 2rem 1rem 4rem;
 }
 
-.cinema-entrance .flag-wrap {
-  position: relative;
-  flex-shrink: 0;
-  width: min(70vw, 480px);
-  height: min(50vw, 340px);
-  max-width: 480px;
-  opacity: 1 !important;
-  transform: none !important;
-  margin-bottom: 0.2rem;
-  filter: drop-shadow(0 28px 40px rgba(0, 0, 0, 0.55));
+/* FLAG panel — starts at z=0 */
+.cinema-3d__panel--flag {
+  z-index: 3;
   pointer-events: none;
 }
-.cinema-entrance .flag-pedestal {
+.cinema-3d__panel--flag .flag-wrap {
+  position: relative;
+  width: min(68vw, 460px);
+  height: min(48vw, 330px);
+  max-width: 460px;
+  opacity: 1 !important;
+  transform: translateZ(40px);
+  filter: drop-shadow(0 28px 42px rgba(0, 0, 0, 0.55));
+  margin-bottom: 0.15rem;
+}
+.cinema-3d__panel--flag .flag-pedestal {
   position: absolute;
   left: 50%;
-  bottom: -4%;
+  bottom: -5%;
   width: 55%;
   height: 14%;
   transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%);
   border-radius: 50%;
 }
-.cinema-entrance #flagCanvas {
+.cinema-3d__panel--flag #flagCanvas {
   position: absolute;
   inset: 0;
   width: 100% !important;
   height: 100% !important;
   display: block;
 }
-
-.cinema-entrance .e1-text {
-  margin-top: 1.8rem;
+.cinema-3d__panel--flag .e1-text {
+  margin-top: 1.6rem;
   text-align: center;
   opacity: 1 !important;
-  transform: none !important;
-  position: relative;
-  z-index: 4;
+  transform: translateZ(60px);
+  padding: 0 1rem;
   pointer-events: none;
-  padding: 0 1.25rem;
 }
 
-.cinema-layer--credits .lang-search {
+/* TEAM panel — deeper, comes forward on scroll */
+.cinema-3d__panel--team {
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+}
+.cinema-3d__panel--team.is-live {
+  pointer-events: auto;
+}
+.cinema-3d__panel--team .lang-search {
   position: absolute;
   top: 18px;
   right: 18px;
-  z-index: 12;
+  z-index: 10;
   pointer-events: auto;
 }
-.cinema-layer--credits .credits {
-  position: relative;
-  z-index: 8;
+.cinema-3d__panel--team .credits {
   pointer-events: auto;
   text-align: center;
   max-width: 560px;
   padding: 2rem 1.5rem;
+  transform: translateZ(30px);
 }
-.cinema-entrance #ctaContinue {
+.cinema-3d #ctaContinue {
   pointer-events: auto !important;
   cursor: pointer !important;
+  z-index: 12 !important;
   position: relative;
-  z-index: 15 !important;
 }
 
-.cinema-progress {
+.cinema-3d .vignette {
+  z-index: 6;
+  pointer-events: none;
+}
+
+.cinema-3d__hud {
   position: absolute;
-  left: 50%;
-  bottom: 64px;
-  transform: translateX(-50%);
-  width: min(180px, 40vw);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 8;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 26px;
+}
+.cinema-3d__bar {
+  width: min(200px, 42vw);
   height: 2px;
   background: rgba(243, 238, 225, 0.12);
   border-radius: 999px;
-  z-index: 8;
   overflow: hidden;
-  pointer-events: none;
 }
-.cinema-progress span {
+.cinema-3d__bar span {
   display: block;
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, #c8102e, #eac873);
-  border-radius: 999px;
-  transition: width 0.08s linear;
 }
-
-.cinema-entrance .e1-hint {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 28px;
+.cinema-3d .e1-hint {
+  position: static;
   margin: 0;
-  text-align: center;
-  z-index: 9;
-  pointer-events: none;
+  opacity: 0.7;
   font-family: var(--font-mono);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
-  color: rgba(243, 238, 225, 0.45);
+  color: rgba(243, 238, 225, 0.5);
+  text-align: center;
+  animation: none;
 }
 
 @media (max-width: 640px) {
-  .cinema-entrance .flag-wrap {
-    width: min(78vw, 320px);
+  .cinema-3d__panel--flag .flag-wrap {
+    width: min(80vw, 320px);
     height: min(56vw, 240px);
   }
-  .cinema-entrance .e1-text { margin-top: 1.2rem; }
+  .cinema-3d__panel--flag .e1-text { margin-top: 1.1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cinema-3d__world,
+  .cinema-3d__panel { transition: none !important; }
 }

@@ -165,44 +165,31 @@
 
   /* ---------- Entrance 1 ---------- */
   function initEntrance1() {
-    const root = $("entranceScroll");
-    const hero = $("cinemaHero");
-    const credits = $("cinemaCredits");
+    const scroller = $("entranceScroll");
+    const world = $("cinemaWorld");
+    const panelFlag = $("panelFlag");
+    const panelTeam = $("panelTeam");
+    const fill = $("cinemaProgressFill");
     const hint = $("e1Hint");
+    const cta = $("ctaContinue");
     const flagWrap = $("flagWrap");
     const textBlock = $("e1Text");
-    const fill = $("cinemaProgressFill");
-    const cta = $("ctaContinue");
-    const embers = $("cinemaEmbers");
 
-    if (!root) {
+    if (!scroller) {
       console.warn("[PERJUANGAN] entranceScroll missing");
       return;
     }
 
-    // No document scroll — fixed overlay
-    document.documentElement.classList.remove("is-cinema-entrance");
-    document.body.classList.remove("is-cinema-entrance");
-    root.classList.remove("is-done");
-    root.style.display = "";
+    cinemaDone = false;
+    document.documentElement.classList.add("is-c3d");
+    document.body.classList.add("is-c3d");
+    scroller.classList.remove("is-done");
+    scroller.style.display = "";
 
     try {
       flagInstance = PJ.FlagCloth($("flagCanvas"));
     } catch (err) {
       console.warn("[PERJUANGAN] flag failed:", err);
-    }
-
-    // Embers
-    if (embers && !embers.childElementCount) {
-      for (let i = 0; i < 14; i++) {
-        const s = document.createElement("span");
-        s.style.left = Math.random() * 100 + "%";
-        s.style.setProperty("--dx", (Math.random() * 40 - 20).toFixed(1) + "px");
-        s.style.animationDuration = 10 + Math.random() * 12 + "s";
-        s.style.animationDelay = -Math.random() * 14 + "s";
-        s.style.width = s.style.height = 2 + Math.random() * 2.5 + "px";
-        embers.appendChild(s);
-      }
     }
 
     requestAnimationFrame(() => {
@@ -217,10 +204,9 @@
     setTimeout(() => flagInstance && flagInstance.configure(), 250);
     setTimeout(() => flagInstance && flagInstance.configure(), 700);
 
-    let progress = 0; // 0..1
-    let target = 0;
-    let revealedCredits = false;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let smooth = 0;
+    let target = 0;
 
     function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
     function lerp(a, b, t) { return a + (b - a) * t; }
@@ -229,105 +215,96 @@
       return x * x * (3 - 2 * x);
     }
 
-    function paint(p) {
-      // Phase A: hero full → fades (0 → 0.55)
-      // Phase B: credits in (0.4 → 0.85)
-      const heroOut = smoothstep(0.22, 0.58, p);
-      const credIn = smoothstep(0.4, 0.72, p);
-      const hintDim = smoothstep(0.08, 0.35, p);
+    function maxScroll() {
+      return Math.max(1, scroller.offsetHeight - window.innerHeight);
+    }
 
-      if (hero) {
-        hero.style.opacity = String(1 - heroOut);
-        hero.style.transform =
-          "translateY(" + (heroOut * -70).toFixed(1) + "px) scale(" + (1 - heroOut * 0.1).toFixed(3) + ")";
+    function readTarget() {
+      // Distance scrolled through the long entrance section
+      const top = scroller.getBoundingClientRect().top;
+      // When section top is 0 at start, progress from -top
+      return clamp(-top, 0, maxScroll());
+    }
+
+    function paint(p) {
+      // p: 0..1 through the long page
+      // Camera moves forward in Z; flag exits up/back; team comes from depth
+      const camZ = p * 280;
+      const camY = p * -30;
+      const rotX = p * 4; // subtle tilt
+
+      if (world) {
+        world.style.transform =
+          "translate3d(0, " + camY.toFixed(2) + "px, " + camZ.toFixed(2) + "px) rotateX(" + rotX.toFixed(3) + "deg)";
       }
-      if (credits) {
-        credits.style.opacity = String(credIn);
-        credits.style.transform =
-          "translateY(" + ((1 - credIn) * 36).toFixed(1) + "px)";
-        if (credIn > 0.45) {
-          credits.classList.add("is-interactive");
-          revealedCredits = true;
-        } else {
-          credits.classList.remove("is-interactive");
-        }
+
+      // FLAG: visible early, then flies back + fades
+      const flagOut = smoothstep(0.2, 0.55, p);
+      if (panelFlag) {
+        const z = 0 - flagOut * 220;
+        const y = flagOut * -80;
+        const sc = 1 - flagOut * 0.25;
+        panelFlag.style.opacity = String(1 - flagOut);
+        panelFlag.style.transform =
+          "translate3d(0, " + y.toFixed(1) + "px, " + z.toFixed(1) + "px) scale(" + sc.toFixed(3) + ")";
+        panelFlag.style.filter = flagOut > 0.01 ? "blur(" + (flagOut * 6).toFixed(2) + "px)" : "none";
       }
-      if (hint) {
-        // Hint text changes near the end
-        hint.style.opacity = String(0.75 * (1 - smoothstep(0.75, 0.92, p)) * (1 - hintDim * 0.35) + 0.25 * credIn);
+
+      // TEAM: starts deep, comes to camera
+      const teamIn = smoothstep(0.38, 0.72, p);
+      if (panelTeam) {
+        const z = -320 + teamIn * 320;
+        const y = (1 - teamIn) * 40;
+        panelTeam.style.opacity = String(teamIn);
+        panelTeam.style.transform =
+          "translate3d(0, " + y.toFixed(1) + "px, " + z.toFixed(1) + "px) scale(" + (0.88 + teamIn * 0.12).toFixed(3) + ")";
+        panelTeam.style.filter = teamIn < 0.95 ? "blur(" + ((1 - teamIn) * 8).toFixed(2) + "px)" : "none";
+        if (teamIn > 0.55) panelTeam.classList.add("is-live");
+        else panelTeam.classList.remove("is-live");
       }
+
       if (fill) fill.style.width = (p * 100).toFixed(1) + "%";
+      if (hint) {
+        const hide = smoothstep(0.65, 0.85, p);
+        hint.style.opacity = String(0.7 * (1 - hide));
+      }
     }
 
     function tick() {
       if (cinemaDone) return;
-      if (reduceMotion.matches) progress = target;
-      else progress = lerp(progress, target, 0.14);
-      if (Math.abs(progress - target) < 0.001) progress = target;
-      paint(progress);
+      target = readTarget() / maxScroll();
+      if (reduceMotion.matches) smooth = target;
+      else smooth = lerp(smooth, target, 0.16);
+      if (Math.abs(smooth - target) < 0.001) smooth = target;
+      paint(clamp(smooth, 0, 1));
       cinemaRaf = requestAnimationFrame(tick);
     }
     if (cinemaRaf) cancelAnimationFrame(cinemaRaf);
     cinemaRaf = requestAnimationFrame(tick);
 
-    function nudge(delta) {
-      target = clamp(target + delta, 0, 1);
-    }
-
-    function onWheel(e) {
-      if (cinemaDone) return;
-      e.preventDefault();
-      const dy = e.deltaY;
-      nudge(dy > 0 ? 0.065 : -0.05);
-    }
-
-    let touchY = null;
-    function onTouchStart(e) {
-      if (cinemaDone) return;
-      touchY = e.touches[0].clientY;
-    }
-    function onTouchMove(e) {
-      if (cinemaDone || touchY == null) return;
-      const y = e.touches[0].clientY;
-      const dy = touchY - y;
-      touchY = y;
-      if (Math.abs(dy) > 2) {
-        e.preventDefault();
-        nudge(dy > 0 ? 0.04 : -0.03);
-      }
-    }
-    function onTouchEnd() { touchY = null; }
-
-    function advanceStep(e) {
+    // Space / click: jump to team section, then to mode select
+    function advance(e) {
       if (cinemaDone) return;
       const t = e && e.target;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.closest(".lang-search"))) return;
       if (e && e.preventDefault) e.preventDefault();
-
-      if (progress < 0.7 && target < 0.7) {
-        // Jump to credits
-        target = 0.88;
-        revealedCredits = true;
+      const p = readTarget() / maxScroll();
+      if (p < 0.65) {
+        const y = scroller.offsetTop + maxScroll() * 0.82;
+        window.scrollTo({ top: y, behavior: reduceMotion.matches ? "auto" : "smooth" });
         return;
       }
-      // Already on credits → dashboard
       window.__pjGoMode(e);
     }
 
-    root.addEventListener("wheel", onWheel, { passive: false });
-    root.addEventListener("touchstart", onTouchStart, { passive: true });
-    root.addEventListener("touchmove", onTouchMove, { passive: false });
-    root.addEventListener("touchend", onTouchEnd);
     document.addEventListener("keydown", (e) => {
       if (cinemaDone) return;
-      if (e.key === " " || e.key === "Enter") advanceStep(e);
-      if (e.key === "ArrowDown") { e.preventDefault(); nudge(0.08); }
-      if (e.key === "ArrowUp") { e.preventDefault(); nudge(-0.06); }
+      if (e.key === " " || e.key === "Enter") advance(e);
     });
-    root.addEventListener("click", (e) => {
+    scroller.addEventListener("click", (e) => {
       if (cinemaDone) return;
       if (e.target.closest("#ctaContinue, button, a, input, .lang-search")) return;
-      advanceStep(e);
+      advance(e);
     });
 
     if (cta) {
@@ -339,8 +316,10 @@
       });
     }
 
+    // Start at top of entrance
+    window.scrollTo(0, scroller.offsetTop || 0);
     paint(0);
-    console.log("[PERJUANGAN] cinematic entrance ready — wheel / space / click");
+    console.log("[PERJUANGAN] 3D entrance ready — scroll the long page");
   }
 
   function finishCinemaEntrance() {
@@ -350,12 +329,12 @@
       cancelAnimationFrame(cinemaRaf);
       cinemaRaf = null;
     }
-    document.documentElement.classList.remove("is-cinema-entrance");
-    document.body.classList.remove("is-cinema-entrance");
-    const scrollRoot = $("entranceScroll");
-    if (scrollRoot) {
-      scrollRoot.classList.add("is-done");
-      scrollRoot.style.display = "none";
+    document.documentElement.classList.remove("is-c3d");
+    document.body.classList.remove("is-c3d");
+    const scroller = $("entranceScroll");
+    if (scroller) {
+      scroller.classList.add("is-done");
+      scroller.style.display = "none";
     }
     if (flagInstance) {
       try { flagInstance.stop(); } catch (e) {}
