@@ -21,6 +21,8 @@
   let advancedFromE1 = false;
   let mapInitialized = false;
   let learnInitialized = false;
+  let cinemaDone = false;
+  let cinemaRaf = null;
 
   function hideAllScreens() {
     Object.values(screens).forEach((el) => {
@@ -163,12 +165,16 @@
 
   /* ---------- Entrance 1 ---------- */
   function initEntrance1() {
-    const bg = screens.entrance1;
+    const scrollRoot = $("entranceScroll");
+    const sticky = scrollRoot && scrollRoot.querySelector(".cinema-entrance__sticky");
+    const hero = $("cinemaHero");
+    const credits = $("cinemaCredits");
+    const hint = $("e1Hint");
     const flagWrap = $("flagWrap");
     const textBlock = $("e1Text");
-    const hint = $("e1Hint");
 
-    // Create flag instance early, but only start after screen is visible
+    document.body.classList.add("is-cinema-entrance");
+
     try {
       flagInstance = PJ.FlagCloth($("flagCanvas"));
     } catch (err) {
@@ -176,42 +182,116 @@
     }
 
     requestAnimationFrame(() => {
-      bg.classList.add("bg-in");
+      if (sticky) sticky.classList.add("bg-in");
       if (flagInstance) {
         flagInstance.configure();
         flagInstance.start();
       }
-    });
-    setTimeout(() => {
       if (flagWrap) flagWrap.classList.add("is-in");
-      if (flagInstance) flagInstance.configure();
-    }, 180);
-    setTimeout(() => {
-      if (flagInstance) flagInstance.configure();
-    }, 550);
-    setTimeout(() => {
       if (textBlock) textBlock.classList.add("is-in");
-    }, 900);
-    setTimeout(() => {
       if (hint) hint.classList.add("is-in");
-    }, 1500);
+    });
+    setTimeout(() => { if (flagInstance) flagInstance.configure(); }, 200);
+    setTimeout(() => { if (flagInstance) flagInstance.configure(); }, 600);
 
-    const advance = (e) => {
-      if (advancedFromE1) return;
-      if (e && e.type === "keydown") {
-        if (e.key !== " " && e.key !== "Enter" && e.code !== "Space") return;
-        e.preventDefault();
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let smooth = 0;
+    let target = 0;
+    let rafPending = false;
+
+    function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function smoothstep(e0, e1, v) {
+      const x = clamp((v - e0) / (e1 - e0), 0, 1);
+      return x * x * (3 - 2 * x);
+    }
+
+    function getDist() {
+      if (!scrollRoot) return 0;
+      const max = Math.max(1, scrollRoot.offsetHeight - window.innerHeight);
+      return clamp(-scrollRoot.getBoundingClientRect().top, 0, max);
+    }
+
+    function tick() {
+      rafPending = false;
+      if (cinemaDone) return;
+      target = getDist();
+      if (reduceMotion.matches) smooth = target;
+      else smooth = lerp(smooth, target, 0.16);
+      if (Math.abs(smooth - target) < 0.5) smooth = target;
+
+      const max = Math.max(1, (scrollRoot ? scrollRoot.offsetHeight : 1400) - window.innerHeight);
+      const p = clamp(smooth / max, 0, 1);
+
+      // Phase 0-0.45: hero holds, then fades up
+      const heroExit = smoothstep(0.28, 0.62, p);
+      // Phase 0.45-1: credits fade in
+      const creditsIn = smoothstep(0.48, 0.78, p);
+      const hintFade = smoothstep(0.08, 0.35, p);
+
+      const root = document.documentElement;
+      root.style.setProperty("--cin-hero-opacity", String(1 - heroExit));
+      root.style.setProperty("--cin-hero-y", (heroExit * -80).toFixed(1) + "px");
+      root.style.setProperty("--cin-hero-scale", String(1 - heroExit * 0.12));
+      root.style.setProperty("--cin-credits-opacity", String(creditsIn));
+      root.style.setProperty("--cin-credits-y", ((1 - creditsIn) * 48).toFixed(1) + "px");
+      root.style.setProperty("--cin-hint-opacity", String(0.75 * (1 - hintFade)));
+      root.style.setProperty("--cin-hint-y", (hintFade * 24).toFixed(1) + "px");
+
+      if (credits) {
+        if (creditsIn > 0.85) credits.classList.add("is-interactive");
+        else credits.classList.remove("is-interactive");
       }
-      advancedFromE1 = true;
-      if (flagInstance) flagInstance.stop();
-      goTo("entrance2");
-      applyI18nDOM();
-      console.log("[PERJUANGAN] → entrance2");
-    };
 
-    // Click anywhere on entrance1 section
-    screens.entrance1.addEventListener("click", advance);
-    document.addEventListener("keydown", advance);
+      if (Math.abs(smooth - target) > 0.5) {
+        if (!rafPending) {
+          rafPending = true;
+          cinemaRaf = requestAnimationFrame(tick);
+        }
+      }
+    }
+
+    function requestTick() {
+      if (rafPending || cinemaDone) return;
+      rafPending = true;
+      cinemaRaf = requestAnimationFrame(tick);
+    }
+
+    window.addEventListener("scroll", requestTick, { passive: true });
+    window.addEventListener("resize", () => {
+      if (flagInstance) flagInstance.configure();
+      requestTick();
+    });
+    requestTick();
+
+    // Optional: Space still jumps toward credits
+    document.addEventListener("keydown", (e) => {
+      if (cinemaDone) return;
+      if (e.key === " " || e.key === "Enter") {
+        if (!scrollRoot) return;
+        const max = Math.max(1, scrollRoot.offsetHeight - window.innerHeight);
+        if (getDist() < max * 0.7) {
+          e.preventDefault();
+          window.scrollTo({ top: max * 0.85, behavior: reduceMotion.matches ? "auto" : "smooth" });
+        }
+      }
+    });
+
+    console.log("[PERJUANGAN] cinematic entrance ready — scroll to continue");
+  }
+
+  function finishCinemaEntrance() {
+    if (cinemaDone) return;
+    cinemaDone = true;
+    document.body.classList.remove("is-cinema-entrance");
+    const scrollRoot = $("entranceScroll");
+    if (scrollRoot) {
+      scrollRoot.classList.add("is-done");
+    }
+    if (flagInstance) {
+      try { flagInstance.stop(); } catch (e) {}
+    }
+    window.scrollTo(0, 0);
   }
 
   /* ---------- Global navigation (also used by inline onclick) ---------- */
@@ -220,6 +300,7 @@
       e.preventDefault();
       e.stopPropagation();
     }
+    finishCinemaEntrance();
     goTo("modeSelect");
     applyI18nDOM();
     console.log("[PERJUANGAN] → mode select");
@@ -318,7 +399,15 @@
     if (PJ.AIGuide && typeof PJ.AIGuide.init === "function") {
       PJ.AIGuide.init();
     }
-    goTo("entrance1");
-    initEntrance1();
+    // Cinematic entrance owns the first screen via body scroll
+    const eScroll = $("entranceScroll");
+    if (eScroll) {
+      eScroll.hidden = false;
+      initEntrance1();
+    } else {
+      goTo("entrance1");
+      initEntrance1();
+    }
+    applyI18nDOM();
   });
 })();

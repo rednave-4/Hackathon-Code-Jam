@@ -2538,3 +2538,96 @@ button {
   outline: none;
   border-color: var(--gold);
 }
+
+
+/* ==========================================================================
+   Cinematic entrance scroll (e1 + e2 only)
+   ========================================================================== */
+.cinema-entrance {
+  position: relative;
+  height: calc(100vh + 1400px);
+  z-index: 30;
+}
+.cinema-entrance.is-done {
+  display: none !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  overflow: hidden;
+}
+.cinema-entrance__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 560px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(120% 100% at 50% 30%, var(--ink-2) 0%, var(--ink) 65%, #000 100%);
+}
+.cinema-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+.cinema-layer--hero {
+  z-index: 4;
+  opacity: var(--cin-hero-opacity, 1);
+  transform: translate3d(0, var(--cin-hero-y, 0px), 0) scale(var(--cin-hero-scale, 1));
+}
+.cinema-layer--hero .flag-wrap,
+.cinema-layer--hero .e1-text {
+  pointer-events: none;
+}
+.cinema-layer--credits {
+  z-index: 5;
+  opacity: var(--cin-credits-opacity, 0);
+  transform: translate3d(0, var(--cin-credits-y, 40px), 0);
+  pointer-events: none;
+}
+.cinema-layer--credits.is-interactive {
+  pointer-events: auto;
+}
+.cinema-layer--credits .lang-search,
+.cinema-layer--credits .credits,
+.cinema-layer--credits .btn {
+  pointer-events: auto;
+}
+.cinema-entrance .e1-hint {
+  opacity: var(--cin-hint-opacity, 0.75);
+  transform: translate3d(0, var(--cin-hint-y, 0px), 0);
+}
+.cinema-entrance .flag-wrap {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+.cinema-entrance .e1-text {
+  opacity: 1;
+  transform: none;
+}
+.cinema-entrance .e1-space,
+.cinema-entrance .vignette {
+  opacity: 1;
+}
+body.is-cinema-entrance {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+body.is-cinema-entrance #app {
+  height: auto;
+  min-height: 100vh;
+}
+body:not(.is-cinema-entrance) .cinema-entrance {
+  display: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cinema-layer {
+    transition: none;
+  }
+}
