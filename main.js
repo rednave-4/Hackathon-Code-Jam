@@ -342,7 +342,7 @@
     window.scrollTo(0, 0);
   }
 
-nline onclick) ---------- */
+  /* ---------- Global navigation (also used by inline onclick) ---------- */
   window.__pjGoMode = function (e) {
     if (e) {
       e.preventDefault();
