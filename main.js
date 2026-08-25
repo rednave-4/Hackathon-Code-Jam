@@ -431,6 +431,9 @@
     if (PJ.AIGuide && typeof PJ.AIGuide.init === "function") {
       PJ.AIGuide.init();
     }
+    if (PJ.Audio && typeof PJ.Audio.init === "function") {
+      PJ.Audio.init();
+    }
     // Entrance owns the top of the page as real, scrollable content —
     // Entrance 1 then Entrance 2 stacked below it — before the app shell
     // (mode select → learn/game) takes over as a fixed-viewport SPA.

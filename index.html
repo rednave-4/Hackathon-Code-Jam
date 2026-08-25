@@ -218,6 +218,24 @@
     </section>
 
     
+    <!-- Sound toggle -->
+    <button
+      type="button"
+      id="audioMuteBtn"
+      class="audio-fab"
+      data-audio-mute
+      title="Matikan suara"
+      aria-label="Matikan atau nyalakan suara latar"
+      aria-pressed="false"
+    >
+      <svg class="audio-fab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 9v6h4l5 4V5L8 9H4z" />
+        <path class="audio-fab__wave1" d="M16.5 8.5a5 5 0 0 1 0 7" />
+        <path class="audio-fab__wave2" d="M19 6a9 9 0 0 1 0 12" />
+        <line class="audio-fab__mute-x" x1="16" y1="7" x2="21.5" y2="17" />
+      </svg>
+    </button>
+
     <!-- AI Historical Guide -->
     <div id="aiGuide" class="ai-guide" aria-live="polite">
       <button type="button" id="aiFab" class="ai-fab" title="AI Guide" aria-label="Open AI Historical Guide">
@@ -284,6 +302,7 @@
   <script src="flag.js"></script>
   <script src="map.js"></script>
   <script src="learn.js"></script>
+  <script src="audio.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
