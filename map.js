@@ -19,54 +19,39 @@ PJ.MapController = (function () {
     return obj[lang] || obj.id || "";
   }
 
-  let progress = loadProgress(); // Set of completed ids
   let selectedId = null;
 
-  // ---------- persistence ----------
-  function loadProgress() {
-    try {
-      const raw = localStorage.getItem(PJ.STORAGE_KEY);
-      if (!raw) return new Set();
-      const data = JSON.parse(raw);
-      // Support both formats:
-      //   ["sumpah-pemuda", "proklamasi"]
-      //   { "completed": ["sumpah-pemuda", "proklamasi"] }
-      let arr = [];
-      if (Array.isArray(data)) arr = data;
-      else if (data && Array.isArray(data.completed)) arr = data.completed;
-      return new Set(arr.filter((x) => typeof x === "string"));
-    } catch (e) {
-      console.warn("PERJUANGAN: gagal membaca progres, mulai baru.", e);
-      return new Set();
-    }
+  // ---------- progress helpers (delegates to PJ.Progress) ----------
+  function isDone(id) {
+    return !!(PJ.Progress && PJ.Progress.isCompleted && PJ.Progress.isCompleted(id));
   }
 
-  function saveProgress() {
-    try {
-      // Always save as plain array (canonical format)
-      localStorage.setItem(PJ.STORAGE_KEY, JSON.stringify(Array.from(progress)));
-    } catch (e) {
-      console.warn("PERJUANGAN: gagal menyimpan progres.", e);
+  function completedIds() {
+    if (PJ.Progress && typeof PJ.Progress.getCompletedArray === "function") {
+      return PJ.Progress.getCompletedArray();
     }
+    return [];
   }
 
   function resetProgress() {
-    progress = new Set();
-    saveProgress();
+    if (PJ.Progress && typeof PJ.Progress.reset === "function") {
+      PJ.Progress.reset();
+    }
     render();
     closePanel();
   }
 
   // ---------- state helpers ----------
   function stateOf(mission, index) {
-    if (progress.has(mission.id)) return "completed";
+    if (isDone(mission.id)) return "completed";
     if (index === 0) return "available";
     const prev = missions[index - 1];
-    return progress.has(prev.id) ? "available" : "locked";
+    return isDone(prev.id) ? "available" : "locked";
   }
 
   function completedCount() {
-    return missions.filter((m) => progress.has(m.id)).length;
+    const done = completedIds();
+    return missions.filter((m) => done.includes(m.id)).length;
   }
 
   // ---------- smooth path (Catmull-Rom -> cubic bezier) ----------
@@ -189,9 +174,10 @@ PJ.MapController = (function () {
     els.routeBase.setAttribute("d", fullPath);
 
     // "progress" route only spans completed contiguous segments
+    const doneIds = completedIds();
     let lastCompletedIdx = -1;
     for (let i = 0; i < missions.length; i++) {
-      if (progress.has(missions[i].id)) lastCompletedIdx = i;
+      if (doneIds.includes(missions[i].id)) lastCompletedIdx = i;
       else break;
     }
     if (lastCompletedIdx > 0) {
@@ -342,6 +328,12 @@ PJ.MapController = (function () {
     document.addEventListener("pj:devmodechange", () => {
       if (selectedId) renderPanel(selectedId);
     });
+    if (PJ.Progress && typeof PJ.Progress.onChange === "function") {
+      PJ.Progress.onChange(() => {
+        render();
+        if (selectedId) renderPanel(selectedId);
+      });
+    }
     render();
   }
 
@@ -389,8 +381,12 @@ PJ.MapController = (function () {
       console.warn(`[PERJUANGAN] markMissionComplete: unknown stageId "${stageId}"`);
       return;
     }
-    progress.add(stageId);
-    saveProgress();
+    if (PJ.Progress && typeof PJ.Progress.markComplete === "function") {
+      PJ.Progress.markComplete(stageId);
+    }
+    if (PJ.Achievements && typeof PJ.Achievements.evaluate === "function") {
+      PJ.Achievements.evaluate();
+    }
     render();
     if (selectedId === stageId) renderPanel(stageId);
     try { if (window.PJ && PJ.Audio) PJ.Audio.playSfx("complete"); } catch (e) {}

@@ -180,9 +180,22 @@
 
     function applyFlagTransform() {
       if (!flagWrap) return;
+      // rotateX combines two things: cursor tilt (tiltY, small ±4°) and the
+      // "leaving" tip-back as Entrance 1 scrolls away (lastPOut-driven,
+      // up to 30°) — like the flag physically tipping backward into the
+      // floor rather than just fading out flat.
       flagWrap.style.transform =
         "translateY(" + (-lastPOut * 70).toFixed(1) + "px) scale(" + (1 - lastPOut * 0.1).toFixed(3) + ")" +
-        " rotateX(" + tiltY.toFixed(2) + "deg) rotateY(" + tiltX.toFixed(2) + "deg)";
+        " rotateX(" + (tiltY - lastPOut * 30).toFixed(2) + "deg) rotateY(" + tiltX.toFixed(2) + "deg)";
+    }
+    function applyTextTransform() {
+      if (!textBlock) return;
+      // Same tip-back on the title block, plus a subtle cursor rotateY so
+      // the (now extruded, see CSS) title reads like a carved sign you can
+      // look around, not a flat label.
+      textBlock.style.transform =
+        "translateY(" + (-lastPOut * 46).toFixed(1) + "px)" +
+        " rotateX(" + (-lastPOut * 24).toFixed(2) + "deg) rotateY(" + (tiltX * 0.5).toFixed(2) + "deg)";
     }
 
     // Item: flag reacts to the cursor — small tilt toward pointer position,
@@ -199,12 +212,14 @@
         tiltX = clamp(nx * 4, -4, 4);
         tiltY = clamp(-ny * 4, -4, 4);
         applyFlagTransform();
+        applyTextTransform();
         entrance1.style.setProperty("--tiltX", nx.toFixed(3));
         entrance1.style.setProperty("--tiltY", ny.toFixed(3));
       }, { passive: true });
       entrance1.addEventListener("mouseleave", () => {
         tiltX = 0; tiltY = 0;
         applyFlagTransform();
+        applyTextTransform();
         entrance1.style.setProperty("--tiltX", "0");
         entrance1.style.setProperty("--tiltY", "0");
       }, { passive: true });
@@ -223,10 +238,8 @@
         lastPOut = pOut;
         applyFlagTransform();
         if (flagWrap) flagWrap.style.opacity = String(1 - pOut);
-        if (textBlock) {
-          textBlock.style.transform = "translateY(" + (-pOut * 46).toFixed(1) + "px)";
-          textBlock.style.opacity = String(1 - pOut);
-        }
+        applyTextTransform();
+        if (textBlock) textBlock.style.opacity = String(1 - pOut);
       }
 
       if (entrance2 && creditsBlock) {
@@ -234,8 +247,12 @@
         // Longer fade-in for Entrance 2
         const pIn = smoothstep(vh * 1.08, vh * 0.1, r2.top);
         creditsBlock.style.opacity = String(pIn);
+        // rotateX starts tipped back (like a drawbridge lying flat, hidden
+        // below the horizon) and stands upright to face the viewer as it
+        // scrolls in — the other half of the "room turn" from Entrance 1.
         creditsBlock.style.transform =
-          "translate3d(0," + ((1 - pIn) * 70).toFixed(1) + "px,0) scale(" + (0.92 + pIn * 0.08).toFixed(3) + ")";
+          "translate3d(0," + ((1 - pIn) * 70).toFixed(1) + "px,0) scale(" + (0.92 + pIn * 0.08).toFixed(3) + ")" +
+          " rotateX(" + ((1 - pIn) * 26).toFixed(1) + "deg)";
         creditsBlock.style.filter =
           pIn < 0.98 ? "blur(" + ((1 - pIn) * 8).toFixed(1) + "px)" : "none";
         Array.prototype.forEach.call(creditsBlock.children, function (kid, i) {

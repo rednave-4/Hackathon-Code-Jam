@@ -97,6 +97,30 @@ PJ.Achievements = (function () {
       },
       test: (s) => (s.learnRead || []).length >= 5,
     },
+        {
+      id: "all_figures",
+      icon: "👥",
+      title: { id: "Mengenal Seluruh Tokoh", en: "Know Every Figure" },
+      desc: {
+        id: "Kenali tokoh di kelima kartu Mode Belajar hingga semua bercentang.",
+        en: "Meet the figures on all five Learn Mode cards until every card is checked.",
+      },
+      test: () => {
+        try {
+          const raw = localStorage.getItem("perjuangan_figures_seen");
+          const data = raw ? JSON.parse(raw) : {};
+          const chapters = PJ.FIGURE_CHAPTERS || [];
+          if (!chapters.length) return false;
+          return chapters.every((ch) => {
+            const seen = data[ch.id] || [];
+            return (ch.figures || []).length > 0 &&
+              ch.figures.every((f) => seen.indexOf(f.id) !== -1);
+          });
+        } catch (e) {
+          return false;
+        }
+      },
+    },
     {
       id: "polyglot",
       icon: "🌐",

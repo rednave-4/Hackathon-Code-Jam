@@ -206,12 +206,15 @@ PJ.Progress = (function () {
     scheduleSave();
   }
 
-  function reset() {
+    function reset() {
+    try {
+      localStorage.removeItem("perjuangan_figures_seen");
+    } catch (e) {}
     state = emptyState();
     scheduleSave(true);
     notify();
   }
-
+  
   function scheduleSave(immediate) {
     if (saveTimer) clearTimeout(saveTimer);
     const run = () => {

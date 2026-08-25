@@ -396,6 +396,352 @@ PJ.TIMELINE = [
   { id: "agresi-gerilya", year: 1947, month: 7, day: 21 },
 ];
 
+/*tokoh tokoh */
+PJ.FIGURE_CHAPTERS = [
+  {
+    id: "sumpah-pemuda",
+    title: { id: "Sumpah Pemuda", en: "Youth Pledge" },
+    subtitle: { id: "28 Oktober 1928", en: "28 October 1928" },
+    photo: "Sumpah Pemuda.Jpeg",
+    figures: [
+      {
+        id: "soegondo",
+        photo: "soegondo.jpeg",
+        name: { id: "Soegondo Djojopoespito", en: "Soegondo Djojopoespito" },
+        role: { id: "Ketua Kongres Pemuda II", en: "Chair of the Second Youth Congress" },
+        bio: {
+          id: "Memimpin Kongres Pemuda II di Batavia. Di bawah pimpinannya, utusan pemuda dari seluruh Hindia Belanda merumuskan ikrar satu tanah air, satu bangsa, satu bahasa.",
+          en: "Chaired the Second Youth Congress in Batavia, where delegates pledged one homeland, one nation, and one language.",
+        },
+      },
+      {
+        id: "yamin",
+        photo: "yamin.jpeg",
+        name: { id: "Mohammad Yamin", en: "Mohammad Yamin" },
+        role: { id: "Perumus gagasan Sumpah Pemuda", en: "Architect of the Youth Pledge" },
+        bio: {
+          id: "Berperan besar merumuskan isi Sumpah Pemuda. Gagasannya tentang kesatuan bangsa dan bahasa menjadi tulang punggung ikrar 28 Oktober 1928.",
+          en: "Helped shape the Youth Pledge. His ideas on national and linguistic unity became the core of the 1928 resolution.",
+        },
+      },
+      {
+        id: "supratman",
+        photo: "supratman.jpeg",
+        name: { id: "Wage Rudolf Supratman", en: "Wage Rudolf Supratman" },
+        role: { id: "Pencipta Indonesia Raya", en: "Composer of Indonesia Raya" },
+        bio: {
+          id: "Memperdengarkan lagu yang kelak menjadi Indonesia Raya di Kongres Pemuda II. Lagu itu mengikat semangat kongres ke dalam satu suara.",
+          en: "Performed the song that became Indonesia Raya at the Second Youth Congress, giving the pledge a shared voice.",
+        },
+      },
+      {
+        id: "amir-sjarifuddin",
+        photo: "amir.jpeg",
+        name: { id: "Amir Sjarifuddin", en: "Amir Sjarifuddin" },
+        role: { id: "Pencipta Indonesia Raya", en: "Composer of Indonesia Raya" },
+        bio: {
+          id: "Memperdengarkan lagu yang kelak menjadi Indonesia Raya di Kongres Pemuda II. Lagu itu mengikat semangat kongres ke dalam satu suara.",
+          en: "Performed the song that became Indonesia Raya at the Second Youth Congress, giving the pledge a shared voice.",
+        },
+      },
+      {
+        id: "djoko",
+        photo: "djoko.jpeg",
+        name: { id: "Djoko Marsaid", en: "Djoko Marsaid" },
+        role: { id: "Pencipta Indonesia Raya", en: "Composer of Indonesia Raya" },
+        bio: {
+          id: "Memperdengarkan lagu yang kelak menjadi Indonesia Raya di Kongres Pemuda II. Lagu itu mengikat semangat kongres ke dalam satu suara.",
+          en: "Performed the song that became Indonesia Raya at the Second Youth Congress, giving the pledge a shared voice.",
+        },
+      },
+      {
+        id: "mangoensarkoro",
+        photo: "mangoen.jpeg",
+        name: { id: "S Mangoensarkoro (Ki Mangunsarkoro)", en: "S Mangoensarkoro (Ki Mangunsarkoro)" },
+        role: { id: "Pencipta Indonesia Raya", en: "Composer of Indonesia Raya" },
+        bio: {
+          id: "Memperdengarkan lagu yang kelak menjadi Indonesia Raya di Kongres Pemuda II. Lagu itu mengikat semangat kongres ke dalam satu suara.",
+          en: "Performed the song that became Indonesia Raya at the Second Youth Congress, giving the pledge a shared voice.",
+        },
+      },
+       {
+        id: "Johannes",
+        photo: "Johannes.jpeg",
+        name: { id: "Johannes Leimena", en: "Johannes Leimena" },
+        role: { id: "Pencipta Indonesia Raya", en: "Composer of Indonesia Raya" },
+        bio: {
+          id: "Memperdengarkan lagu yang kelak menjadi Indonesia Raya di Kongres Pemuda II. Lagu itu mengikat semangat kongres ke dalam satu suara.",
+          en: "Performed the song that became Indonesia Raya at the Second Youth Congress, giving the pledge a shared voice.",
+        },
+      },
+    ],
+  },
+  {
+    id: "rengasdengklok",
+    title: { id: "Rengasdengklok", en: "Rengasdengklok" },
+    subtitle: { id: "16 Agustus 1945", en: "16 August 1945" },
+    photo: "Rengas.jpeg",
+    figures: [
+      
+      {
+        id: "sukarni",
+        photo: "sukarni.jpeg",
+        name: { id: "Sukarni Kartodiwirjo", en: "Sukarni Kartodiwirjo" },
+        role: { id: "Golongan muda · desakan proklamasi", en: "Young group · pressing for proclamation" },
+        bio: {
+          id: "Tokoh golongan muda yang menolak menunda kemerdekaan. Ia termasuk yang mendesak Soekarno–Hatta agar proklamasi dikumandangkan segera.",
+          en: "A young-group leader who refused to delay independence and pressed Soekarno–Hatta to proclaim at once.",
+        },
+      },
+      {
+        id: "wikana",
+        photo: "wikana.jpeg",
+        name: { id: "Wikana", en: "Wikana" },
+        role: { id: "Penggerak Rengasdengklok", en: "Rengasdengklok organizer" },
+        bio: {
+          id: "Salah satu penggerak yang membawa Soekarno dan Hatta ke Rengasdengklok agar terlepas dari pengaruh Jepang dan segera memproklamasikan kemerdekaan.",
+          en: "Helped take Soekarno and Hatta to Rengasdengklok, away from Japanese influence, to force an immediate proclamation.",
+        },
+      },
+      {
+        id: "chaerul-saleh",
+        photo: "chaerul.jpeg",
+        name: { id: "Chaerul Saleh", en: "Chaerul Saleh" },
+        role: { id: "Golongan muda", en: "Young group" },
+        bio: {
+          id: "Bagian dari golongan muda yang tidak mau kemerdekaan menunggu izin siapa pun. Tekad mereka memaksa keputusan di malam Rengasdengklok.",
+          en: "Part of the young group that refused to wait for anyone’s permission. Their resolve forced the decision that night.",
+        },
+      },
+      {
+        id: "soekarno",
+        photo: "soekarno.jpeg",
+        name: { id: "Soekarno", en: "Soekarno" },
+        role: { id: "Golongan muda", en: "Young group" },
+        bio: {
+          id: "Bagian dari golongan muda yang tidak mau kemerdekaan menunggu izin siapa pun. Tekad mereka memaksa keputusan di malam Rengasdengklok.",
+          en: "Part of the young group that refused to wait for anyone’s permission. Their resolve forced the decision that night.",
+        },
+      },
+      {
+        id: "M hatta",
+        photo: "hatta.jpeg",
+        name: { id: "Mohammad Hatta", en: "Mohammad Hatta" },
+        role: { id: "Golongan muda", en: "Young group" },
+        bio: {
+          id: "Bagian dari golongan muda yang tidak mau kemerdekaan menunggu izin siapa pun. Tekad mereka memaksa keputusan di malam Rengasdengklok.",
+          en: "Part of the young group that refused to wait for anyone’s permission. Their resolve forced the decision that night.",
+        },
+      },
+      {
+        id: "achmad S",
+        photo: "soebardjo.jpeg",
+        name: { id: "Achmad Soebardjo", en: "Achmad Soebardjo" },
+        role: { id: "Golongan muda", en: "Young group" },
+        bio: {
+          id: "Bagian dari golongan muda yang tidak mau kemerdekaan menunggu izin siapa pun. Tekad mereka memaksa keputusan di malam Rengasdengklok.",
+          en: "Part of the young group that refused to wait for anyone’s permission. Their resolve forced the decision that night.",
+        },
+      },
+    ],
+  },
+  {
+    id: "proklamasi",
+    title: { id: "Proklamasi", en: "Proclamation" },
+    subtitle: { id: "17 Agustus 1945", en: "17 August 1945" },
+    photo: "Proklamasi.jpeg",
+    figures: [
+      {
+        id: "soekarno",
+        photo: "soekarno.jpeg",
+        name: { id: "Soekarno", en: "Soekarno" },
+        role: { id: "Proklamator", en: "Proclaimer" },
+        bio: {
+          id: "Membacakan naskah Proklamasi 17 Agustus 1945 di Pegangsaan Timur 56. Suaranya menandai lahirnya Republik Indonesia.",
+          en: "Read the Proclamation on 17 August 1945 at Pegangsaan Timur 56, marking the birth of the Republic.",
+        },
+      },
+      {
+        id: "hatta",
+        photo: "hatta.jpeg",
+        name: { id: "Mohammad Hatta", en: "Mohammad Hatta" },
+        role: { id: "Proklamator", en: "Proclaimer" },
+        bio: {
+          id: "Mendampingi Soekarno saat proklamasi. Hatta menandatangani naskah atas nama bangsa Indonesia.",
+          en: "Stood with Soekarno at the proclamation and signed the text on behalf of the Indonesian people.",
+        },
+      },
+      {
+        id: "sayuti-melik",
+        photo: "sayuti.jpeg",
+        name: { id: "Sayuti Melik", en: "Sayuti Melik" },
+        role: { id: "Pengetik naskah Proklamasi", en: "Typist of the Proclamation" },
+        bio: {
+          id: "Mengetik naskah Proklamasi di rumah Laksamana Maeda pada dini hari 17 Agustus, merapikan rumusan Soekarno–Hatta.",
+          en: "Typed the Proclamation at Admiral Maeda’s house in the early hours of 17 August, refining Soekarno–Hatta’s draft.",
+        },
+      },
+      {
+        id: "fatmawati",
+        photo: "fatmawati.jpg",
+        name: { id: "Fatmawati", en: "Fatmawati" },
+        role: { id: "Penjahit Sang Saka Merah Putih", en: "Sewed the Red-and-White flag" },
+        bio: {
+          id: "Menjahit bendera yang dikibarkan setelah proklamasi. Merah-putih itu menjadi tanda visual lahirnya republik.",
+          en: "Sewed the flag raised after the proclamation — the visual sign that the republic had been born.",
+        },
+      },
+      {
+        id: "achmad S",
+        photo: "soebardjo.jpeg",
+        name: { id: "Achmad Soebardjo", en: "Achmad Soebardjo" },
+        role: { id: "Golongan muda", en: "Young group" },
+        bio: {
+          id: "Menjahit bendera yang dikibarkan setelah proklamasi. Merah-putih itu menjadi tanda visual lahirnya republik.",
+          en: "Sewed the flag raised after the proclamation — the visual sign that the republic had been born.",
+        },
+      },
+      {
+        id: "sukarni",
+        photo: "sukarni.jpeg",
+        name: { id: "Sukarni Kartodiwirjo", en: "Sukarni Kartodiwirjo" },
+        role: { id: "Penjahit Sang Saka Merah Putih", en: "Sewed the Red-and-White flag" },
+        bio: {
+          id: "Menjahit bendera yang dikibarkan setelah proklamasi. Merah-putih itu menjadi tanda visual lahirnya republik.",
+          en: "Sewed the flag raised after the proclamation — the visual sign that the republic had been born.",
+        },
+      },
+      {
+        id: "bm diah",
+        photo: "diah.jpeg",
+        name: { id: "B.M. Diah", en: "B.M. Diah" },
+        role: { id: "Penjahit Sang Saka Merah Putih", en: "Sewed the Red-and-White flag" },
+        bio: {
+          id: "Menjahit bendera yang dikibarkan setelah proklamasi. Merah-putih itu menjadi tanda visual lahirnya republik.",
+          en: "Sewed the flag raised after the proclamation — the visual sign that the republic had been born.",
+        },
+      },
+      {
+        id: "laksamana TM",
+        photo: "laksamana.jpeg",
+        name: { id: "Laksama Tadashi Maeda", en: "Laksama Tadashi Maeda" },
+        role: { id: "Penjahit Sang Saka Merah Putih", en: "Sewed the Red-and-White flag" },
+        bio: {
+          id: "Menjahit bendera yang dikibarkan setelah proklamasi. Merah-putih itu menjadi tanda visual lahirnya republik.",
+          en: "Sewed the flag raised after the proclamation — the visual sign that the republic had been born.",
+        },
+      },
+    ],
+  },
+  {
+    id: "surabaya",
+    title: { id: "Pertempuran Surabaya", en: "Battle of Surabaya" },
+    subtitle: { id: "10 November 1945", en: "10 November 1945" },
+    photo: "sby.jpg",
+    figures: [
+      {
+        id: "bung tomo",
+        photo: "bungtomo.jpeg",
+        name: { id: "Bung Tomo", en: "Bung Tomo" },
+        role: { id: "Orator radio Surabaya", en: "Surabaya radio orator" },
+        bio: {
+          id: "Menggelorakan arek-arek Surabaya lewat pidato radio. Seruannya menjadi nyawa perlawanan 10 November 1945.",
+          en: "Stirred Surabaya’s defenders through radio speeches that became the soul of 10 November 1945.",
+        },
+      },
+      {
+        id: "G. Suryo",
+        photo: "suryo.jpeg",
+        name: { id: "Gubernur Suryo", en: "Gubernur Suryo" },
+        role: { id: "Komandan TKR Jawa Timur", en: "TKR commander, East Java" },
+        bio: {
+          id: "Memimpin pasukan TKR di Jawa Timur saat pertempuran. Ia mengatur perlawanan bersenjata di tengah serbuan Sekutu.",
+          en: "Led TKR forces in East Java, organizing armed resistance during the Allied assault.",
+        },
+      },
+      {
+        id: "moestopo",
+        photo: "moestopo.jpeg",
+        name: { id: "Moestopo", en: "Moestopo" },
+        role: { id: "Pimpinan pejuang Surabaya", en: "Surabaya resistance leader" },
+        bio: {
+          id: "Dokter yang beralih memimpin pejuang. Ia membantu mengorganisasi perlawanan rakyat Surabaya.",
+          en: "A doctor who took up command and helped organize Surabaya’s popular resistance.",
+        },
+      },
+       {
+        id: "KH Hasyim Asy'ari",
+        photo: "hasyim.jpeg",
+        name: { id: "KH Hasyim Asy'ari", en: "KH Hasyim Asy'ari" },
+        role: { id: "Pimpinan pejuang Surabaya", en: "Surabaya resistance leader" },
+        bio: {
+          id: "Dokter yang beralih memimpin pejuang. Ia membantu mengorganisasi perlawanan rakyat Surabaya.",
+          en: "A doctor who took up command and helped organize Surabaya’s popular resistance.",
+        },
+      },
+      {
+        id: "KH Wahab Hasbullah",
+        photo: "wahab.jpeg",
+        name: { id: "KH Wahab Hasbullah", en: "KH Wahab Hasbullah" },
+        role: { id: "Pimpinan pejuang Surabaya", en: "Surabaya resistance leader" },
+        bio: {
+          id: "Dokter yang beralih memimpin pejuang. Ia membantu mengorganisasi perlawanan rakyat Surabaya.",
+          en: "A doctor who took up command and helped organize Surabaya’s popular resistance.",
+        },
+      },
+      {
+        id: "Soemarsono",
+        photo: "soemarsono.jpeg",
+        name: { id: "Soemarsono", en: "Soemarsono" },
+        role: { id: "Pimpinan pejuang Surabaya", en: "Surabaya resistance leader" },
+        bio: {
+          id: "Dokter yang beralih memimpin pejuang. Ia membantu mengorganisasi perlawanan rakyat Surabaya.",
+          en: "A doctor who took up command and helped organize Surabaya’s popular resistance.",
+        },
+      },
+    ],
+  },
+  {
+    id: "agresi-gerilya",
+    title: { id: "Agresi & Gerilya", en: "Aggression & Guerrilla War" },
+    subtitle: { id: "1947 – 1949", en: "1947 – 1949" },
+    photo: "agresi.jpeg",
+    figures: [
+      {
+        id: "soedirman",
+        photo: "img/tokoh/soedirman.jpg",
+        name: { id: "Jenderal Soedirman", en: "General Soedirman" },
+        role: { id: "Panglima Besar TNI", en: "Commander of the Armed Forces" },
+        bio: {
+          id: "Memimpin perang gerilya meski dalam kondisi sakit. Long march-nya menjadi lambang tekad TNI mempertahankan kedaulatan.",
+          en: "Led guerrilla war even while ill. His long march became the symbol of the army’s will to defend sovereignty.",
+        },
+      },
+      {
+        id: "sjafruddin",
+        photo: "img/tokoh/sjafruddin.jpg",
+        name: { id: "Sjafruddin Prawiranegara", en: "Sjafruddin Prawiranegara" },
+        role: { id: "Ketua PDRI", en: "Head of the PDRI" },
+        bio: {
+          id: "Memimpin Pemerintahan Darurat Republik Indonesia di Sumatera saat Yogyakarta diduduki, agar republik tidak padam.",
+          en: "Led the Emergency Government in Sumatra while Yogyakarta was occupied, so the republic would not go dark.",
+        },
+      },
+      {
+        id: "hb-ix",
+        photo: "img/tokoh/hb-ix.jpg",
+        name: { id: "Sri Sultan Hamengkubuwono IX", en: "Sultan Hamengkubuwono IX" },
+        role: { id: "Dukungan Yogyakarta", en: "Yogyakarta’s support" },
+        bio: {
+          id: "Membuka Yogyakarta sebagai ibu kota republik dan menopang pemerintahan serta gerilya di masa agresi.",
+          en: "Opened Yogyakarta as the republic’s capital and supported the government and guerrilla struggle during the aggressions.",
+        },
+      },
+    ],
+  },
+];
+
+
 /* Glossary terms (ID / EN) */
 PJ.GLOSSARY = [
   {

@@ -1,6 +1,6 @@
 /* ==========================================================================
    PERJUANGAN — learn.js
-   Mode Belajar: chapters, interactive timeline, glossary.
+   Mode Belajar: chapters, timeline, figures, glossary.
    ========================================================================== */
 
 window.PJ = window.PJ || {};
@@ -49,18 +49,19 @@ PJ.LearnController = (function () {
   function resetRead() {
     try {
       localStorage.removeItem(PJ.LEARN_STORAGE_KEY);
+      localStorage.removeItem("perjuangan_figures_seen");
     } catch (e) {}
     if (PJ.Progress && typeof PJ.Progress.reset === "function") {
       PJ.Progress.reset();
     }
     renderList();
     renderTimeline();
+    if (els && els.figures) renderFigures();
     if (selectedId) renderArticle(selectedId);
   }
 
   function contentLang() {
     const lang = (PJ.I18N && PJ.I18N.getLang()) || "id";
-    // Full article/mission text exists only for id + en
     if (lang === "id" || lang === "en") return lang;
     return "en";
   }
@@ -82,6 +83,14 @@ PJ.LearnController = (function () {
   let els = {};
 
   function cache() {
+    els.figures = document.getElementById("learnFigures");
+    els.figureViewer = document.getElementById("figureViewer");
+    els.figureViewerImg = document.getElementById("figureViewerImg");
+    els.figureViewerFallback = document.getElementById("figureViewerFallback");
+    els.figureViewerName = document.getElementById("figureViewerName");
+    els.figureViewerRole = document.getElementById("figureViewerRole");
+    els.figureViewerBio = document.getElementById("figureViewerBio");
+    els.figureViewerMore = document.getElementById("figureViewerMore");
     els.list = document.getElementById("learnList");
     els.timeline = document.getElementById("learnTimeline");
     els.glossary = document.getElementById("learnGlossary");
@@ -113,9 +122,19 @@ PJ.LearnController = (function () {
     });
     if (els.list) els.list.hidden = tab !== "chapters";
     if (els.timeline) els.timeline.hidden = tab !== "timeline";
+    if (els.figures) els.figures.hidden = tab !== "figures";
     if (els.glossary) els.glossary.hidden = tab !== "glossary";
     if (tab === "timeline") renderTimeline();
+    if (tab === "figures") renderFigures();
     if (tab === "glossary") renderGlossary();
+
+    const panel = document.getElementById("learnArticleWrap");
+    if (panel) {
+      panel.classList.remove("is-open");
+      panel.hidden = true;
+    }
+    selectedId = null;
+    closeFigureViewer();
   }
 
   function renderList() {
@@ -175,6 +194,168 @@ PJ.LearnController = (function () {
     });
 
     els.timeline.appendChild(track);
+  }
+
+  function chapterList() {
+    return PJ.FIGURE_CHAPTERS || [];
+  }
+
+    const FIGURES_SEEN_KEY = "perjuangan_figures_seen";
+
+  function loadFigureSeen() {
+    try {
+      const raw = localStorage.getItem(FIGURES_SEEN_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function markFigureSeen(chapterId, figureId) {
+    const data = loadFigureSeen();
+    if (!data[chapterId]) data[chapterId] = [];
+    if (data[chapterId].indexOf(figureId) === -1) data[chapterId].push(figureId);
+    try {
+      localStorage.setItem(FIGURES_SEEN_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  function isChapterComplete(chapterId) {
+    const ch = chapterList().find((c) => c.id === chapterId);
+    if (!ch || !ch.figures || !ch.figures.length) return false;
+    const seen = loadFigureSeen()[chapterId] || [];
+    return ch.figures.every((f) => seen.indexOf(f.id) !== -1);
+  }
+
+    function renderFigures() {
+    if (!els.figures) return;
+    const chapters = chapterList();
+    els.figures.innerHTML = "";
+    const grid = document.createElement("div");
+    grid.className = "figures-grid";
+    chapters.forEach((ch) => {
+      const done = isChapterComplete(ch.id);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "figure-card" + (done ? " is-read" : "");
+      const initial = tField(ch.title).charAt(0);
+      btn.innerHTML =
+        (done ? '<span class="figure-card__check">✓</span>' : "") +
+        '<span class="figure-card__photo">' +
+          '<img src="' + ch.photo + '" alt="' + tField(ch.title) + '" onerror="this.style.display=\'none\'; this.nextElementSibling.hidden=false;" />' +
+          '<span class="figure-card__fallback" hidden>' + initial + '</span>' +
+        '</span>' +
+        '<span class="figure-card__name">' + tField(ch.title) + '</span>' +
+        '<span class="figure-card__role">' + tField(ch.subtitle) + '</span>';
+      btn.addEventListener("click", () => openChapter(ch.id));
+      grid.appendChild(btn);
+    });
+    els.figures.appendChild(grid);
+  }
+
+  let chapterIndex = 0;
+  let figureIndex = 0;
+  let figureDetail = false;
+  let figureViewerBound = false;
+
+  function currentFigures() {
+    const ch = chapterList()[chapterIndex];
+    return (ch && ch.figures) || [];
+  }
+
+  function openChapter(id) {
+    const list = chapterList();
+    const idx = list.findIndex((x) => x.id === id);
+    chapterIndex = idx < 0 ? 0 : idx;
+    figureIndex = 0;
+    figureDetail = false;
+    bindFigureViewer();
+    showFigureViewer();
+  }
+
+  function showFigureViewer() {
+    const figures = currentFigures();
+    const f = figures[figureIndex];
+    if (!f || !els.figureViewer) return;
+
+    const name = tField(f.name);
+    if (els.figureViewerImg) {
+      els.figureViewerImg.style.display = "";
+      els.figureViewerImg.src = f.photo;
+      els.figureViewerImg.alt = name;
+      els.figureViewerImg.onerror = function () {
+        this.style.display = "none";
+        if (els.figureViewerFallback) {
+          els.figureViewerFallback.hidden = false;
+          els.figureViewerFallback.textContent = name.charAt(0);
+        }
+      };
+    }
+    if (els.figureViewerFallback) {
+      els.figureViewerFallback.hidden = true;
+      els.figureViewerFallback.textContent = name.charAt(0);
+    }
+    if (els.figureViewerName) els.figureViewerName.textContent = name;
+    if (els.figureViewerRole) els.figureViewerRole.textContent = tField(f.role);
+    if (els.figureViewerBio) {
+      els.figureViewerBio.textContent = tField(f.bio);
+      els.figureViewerBio.hidden = !figureDetail;
+    }
+    if (els.figureViewerMore) els.figureViewerMore.hidden = figureDetail;
+
+    els.figureViewer.classList.toggle("is-detail", figureDetail);
+        const ch = chapterList()[chapterIndex];
+    if (ch && f) markFigureSeen(ch.id, f.id);
+        if (ch && isChapterComplete(ch.id)) {
+      renderFigures();
+      if (PJ.Achievements && typeof PJ.Achievements.evaluate === "function") {
+        PJ.Achievements.evaluate();
+      }
+    }
+    els.figureViewer.hidden = false;
+    requestAnimationFrame(() => els.figureViewer.classList.add("is-open"));
+  }
+
+  function closeFigureViewer() {
+    if (!els.figureViewer) return;
+    figureDetail = false;
+    els.figureViewer.classList.remove("is-open", "is-detail");
+    els.figureViewer.hidden = true;
+  }
+
+  function figureStep(dir) {
+    const figures = currentFigures();
+    if (!figures.length) return;
+    figureIndex = (figureIndex + dir + figures.length) % figures.length;
+    figureDetail = false;
+    showFigureViewer();
+  }
+
+  function bindFigureViewer() {
+    if (figureViewerBound) return;
+    figureViewerBound = true;
+
+    const closeBtn = document.getElementById("figureViewerClose");
+    const backdrop = document.getElementById("figureViewerBackdrop");
+    const prev = document.getElementById("figurePrev");
+    const next = document.getElementById("figureNext");
+    const more = document.getElementById("figureViewerMore");
+
+    if (closeBtn) closeBtn.addEventListener("click", closeFigureViewer);
+    if (backdrop) backdrop.addEventListener("click", closeFigureViewer);
+    if (prev) prev.addEventListener("click", () => figureStep(-1));
+    if (next) next.addEventListener("click", () => figureStep(1));
+    if (more) more.addEventListener("click", () => {
+      figureDetail = true;
+      showFigureViewer();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (!els.figureViewer || els.figureViewer.hidden) return;
+      if (e.key === "Escape") closeFigureViewer();
+      if (e.key === "ArrowLeft") figureStep(-1);
+      if (e.key === "ArrowRight") figureStep(1);
+    });
   }
 
   function renderGlossary(filter) {
@@ -284,6 +465,7 @@ PJ.LearnController = (function () {
     const tabMap = {
       tabChapters: "learn_tab_chapters",
       tabTimeline: "learn_tab_timeline",
+      tabFigures: "learn_tab_figures",
       tabGlossary: "learn_tab_glossary",
     };
     Object.keys(tabMap).forEach((id) => {
@@ -296,6 +478,7 @@ PJ.LearnController = (function () {
     renderList();
     if (activeTab === "timeline") renderTimeline();
     if (activeTab === "glossary") renderGlossary(els.glossarySearch ? els.glossarySearch.value : "");
+    if (activeTab === "figures") renderFigures();
     if (selectedId) renderArticle(selectedId);
     const ver = document.getElementById("learnBrandVersion");
     if (ver) ver.textContent = PJ.I18N.t("brand_version_learn");

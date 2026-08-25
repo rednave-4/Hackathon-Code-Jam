@@ -32,6 +32,14 @@
           <div class="flag-wrap" id="flagWrap">
             <div class="flag-pedestal" aria-hidden="true"></div>
             <canvas id="flagCanvas" width="640" height="400" aria-hidden="true"></canvas>
+            <div class="orbit-motes" aria-hidden="true">
+              <span class="orbit-mote" style="--r:118px;--dur:9s;--delay:0s;--size:3px;--tone:#eac873"></span>
+              <span class="orbit-mote" style="--r:148px;--dur:13s;--delay:-3.2s;--size:2.2px;--tone:#f3eee1"></span>
+              <span class="orbit-mote" style="--r:92px;--dur:7s;--delay:-1.4s;--size:2px;--tone:#eac873"></span>
+              <span class="orbit-mote" style="--r:168px;--dur:16s;--delay:-6.1s;--size:2.6px;--tone:#c9a227"></span>
+              <span class="orbit-mote" style="--r:130px;--dur:10.5s;--delay:-4.6s;--size:2.2px;--tone:#f3eee1"></span>
+              <span class="orbit-mote" style="--r:64px;--dur:6s;--delay:-2.2s;--size:1.8px;--tone:#eac873"></span>
+            </div>
           </div>
           <div class="e1-text" id="e1Text">
             <p class="eyebrow" data-i18n="e1_eyebrow">Sebuah Perjalanan Mengingat</p>
@@ -145,6 +153,7 @@
             <button type="button" class="learn-tab is-active" data-tab="chapters" id="tabChapters" role="tab" aria-selected="true">Bab</button>
             <button type="button" class="learn-tab" data-tab="timeline" id="tabTimeline" role="tab" aria-selected="false">Timeline</button>
             <button type="button" class="learn-tab" data-tab="glossary" id="tabGlossary" role="tab" aria-selected="false">Glosarium</button>
+            <button type="button" class="learn-tab" data-tab="figures" id="tabFigures" role="tab" aria-selected="false">Tokoh</button>
           </div>
           <div id="learnList" class="learn-list" data-panel="chapters"></div>
           <div id="learnTimeline" class="learn-timeline" data-panel="timeline" hidden></div>
@@ -152,9 +161,29 @@
             <input type="search" id="glossarySearch" class="glossary-search" placeholder="Cari istilah..." autocomplete="off" spellcheck="false" />
             <div id="glossaryList" class="glossary-list"></div>
           </div>
+          <div id="learnFigures" class="learn-figures" data-panel="figures" hidden></div>
         </div>
         <div id="learnArticleWrap" class="learn-article-wrap" hidden>
           <article id="learnArticle" class="learn-article"></article>
+        </div>
+      </div>
+
+      <div id="figureViewer" class="figure-viewer" hidden>
+        <div class="figure-viewer__backdrop" id="figureViewerBackdrop"></div>
+        <div class="figure-viewer__card" id="figureViewerCard">
+          <button type="button" class="figure-viewer__close" id="figureViewerClose" aria-label="Close">&times;</button>
+          <button type="button" class="figure-viewer__arrow figure-viewer__arrow--prev" id="figurePrev" aria-label="Sebelumnya">‹</button>
+          <button type="button" class="figure-viewer__arrow figure-viewer__arrow--next" id="figureNext" aria-label="Berikutnya">›</button>
+          <div class="figure-viewer__photo">
+            <img id="figureViewerImg" alt="" />
+            <span id="figureViewerFallback" class="figure-card__fallback" hidden></span>
+          </div>
+          <div class="figure-viewer__meta">
+            <h2 class="figure-viewer__name" id="figureViewerName"></h2>
+            <p class="figure-viewer__role" id="figureViewerRole"></p>
+            <button type="button" class="figure-viewer__more" id="figureViewerMore">selengkapnya</button>
+            <p class="figure-viewer__bio" id="figureViewerBio" hidden></p>
+          </div>
         </div>
       </div>
     </section>
