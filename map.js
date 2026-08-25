@@ -115,6 +115,7 @@ PJ.MapController = (function () {
     els.routeBase = document.getElementById("routeBase");
     els.routeNext = document.getElementById("routeNext");
     els.routeProgress = document.getElementById("routeProgress");
+    els.routeSpark = document.getElementById("routeSpark");
     els.nodesLayer = document.getElementById("nodesLayer");
     els.panel = document.getElementById("detailPanel");
     els.panelClose = document.getElementById("panelClose");
@@ -122,7 +123,38 @@ PJ.MapController = (function () {
     els.progressFill = document.getElementById("progressFill");
     els.resetBtn = document.getElementById("resetBtn");
     els.mapWrap = document.getElementById("mapWrap");
+    els.mapBody = document.querySelector(".map-body");
     els.embersLayer = document.getElementById("embersLayer");
+  }
+
+  // ---------- diorama: cursor tilt on #mapWrap + camera-dip on .map-body
+  // when a mission panel is open. Two separate elements so the continuous
+  // per-frame tilt (instant, no transition) never fights the discrete
+  // open/close dip (CSS-transitioned) for the same `transform` property. ----------
+  function bindDiorama() {
+    if (!els.mapBody || !els.mapWrap) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    els.mapBody.addEventListener("mousemove", (e) => {
+      const r = els.mapBody.getBoundingClientRect();
+      const nx = ((e.clientX - r.left) / r.width) * 2 - 1;
+      const ny = ((e.clientY - r.top) / r.height) * 2 - 1;
+      const tx = clamp(nx * 2.2, -2.2, 2.2);
+      const ty = clamp(-ny * 2.2, -2.2, 2.2);
+      els.mapWrap.style.transform = `rotateX(${ty.toFixed(2)}deg) rotateY(${tx.toFixed(2)}deg)`;
+    }, { passive: true });
+
+    els.mapBody.addEventListener("mouseleave", () => {
+      els.mapWrap.style.transform = "";
+    }, { passive: true });
+  }
+
+  function setDetailOpen(open) {
+    if (els.mapBody) els.mapBody.classList.toggle("has-detail", !!open);
   }
 
   // ---------- ambient embers (purely decorative, spawned once) ----------
@@ -166,8 +198,10 @@ PJ.MapController = (function () {
       const donePts = points.slice(0, lastCompletedIdx + 1);
       els.routeProgress.setAttribute("d", buildSmoothPath(donePts));
       els.routeProgress.style.opacity = 1;
+      if (els.routeSpark) els.routeSpark.classList.add("is-active");
     } else {
       els.routeProgress.style.opacity = 0;
+      if (els.routeSpark) els.routeSpark.classList.remove("is-active");
     }
 
     // highlight the single next segment leading to the currently available
@@ -206,7 +240,12 @@ PJ.MapController = (function () {
         </span>
         <span class="node__label">${tField(mission.title)}</span>
       `;
-      btn.addEventListener("click", () => selectMission(mission.id));
+      btn.addEventListener("click", (e) => {
+        if (window.PJ && PJ.UIFx && typeof PJ.UIFx.burstFromEvent === "function") {
+          PJ.UIFx.burstFromEvent(e, { count: 14, duration: 360 });
+        }
+        selectMission(mission.id);
+      });
       els.nodesLayer.appendChild(btn);
     });
 
@@ -224,12 +263,14 @@ PJ.MapController = (function () {
     selectedId = id;
     els.panel.hidden = false;
     render(); // rebuilds nodes (aria-pressed) and the panel (selectedId is now set)
+    setDetailOpen(true);
     requestAnimationFrame(() => els.panel.classList.add("is-open"));
   }
 
   function closePanel() {
     selectedId = null;
     els.panel.classList.remove("is-open");
+    setDetailOpen(false);
     setTimeout(() => {
       if (!els.panel.classList.contains("is-open")) els.panel.hidden = true;
     }, 320);
@@ -293,6 +334,7 @@ PJ.MapController = (function () {
   function init() {
     cacheEls();
     spawnEmbers();
+    bindDiorama();
     els.resetBtn.addEventListener("click", confirmReset);
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closePanel();
@@ -351,6 +393,7 @@ PJ.MapController = (function () {
     saveProgress();
     render();
     if (selectedId === stageId) renderPanel(stageId);
+    try { if (window.PJ && PJ.Audio) PJ.Audio.playSfx("complete"); } catch (e) {}
     console.log(`[PERJUANGAN] markMissionComplete("${stageId}")`);
   };
 

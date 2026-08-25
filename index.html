@@ -19,15 +19,13 @@
     <div id="entranceWrap">
       <section id="entrance1" class="entrance-panel entrance-panel--flag" aria-label="Pembuka">
         <div class="e1-space" aria-hidden="true">
-          <div class="e1-glow e1-glow--a"></div>
-          <div class="e1-glow e1-glow--b"></div>
-          <div class="e1-floor"></div>
-          <div class="e1-rays"></div>
-          <div class="side-sil side-sil--left" aria-hidden="true"></div>
-          <div class="side-sil side-sil--right" aria-hidden="true"></div>
-          <div class="atm-fog atm-fog--1"></div>
-          <div class="atm-fog atm-fog--2"></div>
-          <div class="atm-stars" aria-hidden="true"></div>
+          <div class="atm-parallax" style="--px:5;--py:5;--pz:-40px"><div class="e1-glow e1-glow--a"></div></div>
+          <div class="atm-parallax" style="--px:8;--py:8;--pz:-15px"><div class="e1-glow e1-glow--b"></div></div>
+          <div class="atm-parallax" style="--px:3;--py:0;--pz:0px"><div class="e1-floor"></div></div>
+          <div class="atm-parallax" style="--px:2;--py:2;--pz:-120px"><div class="e1-rays"></div></div>
+          <div class="atm-parallax" style="--px:6;--py:4;--pz:-60px"><div class="atm-fog atm-fog--1"></div></div>
+          <div class="atm-parallax" style="--px:9;--py:6;--pz:-25px"><div class="atm-fog atm-fog--2"></div></div>
+          <div class="atm-parallax" style="--px:1.5;--py:1.5;--pz:-180px"><div class="atm-stars" aria-hidden="true"></div></div>
           <div class="atm-vignette"></div>
         </div>
         <div class="e1-stage-inner">
@@ -41,13 +39,16 @@
             <p class="title-accent" data-i18n="e1_accent">Bangsa Indonesia</p>
           </div>
         </div>
-        <a href="#entrance2" class="e1-hint" id="e1Hint" data-i18n="e1_hint">Gulir untuk melanjutkan</a>
+        <a href="#entrance2" class="e1-hint" id="e1Hint">
+          <span data-i18n="e1_hint">Gulir untuk melanjutkan</span>
+          <svg class="e1-hint__chevron" viewBox="0 0 20 10" aria-hidden="true">
+            <path d="M2 2l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
       </section>
 
       <section id="entrance2" class="entrance-panel entrance-panel--team" aria-label="Tim">
         <div class="e2-space" aria-hidden="true">
-          <div class="side-sil side-sil--left" aria-hidden="true"></div>
-          <div class="side-sil side-sil--right" aria-hidden="true"></div>
           <div class="atm-fog atm-fog--1"></div>
           <div class="atm-fog atm-fog--2"></div>
           <div class="atm-stars atm-stars--dim" aria-hidden="true"></div>
@@ -213,6 +214,11 @@
             <path id="routeBase" class="route-base" vector-effect="non-scaling-stroke" />
             <path id="routeNext" class="route-next" vector-effect="non-scaling-stroke" />
             <path id="routeProgress" class="route-progress" vector-effect="non-scaling-stroke" />
+            <circle id="routeSpark" class="route-spark" r="0.9">
+              <animateMotion dur="3.4s" repeatCount="indefinite" rotate="auto">
+                <mpath href="#routeProgress" />
+              </animateMotion>
+            </circle>
           </svg>
           <div id="nodesLayer" aria-label="Missions"></div>
           <div class="map-vignette" aria-hidden="true"></div>
@@ -222,12 +228,25 @@
     </section>
 
     
-    <!-- AI Historical Guide -->
-    <div id="fxOverlay" class="fx-overlay" aria-hidden="true"></div>
-    <button type="button" id="audioMuteBtn" class="audio-mute-btn" data-audio-mute aria-pressed="false" title="Mute">
-      <span class="audio-mute-btn__icon" aria-hidden="true">♪</span>
-      <span class="audio-mute-btn__slash" aria-hidden="true"></span>
+    <!-- Sound toggle -->
+    <button
+      type="button"
+      id="audioMuteBtn"
+      class="audio-fab"
+      data-audio-mute
+      title="Matikan suara"
+      aria-label="Matikan atau nyalakan suara latar"
+      aria-pressed="false"
+    >
+      <svg class="audio-fab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 9v6h4l5 4V5L8 9H4z" />
+        <path class="audio-fab__wave1" d="M16.5 8.5a5 5 0 0 1 0 7" />
+        <path class="audio-fab__wave2" d="M19 6a9 9 0 0 1 0 12" />
+        <line class="audio-fab__mute-x" x1="16" y1="7" x2="21.5" y2="17" />
+      </svg>
     </button>
+
+    <!-- AI Historical Guide -->
     <div id="aiGuide" class="ai-guide" aria-live="polite">
       <button type="button" id="aiFab" class="ai-fab" title="AI Guide" aria-label="Open AI Historical Guide">
         <span class="ai-fab__icon">◈</span>
@@ -254,6 +273,7 @@
     </div>
 
     <div id="modalRoot"></div>
+    <div id="fxOverlay" class="fx-overlay" aria-hidden="true"></div>
 
     <!-- STAGE OVERLAY -->
     <div id="stageOverlay" class="stage-overlay grain" hidden aria-label="Stage">
@@ -282,7 +302,6 @@
 
   <script src="i18n.js"></script>
   <script src="data.js"></script>
-  <script src="audio.js"></script>
   <script src="firebase-init.js"></script>
   <script src="progress.js"></script>
   <script src="achievements.js"></script>
@@ -294,6 +313,7 @@
   <script src="flag.js"></script>
   <script src="map.js"></script>
   <script src="learn.js"></script>
+  <script src="audio.js"></script>
   <script src="ui-fx.js"></script>
   <script src="main.js"></script>
 </body>
