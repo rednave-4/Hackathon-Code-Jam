@@ -429,11 +429,7 @@
     }
 
     if (PJ.Audio && typeof PJ.Audio.init === "function") {
-      try {
-        PJ.Audio.init();
-      } catch (err) {
-        console.warn("[PERJUANGAN] Audio init error:", err);
-      }
+      try { PJ.Audio.init(); } catch (err) { console.warn("[PERJUANGAN] Audio init error:", err); }
     }
 
     applyI18nDOM();

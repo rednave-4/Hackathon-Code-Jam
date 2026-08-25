@@ -351,9 +351,7 @@ PJ.MapController = (function () {
     saveProgress();
     render();
     if (selectedId === stageId) renderPanel(stageId);
-    try {
-      if (window.PJ && PJ.Audio) PJ.Audio.playSfx("complete");
-    } catch (e) {}
+    try { if (window.PJ && PJ.Audio) PJ.Audio.playSfx("complete"); } catch (e) {}
     console.log(`[PERJUANGAN] markMissionComplete("${stageId}")`);
   };
 
