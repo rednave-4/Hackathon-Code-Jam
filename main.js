@@ -199,11 +199,20 @@
 
       if (entrance2 && creditsBlock) {
         const r2 = entrance2.getBoundingClientRect();
-        // 0 while Entrance 2 is still below the viewport, 1 once it has
-        // settled into view — the "arriving" progress.
-        const pIn = smoothstep(vh * 0.92, vh * 0.4, r2.top);
-        creditsBlock.style.transform = "translateY(" + ((1 - pIn) * 46).toFixed(1) + "px)";
+        const pIn = smoothstep(vh * 0.98, vh * 0.25, r2.top);
+        entrance2.style.setProperty("--e2-in", pIn.toFixed(3));
         creditsBlock.style.opacity = String(pIn);
+        creditsBlock.style.transform =
+          "translate3d(0," + ((1 - pIn) * 56).toFixed(1) + "px,0) scale(" + (0.94 + pIn * 0.06).toFixed(3) + ")";
+        creditsBlock.style.filter =
+          pIn < 0.97 ? "blur(" + ((1 - pIn) * 6).toFixed(1) + "px)" : "none";
+        Array.prototype.forEach.call(creditsBlock.children, function (kid, i) {
+          const delay = 0.06 + i * 0.09;
+          const local = Math.max(0, Math.min(1, (pIn - delay) / Math.max(0.001, 1 - delay)));
+          const eased = local * local * (3 - 2 * local);
+          kid.style.opacity = String(eased);
+          kid.style.transform = "translate3d(0," + ((1 - eased) * 24).toFixed(1) + "px,0)";
+        });
       }
     }
 

@@ -298,37 +298,51 @@ button {
 /* -------------------------------------------------------------------- */
 .credits {
   text-align: center;
-  max-width: 560px;
-  padding: 2rem 1.5rem;
+  max-width: 640px;
+  padding: 2.2rem 1.5rem;
   position: relative;
   z-index: 2;
   background: radial-gradient(ellipse at 50% 40%, rgba(31, 26, 20, 0.35) 0%, transparent 70%);
   opacity: 0;
-  transform: translateY(40px);
+  transform: translateY(56px) scale(0.94);
+  will-change: transform, opacity, filter;
+}
+.credits > * {
+  opacity: 0;
+  transform: translateY(24px);
+  will-change: transform, opacity;
 }
 .credits .eyebrow {
-  margin-bottom: 1.1rem;
+  margin-bottom: 1.25rem;
+  font-size: clamp(0.85rem, 2.2vw, 1.05rem);
+  letter-spacing: 0.28em;
 }
 .credits h2 {
   font-family: var(--font-display);
-  font-size: clamp(1.6rem, 4vw, 2.4rem);
-  margin: 0 0 0.4rem;
+  font-size: clamp(2.1rem, 6vw, 3.35rem);
+  line-height: 1.15;
+  margin: 0 0 0.55rem;
   text-shadow: 0 4px 28px rgba(0, 0, 0, 0.45);
 }
 .credits .maker {
   font-family: var(--font-mono);
   color: var(--gold-bright);
-  font-size: 0.95rem;
-  letter-spacing: 0.06em;
-  margin: 0 0 2.6rem;
+  font-size: clamp(1.05rem, 2.6vw, 1.35rem);
+  letter-spacing: 0.08em;
+  margin: 0 0 2.8rem;
   text-shadow: 0 0 20px rgba(234, 200, 115, 0.2);
 }
 .credits-divider {
-  width: 64px;
-  height: 1px;
+  width: 88px;
+  height: 2px;
   background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  margin: 0 auto 2.2rem;
-  box-shadow: 0 0 12px rgba(201, 162, 39, 0.25);
+  margin: 0 auto 2.4rem;
+  box-shadow: 0 0 14px rgba(201, 162, 39, 0.3);
+}
+.credits .btn--primary {
+  font-size: 0.88rem;
+  padding: 1.05rem 2.4rem;
+  letter-spacing: 0.16em;
 }
 
 /* -------------------------------------------------------------------- */
@@ -2532,7 +2546,6 @@ body.is-entrance #app {
   }
 }
 
-.audio-mute-btn{position:fixed;left:1.1rem;bottom:1.1rem;z-index:180;width:48px;height:48px;border-radius:50%;border:1px solid rgba(201,162,39,.35);background:rgba(18,15,12,.92);color:var(--parch);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(0,0,0,.4)}
-.audio-mute-btn.is-muted{color:var(--parch-faint)}
-.audio-mute-btn__slash{display:none;position:absolute;width:2px;height:22px;background:var(--red);transform:rotate(45deg)}
+.audio-mute-btn{position:fixed;left:1.1rem;bottom:1.1rem;z-index:180;width:48px;height:48px;border-radius:50%;border:1px solid rgba(201,162,39,.35);background:rgba(18,15,12,.92);color:var(--parch);cursor:pointer;display:flex;align-items:center;justify-content:center}
 .audio-mute-btn.is-muted .audio-mute-btn__slash{display:block}
+.audio-mute-btn__slash{display:none;position:absolute;width:2px;height:22px;background:var(--red);transform:rotate(45deg)}
