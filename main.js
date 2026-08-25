@@ -199,21 +199,11 @@
 
       if (entrance2 && creditsBlock) {
         const r2 = entrance2.getBoundingClientRect();
-        // Longer, slower fade-in (starts earlier, finishes later)
-        const pIn = smoothstep(vh * 1.05, vh * 0.12, r2.top);
-        entrance2.style.setProperty("--e2-in", pIn.toFixed(3));
+        // 0 while Entrance 2 is still below the viewport, 1 once it has
+        // settled into view — the "arriving" progress.
+        const pIn = smoothstep(vh * 0.92, vh * 0.4, r2.top);
+        creditsBlock.style.transform = "translateY(" + ((1 - pIn) * 46).toFixed(1) + "px)";
         creditsBlock.style.opacity = String(pIn);
-        creditsBlock.style.transform =
-          "translate3d(0," + ((1 - pIn) * 64).toFixed(1) + "px,0) scale(" + (0.92 + pIn * 0.08).toFixed(3) + ")";
-        creditsBlock.style.filter =
-          pIn < 0.98 ? "blur(" + ((1 - pIn) * 8).toFixed(1) + "px)" : "none";
-        Array.prototype.forEach.call(creditsBlock.children, function (kid, i) {
-          const delay = 0.1 + i * 0.12;
-          const local = Math.max(0, Math.min(1, (pIn - delay) / Math.max(0.001, 1 - delay)));
-          const eased = local * local * (3 - 2 * local);
-          kid.style.opacity = String(eased);
-          kid.style.transform = "translate3d(0," + ((1 - eased) * 32).toFixed(1) + "px,0)";
-        });
       }
     }
 
@@ -334,10 +324,27 @@
       e.preventDefault();
       e.stopPropagation();
     }
-    finishEntrance();
-    goTo("modeSelect");
-    applyI18nDOM();
-    console.log("[PERJUANGAN] → mode select");
+    var ev = e;
+    function proceed() {
+      finishEntrance();
+      goTo("modeSelect");
+      applyI18nDOM();
+      try {
+        if (PJ.Audio) {
+          PJ.Audio.unlock();
+          PJ.Audio.playSfx("open");
+          PJ.Audio.playAmbient("map");
+        }
+      } catch (err) {}
+      if (PJ.UIFx && PJ.UIFx.playModeEnter) PJ.UIFx.playModeEnter();
+      console.log("[PERJUANGAN] → mode select");
+    }
+    if (PJ.UIFx && PJ.UIFx.burstFromEvent) {
+      try { if (PJ.Audio) PJ.Audio.playSfx("whoosh"); } catch (err) {}
+      PJ.UIFx.burstFromEvent(ev, { duration: 420, count: 22, onDone: proceed });
+    } else {
+      proceed();
+    }
   };
 
   window.__pjGoLearn = function (e) {
@@ -419,6 +426,8 @@
       }
     }
 
+    if (PJ.Audio && PJ.Audio.init) { try { PJ.Audio.init(); } catch (e) {} }
+    if (PJ.UIFx && PJ.UIFx.init) { try { PJ.UIFx.init(); } catch (e) {} }
     applyI18nDOM();
     bindLangButtons();
     initButtons();
