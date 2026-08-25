@@ -324,27 +324,11 @@
       e.preventDefault();
       e.stopPropagation();
     }
-    var ev = e;
-    function proceed() {
-      finishEntrance();
-      goTo("modeSelect");
-      applyI18nDOM();
-      try {
-        if (PJ.Audio) {
-          PJ.Audio.unlock();
-          PJ.Audio.playSfx("open");
-          PJ.Audio.playAmbient("map");
-        }
-      } catch (err) {}
-      if (PJ.UIFx && PJ.UIFx.playModeEnter) PJ.UIFx.playModeEnter();
-      console.log("[PERJUANGAN] → mode select");
-    }
-    if (PJ.UIFx && PJ.UIFx.burstFromEvent) {
-      try { if (PJ.Audio) PJ.Audio.playSfx("whoosh"); } catch (err) {}
-      PJ.UIFx.burstFromEvent(ev, { duration: 780, onDone: proceed });
-    } else {
-      proceed();
-    }
+    finishEntrance();
+    goTo("modeSelect");
+    applyI18nDOM();
+    try { if (PJ.Audio) { PJ.Audio.unlock(); PJ.Audio.playSfx("open"); PJ.Audio.playAmbient("map"); } } catch (e) {}
+    console.log("[PERJUANGAN] → mode select");
   };
 
   window.__pjGoLearn = function (e) {
@@ -426,6 +410,7 @@
       }
     }
 
+    if (PJ.Audio && PJ.Audio.init) { try { PJ.Audio.init(); } catch (e) {} }
     applyI18nDOM();
     bindLangButtons();
     initButtons();
@@ -442,7 +427,6 @@
     // Entrance owns the top of the page as real, scrollable content —
     // Entrance 1 then Entrance 2 stacked below it — before the app shell
     // (mode select → learn/game) takes over as a fixed-viewport SPA.
-    if (PJ.UIFx && PJ.UIFx.init) { try { PJ.UIFx.init(); } catch (e) {} }
     initEntrance();
     applyI18nDOM();
   });
