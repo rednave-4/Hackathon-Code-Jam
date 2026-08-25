@@ -2635,6 +2635,7 @@ body:not(.is-c3d) .cinema-3d {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  transform-style: preserve-3d;
 }
 .c3d-embers span {
   position: absolute;
@@ -2643,12 +2644,19 @@ body:not(.is-c3d) .cinema-3d {
   background: #eac873;
   opacity: 0.4;
   box-shadow: 0 0 6px rgba(234, 200, 115, 0.4);
+  filter: blur(var(--ember-blur, 0px));
   animation: c3dEmber linear infinite;
 }
+/* real depth: embers spawned closer to camera (negative --z) drift more,
+   look bigger/brighter; far embers (positive --z) stay hazier — genuine
+   parallax instead of a flat 2D drift */
 @keyframes c3dEmber {
-  0% { transform: translateY(0); opacity: 0; }
-  12% { opacity: 0.5; }
-  100% { transform: translateY(-105vh) translateX(var(--dx, 0px)); opacity: 0; }
+  0% { transform: translateZ(var(--z, 0px)) translateY(0) translateX(0); opacity: 0; }
+  12% { opacity: var(--ember-peak, 0.5); }
+  100% {
+    transform: translateZ(var(--z, 0px)) translateY(-105vh) translateX(var(--dx, 0px));
+    opacity: 0;
+  }
 }
 
 .cinema-3d__world {
@@ -2675,14 +2683,57 @@ body:not(.is-c3d) .cinema-3d {
   z-index: 3;
   pointer-events: none;
 }
+/* rotating light-rig halo beneath the flag — gives the flat pedestal
+   glow an actual sense of a 3D ground plane turning in space */
+.flag-aura {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(62vw, 440px);
+  height: min(62vw, 440px);
+  transform: translate(-50%, -50%) translateZ(-60px) rotateX(72deg);
+  transform-origin: center;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(234, 200, 115, 0.18),
+    rgba(0, 0, 0, 0) 28%,
+    rgba(200, 16, 46, 0.14) 50%,
+    rgba(0, 0, 0, 0) 78%,
+    rgba(234, 200, 115, 0.18)
+  );
+  filter: blur(20px);
+  opacity: 0.85;
+  pointer-events: none;
+  animation: auraSpin 16s linear infinite;
+}
+@keyframes auraSpin {
+  to { transform: translate(-50%, -50%) translateZ(-60px) rotateX(72deg) rotate(360deg); }
+}
 .cinema-3d__panel--flag .flag-wrap {
   position: relative;
   width: min(68vw, 460px);
   height: min(48vw, 330px);
   max-width: 460px;
   opacity: 1 !important;
-  transform: translateZ(50px);
   filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.6));
+  animation: flagIdleFloat 9s ease-in-out infinite;
+}
+/* subtle continuous 3D drift so the flag never sits dead-still, even
+   before/after the scroll-driven camera move kicks in */
+@keyframes flagIdleFloat {
+  0%, 100% { transform: translateZ(50px) rotateY(-3deg) translateY(0); }
+  50% { transform: translateZ(85px) rotateY(3deg) translateY(-7px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flag-aura,
+  .cinema-3d__panel--flag .flag-wrap {
+    animation: none;
+    transform: translate(-50%, -50%) translateZ(-60px) rotateX(72deg);
+  }
+  .cinema-3d__panel--flag .flag-wrap {
+    transform: translateZ(50px);
+  }
 }
 .cinema-3d__panel--flag .flag-pedestal {
   position: absolute;
@@ -2722,20 +2773,32 @@ body:not(.is-c3d) .cinema-3d {
   top: 16px;
   right: 16px;
   z-index: 10;
-  pointer-events: auto;
+  /* BUGFIX: this used to be `pointer-events: auto` unconditionally, which
+     re-enabled clicks on this element (and #ctaContinue below) even while
+     the whole team panel was still invisible (opacity 0) during the flag
+     phase. Since the team panel sits centered on top of the flag, an
+     early click landed on this invisible layer instead of passing through
+     to the scroller — instantly skipping straight to Mode Select instead
+     of advancing the flag → team story. Now it only becomes clickable
+     once `.is-live` is added (see rule below), matching what's visible. */
+  pointer-events: none;
 }
 .cinema-3d__panel--team .credits {
   text-align: center;
   max-width: 560px;
   padding: 2rem 1.5rem;
   transform: translateZ(40px);
+  pointer-events: none;
+}
+.cinema-3d__panel--team.is-live .lang-search,
+.cinema-3d__panel--team.is-live .credits {
   pointer-events: auto;
 }
-.cinema-3d #ctaContinue {
-  pointer-events: auto !important;
-  cursor: pointer !important;
+.cinema-3d__panel--team.is-live #ctaContinue {
+  pointer-events: auto;
+  cursor: pointer;
   position: relative;
-  z-index: 15 !important;
+  z-index: 15;
 }
 
 .cinema-3d__hud {

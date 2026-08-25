@@ -196,13 +196,22 @@
     }
 
     if (embers && !embers.childElementCount) {
-      for (let i = 0; i < 16; i++) {
+      // Real depth: each ember gets a random Z position. Ones close to the
+      // camera (negative z) render bigger, sharper and brighter; ones far
+      // away (positive z) are smaller, dimmer and blurred — a cheap but
+      // genuine depth-of-field parallax instead of a flat 2D sprinkle.
+      for (let i = 0; i < 22; i++) {
         const s = document.createElement("span");
+        const z = Math.random() * 340 - 120; // -120 (near) .. 220 (far)
+        const depth01 = clamp((z + 120) / 340, 0, 1); // 0 near .. 1 far
+        const sz = 3.2 - depth01 * 1.8 + Math.random() * 1.2;
         s.style.left = Math.random() * 100 + "%";
-        s.style.setProperty("--dx", (Math.random() * 50 - 25).toFixed(1) + "px");
-        s.style.animationDuration = 9 + Math.random() * 12 + "s";
+        s.style.setProperty("--dx", (Math.random() * 60 - 30).toFixed(1) + "px");
+        s.style.setProperty("--z", z.toFixed(0) + "px");
+        s.style.setProperty("--ember-blur", (depth01 * 2.2).toFixed(2) + "px");
+        s.style.setProperty("--ember-peak", (0.65 - depth01 * 0.35).toFixed(2));
+        s.style.animationDuration = 9 + Math.random() * 12 + depth01 * 6 + "s";
         s.style.animationDelay = -Math.random() * 12 + "s";
-        const sz = 2 + Math.random() * 2.5;
         s.style.width = s.style.height = sz + "px";
         embers.appendChild(s);
       }
@@ -221,7 +230,12 @@
     setTimeout(() => flagInstance && flagInstance.configure(), 700);
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
     let smooth = 0;
+
+    // Mouse-parallax tilt state: target values updated on pointer move,
+    // smoothed toward each frame just like the scroll progress is.
+    let tiltX = 0, tiltY = 0, tiltTX = 0, tiltTY = 0;
 
     function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
     function lerp(a, b, t) { return a + (b - a) * t; }
@@ -238,10 +252,19 @@
     }
 
     function paint(p) {
-      // Keep camera subtle so panels stay readable
+      // Keep camera subtle so panels stay readable. On top of the
+      // scroll-driven dolly, blend in a gentle mouse-parallax tilt so the
+      // whole scene reads as an actual 3D volume rather than a flat
+      // cross-fade — moving the cursor subtly rotates/shifts the camera.
       if (world) {
+        const rotX = (-tiltY * 3.5).toFixed(2);
+        const rotY = (tiltX * 4.5).toFixed(2);
+        const px = (tiltX * 14).toFixed(1);
+        const py = (p * -18 + tiltY * 10).toFixed(1);
+        const pz = (p * 120).toFixed(1);
         world.style.transform =
-          "translate3d(0," + (p * -18).toFixed(1) + "px," + (p * 120).toFixed(1) + "px)";
+          "translate3d(" + px + "px," + py + "px," + pz + "px) " +
+          "rotateX(" + rotX + "deg) rotateY(" + rotY + "deg)";
       }
 
       // Flag: visible start → gone by ~45%
@@ -279,14 +302,32 @@
     function tick() {
       if (cinemaDone) return;
       const target = progress01();
-      if (reduceMotion.matches) smooth = target;
-      else smooth = lerp(smooth, target, 0.2);
+      if (reduceMotion.matches) {
+        smooth = target;
+        tiltX = tiltY = 0;
+      } else {
+        smooth = lerp(smooth, target, 0.2);
+        tiltX = lerp(tiltX, tiltTX, 0.08);
+        tiltY = lerp(tiltY, tiltTY, 0.08);
+      }
       if (Math.abs(smooth - target) < 0.001) smooth = target;
       paint(smooth);
       cinemaRaf = requestAnimationFrame(tick);
     }
     if (cinemaRaf) cancelAnimationFrame(cinemaRaf);
     cinemaRaf = requestAnimationFrame(tick);
+
+    // Pointer parallax: only on devices with a real mouse, and only when
+    // motion isn't reduced. Values are normalized -1..1 from screen center.
+    function onPointerMove(e) {
+      if (cinemaDone) return;
+      tiltTX = clamp((e.clientX - window.innerWidth / 2) / (window.innerWidth / 2), -1, 1);
+      tiltTY = clamp((e.clientY - window.innerHeight / 2) / (window.innerHeight / 2), -1, 1);
+    }
+    const pointerParallaxEnabled = hasFinePointer && !reduceMotion.matches;
+    if (pointerParallaxEnabled) {
+      window.addEventListener("mousemove", onPointerMove, { passive: true });
+    }
 
     // CRITICAL: forward mouse wheel on sticky stage → page scroll
     // (overflow:hidden stage often eats wheel without scrolling the document)
@@ -353,6 +394,11 @@
       advance(e);
     });
 
+    // Single, clean binding for the "Lanjutkan" button. (Previously this
+    // button was also bound in initButtons(), so one click fired
+    // window.__pjGoMode 2-3 times — harmless-ish but sloppy. Now there's
+    // exactly one listener, and the CSS bugfix above ensures this button
+    // can't even be clicked until the team panel is actually visible.)
     if (cta) {
       cta.onclick = null;
       cta.addEventListener("click", (e) => {
@@ -365,6 +411,11 @@
     window.scrollTo(0, scroller.offsetTop || 0);
     paint(0);
     console.log("[PERJUANGAN] 3D entrance ready — wheel scrolls page, team holds");
+
+    // Expose cleanup so finishCinemaEntrance() can stop the pointer listener.
+    initEntrance1._cleanupPointer = () => {
+      if (pointerParallaxEnabled) window.removeEventListener("mousemove", onPointerMove);
+    };
   }
 
   function finishCinemaEntrance() {
@@ -383,6 +434,9 @@
     }
     if (flagInstance) {
       try { flagInstance.stop(); } catch (e) {}
+    }
+    if (typeof initEntrance1._cleanupPointer === "function") {
+      try { initEntrance1._cleanupPointer(); } catch (e) {}
     }
     window.scrollTo(0, 0);
   }
@@ -434,15 +488,15 @@
   };
 
   function initButtons() {
-    const cta = $("ctaContinue");
-    if (cta) {
-      cta.onclick = window.__pjGoMode;
-      cta.addEventListener("click", window.__pjGoMode);
-    }
     const learnBtn = $("btnModeLearn");
     if (learnBtn) learnBtn.onclick = window.__pjGoLearn;
     const gameBtn = $("btnModeGame");
     if (gameBtn) gameBtn.onclick = window.__pjGoGame;
+    // NOTE: ctaContinue ("Lanjutkan") is intentionally NOT bound here.
+    // It lives inside the cinematic entrance and is bound once, cleanly,
+    // inside initEntrance1(). Binding it here too used to make every
+    // click fire window.__pjGoMode 2-3x (onclick + two addEventListener
+    // registrations stacking on top of each other).
 
     const learnBack = $("learnBackBtn");
     if (learnBack) {
