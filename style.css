@@ -2763,6 +2763,7 @@ body:not(.is-c3d) .cinema-3d {
 .cinema-3d__panel--team {
   z-index: 4;
   opacity: 0;
+  transform: translate3d(0, 42%, -60px);
   pointer-events: none;
 }
 .cinema-3d__panel--team.is-live {

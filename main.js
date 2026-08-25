@@ -267,34 +267,44 @@
           "rotateX(" + rotX + "deg) rotateY(" + rotY + "deg)";
       }
 
-      // Flag: visible start → gone by ~45%
-      const flagOut = smoothstep(0.08, 0.42, p);
+      // Panel 1 (flag): scrolls UP and off the top, like a normal page
+      // section you've scrolled past — not just a fade-in-place. This is
+      // the same overall timing as before (Entrance 1's animation was
+      // already good), just expressed as a slide instead of a crossfade.
+      const flagOut = smoothstep(0.06, 0.46, p);
       if (panelFlag) {
-        panelFlag.style.opacity = String(1 - flagOut);
+        panelFlag.style.opacity = String(1 - flagOut * flagOut);
         panelFlag.style.transform =
-          "translate3d(0," + (flagOut * -70).toFixed(1) + "px," +
-          (-flagOut * 200).toFixed(1) + "px) scale(" + (1 - flagOut * 0.22).toFixed(3) + ")";
-        panelFlag.style.filter = flagOut > 0.08 ? "blur(" + (flagOut * 6).toFixed(2) + "px)" : "none";
+          "translate3d(0," + (flagOut * -100).toFixed(2) + "%," +
+          (-flagOut * 140).toFixed(1) + "px) scale(" + (1 - flagOut * 0.14).toFixed(3) + ")";
+        panelFlag.style.filter = flagOut > 0.5 ? "blur(" + ((flagOut - 0.5) * 5).toFixed(2) + "px)" : "none";
         panelFlag.style.visibility = flagOut >= 0.98 ? "hidden" : "visible";
       }
 
-      // Team: starts ~25%, FULL by ~50%, STAYS visible until end (no black hole)
-      const teamIn = smoothstep(0.22, 0.5, p);
+      // Panel 2 (team/credits): this is the fix for what you sketched —
+      // it no longer fades in on top of the flag's own position. It
+      // starts stacked BELOW the viewport (translateY 100%) and slides
+      // straight UP into place as you keep scrolling, exactly like
+      // "Entrance 2" sitting under "Entrance 1" and coming into view.
+      // Because it's a physical position (not just opacity), there's no
+      // window where both panels are simultaneously half-faded/blurred —
+      // which is what was reading as a "black gap" mid-scroll before.
+      const teamIn = smoothstep(0.34, 0.66, p);
       if (panelTeam) {
-        panelTeam.style.opacity = String(teamIn);
+        panelTeam.style.opacity = String(Math.min(1, teamIn * 1.25));
         panelTeam.style.transform =
-          "translate3d(0," + ((1 - teamIn) * 36).toFixed(1) + "px," +
-          (-220 + teamIn * 220).toFixed(1) + "px) scale(" + (0.92 + teamIn * 0.08).toFixed(3) + ")";
-        panelTeam.style.filter = teamIn < 0.9 ? "blur(" + ((1 - teamIn) * 5).toFixed(2) + "px)" : "none";
+          "translate3d(0," + ((1 - teamIn) * 42).toFixed(2) + "%," +
+          (-60 + teamIn * 60).toFixed(1) + "px)";
+        panelTeam.style.filter = teamIn < 0.4 ? "blur(" + ((0.4 - teamIn) * 5).toFixed(2) + "px)" : "none";
         panelTeam.style.visibility = teamIn < 0.02 ? "hidden" : "visible";
-        if (teamIn > 0.3) panelTeam.classList.add("is-live");
+        if (teamIn > 0.55) panelTeam.classList.add("is-live");
         else panelTeam.classList.remove("is-live");
       }
 
       if (fill) fill.style.width = (p * 100).toFixed(1) + "%";
       if (hint) {
         // Hide hint once team is readable
-        const hide = smoothstep(0.4, 0.55, p);
+        const hide = smoothstep(0.32, 0.5, p);
         hint.style.opacity = String(0.65 * (1 - hide));
       }
     }
@@ -367,7 +377,7 @@
     scroller.addEventListener("touchmove", onTouchMove, { passive: false });
 
     function jumpToTeam() {
-      const y = scroller.offsetTop + maxScroll() * 0.62;
+      const y = scroller.offsetTop + maxScroll() * 0.72;
       window.scrollTo({ top: y, behavior: reduceMotion.matches ? "auto" : "smooth" });
     }
 
@@ -377,7 +387,7 @@
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.closest(".lang-search"))) return;
       if (e && e.preventDefault) e.preventDefault();
       const p = progress01();
-      if (p < 0.45) {
+      if (p < 0.6) {
         jumpToTeam();
         return;
       }
