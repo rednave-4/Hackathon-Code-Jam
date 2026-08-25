@@ -10,19 +10,15 @@
   const $ = (id) => document.getElementById(id);
 
   const screens = {
-    entrance1: $("entrance1"),
-    entrance2: $("entrance2"),
     modeSelect: $("modeSelect"),
     learnMode: $("learnMode"),
     mainMap: $("mainMap"),
   };
 
   let flagInstance = null;
-  let advancedFromE1 = false;
   let mapInitialized = false;
   let learnInitialized = false;
-  let cinemaDone = false;
-  let cinemaRaf = null;
+  let entranceDone = false;
 
   function hideAllScreens() {
     Object.values(screens).forEach((el) => {
@@ -163,31 +159,25 @@
     });
   }
 
-  /* ---------- Entrance 1 ---------- */
-  function initEntrance1() {
-    const scroller = $("entranceScroll");
-    const sticky = scroller && scroller.querySelector(".cinema-3d__sticky");
-    const scene = scroller && scroller.querySelector(".cinema-3d__scene");
-    const world = $("cinemaWorld");
-    const panelFlag = $("panelFlag");
-    const panelTeam = $("panelTeam");
-    const fill = $("cinemaProgressFill");
-    const hint = $("e1Hint");
-    const cta = $("ctaContinue");
+  /* ---------- Entrance — real stacked scroll (no sticky/3D hijack) ---------- */
+  function initEntrance() {
+    const wrap = $("entranceWrap");
+    const entrance1 = $("entrance1");
+    const entrance2 = $("entrance2");
     const flagWrap = $("flagWrap");
     const textBlock = $("e1Text");
-    const embers = $("cinemaEmbers");
+    const creditsBlock = $("creditsBlock");
+    const cta = $("ctaContinue");
 
-    if (!scroller) {
-      console.warn("[PERJUANGAN] entranceScroll missing");
+    if (!wrap) {
+      console.warn("[PERJUANGAN] entranceWrap missing");
       return;
     }
 
-    cinemaDone = false;
-    document.documentElement.classList.add("is-c3d");
-    document.body.classList.add("is-c3d");
-    scroller.classList.remove("is-done");
-    scroller.style.display = "";
+    entranceDone = false;
+    document.documentElement.classList.add("is-entrance");
+    document.body.classList.add("is-entrance");
+    wrap.hidden = false;
 
     try {
       flagInstance = PJ.FlagCloth($("flagCanvas"));
@@ -195,28 +185,8 @@
       console.warn("[PERJUANGAN] flag failed:", err);
     }
 
-    if (embers && !embers.childElementCount) {
-      // Real depth: each ember gets a random Z position. Ones close to the
-      // camera (negative z) render bigger, sharper and brighter; ones far
-      // away (positive z) are smaller, dimmer and blurred — a cheap but
-      // genuine depth-of-field parallax instead of a flat 2D sprinkle.
-      for (let i = 0; i < 22; i++) {
-        const s = document.createElement("span");
-        const z = Math.random() * 340 - 120; // -120 (near) .. 220 (far)
-        const depth01 = clamp((z + 120) / 340, 0, 1); // 0 near .. 1 far
-        const sz = 3.2 - depth01 * 1.8 + Math.random() * 1.2;
-        s.style.left = Math.random() * 100 + "%";
-        s.style.setProperty("--dx", (Math.random() * 60 - 30).toFixed(1) + "px");
-        s.style.setProperty("--z", z.toFixed(0) + "px");
-        s.style.setProperty("--ember-blur", (depth01 * 2.2).toFixed(2) + "px");
-        s.style.setProperty("--ember-peak", (0.65 - depth01 * 0.35).toFixed(2));
-        s.style.animationDuration = 9 + Math.random() * 12 + depth01 * 6 + "s";
-        s.style.animationDelay = -Math.random() * 12 + "s";
-        s.style.width = s.style.height = sz + "px";
-        embers.appendChild(s);
-      }
-    }
-
+    // Reveal Entrance 1's content on load (native page scroll handles the
+    // rest — there's nothing to hijack or paint per-frame).
     requestAnimationFrame(() => {
       if (flagInstance) {
         flagInstance.configure();
@@ -224,193 +194,36 @@
       }
       if (flagWrap) flagWrap.classList.add("is-in");
       if (textBlock) textBlock.classList.add("is-in");
-      if (hint) hint.classList.add("is-in");
     });
     setTimeout(() => flagInstance && flagInstance.configure(), 250);
     setTimeout(() => flagInstance && flagInstance.configure(), 700);
 
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
-    let smooth = 0;
-
-    // Mouse-parallax tilt state: target values updated on pointer move,
-    // smoothed toward each frame just like the scroll progress is.
-    let tiltX = 0, tiltY = 0, tiltTX = 0, tiltTY = 0;
-
-    function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
-    function lerp(a, b, t) { return a + (b - a) * t; }
-    function smoothstep(e0, e1, v) {
-      const x = clamp((v - e0) / (e1 - e0), 0, 1);
-      return x * x * (3 - 2 * x);
-    }
-    function maxScroll() {
-      return Math.max(1, scroller.offsetHeight - window.innerHeight);
-    }
-    function progress01() {
-      const top = scroller.getBoundingClientRect().top;
-      return clamp(-top / maxScroll(), 0, 1);
-    }
-
-    function paint(p) {
-      // Keep camera subtle so panels stay readable. On top of the
-      // scroll-driven dolly, blend in a gentle mouse-parallax tilt so the
-      // whole scene reads as an actual 3D volume rather than a flat
-      // cross-fade — moving the cursor subtly rotates/shifts the camera.
-      if (world) {
-        const rotX = (-tiltY * 3.5).toFixed(2);
-        const rotY = (tiltX * 4.5).toFixed(2);
-        const px = (tiltX * 14).toFixed(1);
-        const py = (p * -18 + tiltY * 10).toFixed(1);
-        const pz = (p * 120).toFixed(1);
-        world.style.transform =
-          "translate3d(" + px + "px," + py + "px," + pz + "px) " +
-          "rotateX(" + rotX + "deg) rotateY(" + rotY + "deg)";
-      }
-
-      // Panel 1 (flag): scrolls UP and off the top, like a normal page
-      // section you've scrolled past — not just a fade-in-place. This is
-      // the same overall timing as before (Entrance 1's animation was
-      // already good), just expressed as a slide instead of a crossfade.
-      const flagOut = smoothstep(0.06, 0.46, p);
-      if (panelFlag) {
-        panelFlag.style.opacity = String(1 - flagOut * flagOut);
-        panelFlag.style.transform =
-          "translate3d(0," + (flagOut * -100).toFixed(2) + "%," +
-          (-flagOut * 140).toFixed(1) + "px) scale(" + (1 - flagOut * 0.14).toFixed(3) + ")";
-        panelFlag.style.filter = flagOut > 0.5 ? "blur(" + ((flagOut - 0.5) * 5).toFixed(2) + "px)" : "none";
-        panelFlag.style.visibility = flagOut >= 0.98 ? "hidden" : "visible";
-      }
-
-      // Panel 2 (team/credits): this is the fix for what you sketched —
-      // it no longer fades in on top of the flag's own position. It
-      // starts stacked BELOW the viewport (translateY 100%) and slides
-      // straight UP into place as you keep scrolling, exactly like
-      // "Entrance 2" sitting under "Entrance 1" and coming into view.
-      // Because it's a physical position (not just opacity), there's no
-      // window where both panels are simultaneously half-faded/blurred —
-      // which is what was reading as a "black gap" mid-scroll before.
-      const teamIn = smoothstep(0.34, 0.66, p);
-      if (panelTeam) {
-        panelTeam.style.opacity = String(Math.min(1, teamIn * 1.25));
-        panelTeam.style.transform =
-          "translate3d(0," + ((1 - teamIn) * 42).toFixed(2) + "%," +
-          (-60 + teamIn * 60).toFixed(1) + "px)";
-        panelTeam.style.filter = teamIn < 0.4 ? "blur(" + ((0.4 - teamIn) * 5).toFixed(2) + "px)" : "none";
-        panelTeam.style.visibility = teamIn < 0.02 ? "hidden" : "visible";
-        if (teamIn > 0.55) panelTeam.classList.add("is-live");
-        else panelTeam.classList.remove("is-live");
-      }
-
-      if (fill) fill.style.width = (p * 100).toFixed(1) + "%";
-      if (hint) {
-        // Hide hint once team is readable
-        const hide = smoothstep(0.32, 0.5, p);
-        hint.style.opacity = String(0.65 * (1 - hide));
-      }
+    // Reveal Entrance 2's credits, and pause the flag canvas, purely based
+    // on what's actually visible — a plain IntersectionObserver instead of
+    // a scroll-progress paint loop.
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.target === entrance2 && creditsBlock) {
+              if (entry.isIntersecting) creditsBlock.classList.add("is-in");
+            }
+            if (entry.target === entrance1 && flagInstance) {
+              if (entry.isIntersecting) flagInstance.start();
+              else flagInstance.stop();
+            }
+          });
+        },
+        { threshold: 0.3 }
+      );
+      if (entrance1) io.observe(entrance1);
+      if (entrance2) io.observe(entrance2);
+      initEntrance._io = io;
+    } else if (creditsBlock) {
+      creditsBlock.classList.add("is-in");
     }
 
-    function tick() {
-      if (cinemaDone) return;
-      const target = progress01();
-      if (reduceMotion.matches) {
-        smooth = target;
-        tiltX = tiltY = 0;
-      } else {
-        smooth = lerp(smooth, target, 0.2);
-        tiltX = lerp(tiltX, tiltTX, 0.08);
-        tiltY = lerp(tiltY, tiltTY, 0.08);
-      }
-      if (Math.abs(smooth - target) < 0.001) smooth = target;
-      paint(smooth);
-      cinemaRaf = requestAnimationFrame(tick);
-    }
-    if (cinemaRaf) cancelAnimationFrame(cinemaRaf);
-    cinemaRaf = requestAnimationFrame(tick);
-
-    // Pointer parallax: only on devices with a real mouse, and only when
-    // motion isn't reduced. Values are normalized -1..1 from screen center.
-    function onPointerMove(e) {
-      if (cinemaDone) return;
-      tiltTX = clamp((e.clientX - window.innerWidth / 2) / (window.innerWidth / 2), -1, 1);
-      tiltTY = clamp((e.clientY - window.innerHeight / 2) / (window.innerHeight / 2), -1, 1);
-    }
-    const pointerParallaxEnabled = hasFinePointer && !reduceMotion.matches;
-    if (pointerParallaxEnabled) {
-      window.addEventListener("mousemove", onPointerMove, { passive: true });
-    }
-
-    // CRITICAL: forward mouse wheel on sticky stage → page scroll
-    // (overflow:hidden stage often eats wheel without scrolling the document)
-    function onWheel(e) {
-      if (cinemaDone) return;
-      // Let page scroll natively by applying delta to window
-      e.preventDefault();
-      const scale = 1;
-      window.scrollBy({
-        top: e.deltaY * scale,
-        left: 0,
-        behavior: "auto",
-      });
-    }
-    const wheelTargets = [scroller, sticky, scene].filter(Boolean);
-    wheelTargets.forEach((el) => {
-      el.addEventListener("wheel", onWheel, { passive: false });
-    });
-
-    // Touch swipe support
-    let touchY = null;
-    function onTouchStart(e) {
-      if (cinemaDone) return;
-      touchY = e.touches[0].clientY;
-    }
-    function onTouchMove(e) {
-      if (cinemaDone || touchY == null) return;
-      const y = e.touches[0].clientY;
-      const dy = touchY - y;
-      touchY = y;
-      if (Math.abs(dy) > 1) {
-        e.preventDefault();
-        window.scrollBy(0, dy);
-      }
-    }
-    scroller.addEventListener("touchstart", onTouchStart, { passive: true });
-    scroller.addEventListener("touchmove", onTouchMove, { passive: false });
-
-    function jumpToTeam() {
-      const y = scroller.offsetTop + maxScroll() * 0.72;
-      window.scrollTo({ top: y, behavior: reduceMotion.matches ? "auto" : "smooth" });
-    }
-
-    function advance(e) {
-      if (cinemaDone) return;
-      const t = e && e.target;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.closest(".lang-search"))) return;
-      if (e && e.preventDefault) e.preventDefault();
-      const p = progress01();
-      if (p < 0.6) {
-        jumpToTeam();
-        return;
-      }
-      window.__pjGoMode(e);
-    }
-
-    document.addEventListener("keydown", (e) => {
-      if (cinemaDone) return;
-      if (e.key === " " || e.key === "Enter") advance(e);
-    });
-    scroller.addEventListener("click", (e) => {
-      if (cinemaDone) return;
-      if (e.target.closest("#ctaContinue, button, a, input, .lang-search")) return;
-      advance(e);
-    });
-
-    // Single, clean binding for the "Lanjutkan" button. (Previously this
-    // button was also bound in initButtons(), so one click fired
-    // window.__pjGoMode 2-3 times — harmless-ish but sloppy. Now there's
-    // exactly one listener, and the CSS bugfix above ensures this button
-    // can't even be clicked until the team panel is actually visible.)
     if (cta) {
-      cta.onclick = null;
       cta.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -418,35 +231,22 @@
       });
     }
 
-    window.scrollTo(0, scroller.offsetTop || 0);
-    paint(0);
-    console.log("[PERJUANGAN] 3D entrance ready — wheel scrolls page, team holds");
-
-    // Expose cleanup so finishCinemaEntrance() can stop the pointer listener.
-    initEntrance1._cleanupPointer = () => {
-      if (pointerParallaxEnabled) window.removeEventListener("mousemove", onPointerMove);
-    };
+    window.scrollTo(0, 0);
+    console.log("[PERJUANGAN] entrance ready — normal page scroll, Entrance 2 sits below Entrance 1");
   }
 
-  function finishCinemaEntrance() {
-    if (cinemaDone) return;
-    cinemaDone = true;
-    if (cinemaRaf) {
-      cancelAnimationFrame(cinemaRaf);
-      cinemaRaf = null;
-    }
-    document.documentElement.classList.remove("is-c3d");
-    document.body.classList.remove("is-c3d");
-    const scroller = $("entranceScroll");
-    if (scroller) {
-      scroller.classList.add("is-done");
-      scroller.style.display = "none";
-    }
+  function finishEntrance() {
+    if (entranceDone) return;
+    entranceDone = true;
+    document.documentElement.classList.remove("is-entrance");
+    document.body.classList.remove("is-entrance");
+    const wrap = $("entranceWrap");
+    if (wrap) wrap.hidden = true;
     if (flagInstance) {
       try { flagInstance.stop(); } catch (e) {}
     }
-    if (typeof initEntrance1._cleanupPointer === "function") {
-      try { initEntrance1._cleanupPointer(); } catch (e) {}
+    if (initEntrance._io) {
+      try { initEntrance._io.disconnect(); } catch (e) {}
     }
     window.scrollTo(0, 0);
   }
@@ -459,7 +259,7 @@
       e.preventDefault();
       e.stopPropagation();
     }
-    finishCinemaEntrance();
+    finishEntrance();
     goTo("modeSelect");
     applyI18nDOM();
     console.log("[PERJUANGAN] → mode select");
@@ -503,10 +303,8 @@
     const gameBtn = $("btnModeGame");
     if (gameBtn) gameBtn.onclick = window.__pjGoGame;
     // NOTE: ctaContinue ("Lanjutkan") is intentionally NOT bound here.
-    // It lives inside the cinematic entrance and is bound once, cleanly,
-    // inside initEntrance1(). Binding it here too used to make every
-    // click fire window.__pjGoMode 2-3x (onclick + two addEventListener
-    // registrations stacking on top of each other).
+    // It's bound once, cleanly, inside initEntrance(). Binding it here
+    // too used to make every click fire window.__pjGoMode multiple times.
 
     const learnBack = $("learnBackBtn");
     if (learnBack) {
@@ -559,15 +357,10 @@
     if (PJ.AIGuide && typeof PJ.AIGuide.init === "function") {
       PJ.AIGuide.init();
     }
-    // Cinematic entrance owns the first screen via body scroll
-    const eScroll = $("entranceScroll");
-    if (eScroll) {
-      eScroll.hidden = false;
-      initEntrance1();
-    } else {
-      goTo("entrance1");
-      initEntrance1();
-    }
+    // Entrance owns the top of the page as real, scrollable content —
+    // Entrance 1 then Entrance 2 stacked below it — before the app shell
+    // (mode select → learn/game) takes over as a fixed-viewport SPA.
+    initEntrance();
     applyI18nDOM();
   });
 })();

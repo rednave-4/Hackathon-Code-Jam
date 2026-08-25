@@ -12,61 +12,50 @@
 </head>
 <body>
   <div id="app">
-                <!-- ENTRANCE — one long 3D page: flag → team -->
-    <section id="entranceScroll" class="cinema-3d" aria-label="Pembuka 3D">
-      <div class="cinema-3d__sticky">
-        <div class="cinema-3d__scene">
-          <div class="cinema-3d__void" aria-hidden="true">
-            <div class="c3d-glow c3d-glow--red"></div>
-            <div class="c3d-glow c3d-glow--gold"></div>
-            <div class="c3d-embers" id="cinemaEmbers"></div>
+                <!-- ENTRANCE — two real sections, stacked in normal page flow.
+         Entrance 1 (flag) sits on top; scrolling down the page — not a
+         sticky/fake-3D hijack — reveals Entrance 2 (team credits) beneath
+         it, exactly as sketched. -->
+    <div id="entranceWrap">
+      <section id="entrance1" class="entrance-panel entrance-panel--flag" aria-label="Pembuka">
+        <div class="e1-space" aria-hidden="true">
+          <div class="e1-glow e1-glow--a"></div>
+          <div class="e1-glow e1-glow--b"></div>
+          <div class="e1-floor"></div>
+          <div class="e1-rays"></div>
+        </div>
+        <div class="e1-stage-inner">
+          <div class="flag-wrap" id="flagWrap">
+            <div class="flag-pedestal" aria-hidden="true"></div>
+            <canvas id="flagCanvas" width="640" height="400" aria-hidden="true"></canvas>
           </div>
-
-          <div class="cinema-3d__world" id="cinemaWorld">
-            <!-- Phase 1: Flag -->
-            <div class="cinema-3d__panel cinema-3d__panel--flag" id="panelFlag">
-              <div class="flag-aura" aria-hidden="true"></div>
-              <div class="flag-wrap" id="flagWrap">
-                <div class="flag-pedestal" aria-hidden="true"></div>
-                <canvas id="flagCanvas" width="640" height="400" aria-hidden="true"></canvas>
-              </div>
-              <div class="e1-text" id="e1Text">
-                <p class="eyebrow" data-i18n="e1_eyebrow">Sebuah Perjalanan Mengingat</p>
-                <h1 class="title-display" data-i18n="e1_title">SEMANGAT PERJUANGAN</h1>
-                <p class="title-accent" data-i18n="e1_accent">Bangsa Indonesia</p>
-              </div>
-            </div>
-
-            <!-- Phase 2: Team -->
-            <div class="cinema-3d__panel cinema-3d__panel--team" id="panelTeam">
-              <div class="lang-search" id="langSearchE2" role="combobox" aria-haspopup="listbox" aria-expanded="false">
-                <div class="lang-search-box">
-                  <span class="lang-search-icon" aria-hidden="true">&#9906;</span>
-                  <input class="lang-search-input" type="search" autocomplete="off" spellcheck="false" placeholder="Language..." aria-label="Search language" />
-                  <span class="lang-search-current"></span>
-                </div>
-                <div class="lang-search-list" role="listbox" aria-label="Available languages"></div>
-              </div>
-              <div class="credits">
-                <p class="eyebrow" data-i18n="e2_eyebrow">Road to Merdeka</p>
-                <div class="credits-divider"></div>
-                <h2 data-i18n="e2_heading">Dibuat untuk Hackathon</h2>
-                <p class="maker" data-i18n="e2_maker">— MEATLOVER TEAM —</p>
-                <button type="button" class="btn btn--primary" id="ctaContinue" data-i18n="e2_cta">Lanjutkan</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="cinema-3d__hud">
-            <div class="cinema-3d__bar"><span id="cinemaProgressFill"></span></div>
-            <p class="e1-hint" id="e1Hint" data-i18n="e1_hint">Gulir untuk melanjutkan</p>
+          <div class="e1-text" id="e1Text">
+            <p class="eyebrow" data-i18n="e1_eyebrow">Sebuah Perjalanan Mengingat</p>
+            <h1 class="title-display" data-i18n="e1_title">SEMANGAT PERJUANGAN</h1>
+            <p class="title-accent" data-i18n="e1_accent">Bangsa Indonesia</p>
           </div>
         </div>
-      </div>
-    </section>
+        <a href="#entrance2" class="e1-hint" id="e1Hint" data-i18n="e1_hint">Gulir untuk melanjutkan</a>
+      </section>
 
-    <section id="entrance1" class="screen" hidden aria-hidden="true"></section>
-    <section id="entrance2" class="screen" hidden aria-hidden="true"></section>
+      <section id="entrance2" class="entrance-panel entrance-panel--team" aria-label="Tim">
+        <div class="lang-search" id="langSearchE2" role="combobox" aria-haspopup="listbox" aria-expanded="false">
+          <div class="lang-search-box">
+            <span class="lang-search-icon" aria-hidden="true">&#9906;</span>
+            <input class="lang-search-input" type="search" autocomplete="off" spellcheck="false" placeholder="Language..." aria-label="Search language" />
+            <span class="lang-search-current"></span>
+          </div>
+          <div class="lang-search-list" role="listbox" aria-label="Available languages"></div>
+        </div>
+        <div class="credits" id="creditsBlock">
+          <p class="eyebrow" data-i18n="e2_eyebrow">Road to Merdeka</p>
+          <div class="credits-divider"></div>
+          <h2 data-i18n="e2_heading">Dibuat untuk Hackathon</h2>
+          <p class="maker" data-i18n="e2_maker">— MEATLOVER TEAM —</p>
+          <button type="button" class="btn btn--primary" id="ctaContinue" data-i18n="e2_cta">Lanjutkan</button>
+        </div>
+      </section>
+    </div>
 
 <section id="modeSelect" class="screen grain mode-stage" hidden aria-label="Pilih mode">
       <div class="mode-space" aria-hidden="true">

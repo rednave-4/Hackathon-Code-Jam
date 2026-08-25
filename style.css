@@ -103,23 +103,8 @@ button {
 /* Entrance 1 — Cinematic 3D stage                                        */
 /* -------------------------------------------------------------------- */
 #entrance1 {
-  cursor: pointer;
-  touch-action: manipulation;
-  opacity: 1;
-  transition: opacity 0.9s ease, filter 0.7s var(--ease-cinema);
   perspective: 1200px;
   overflow: hidden;
-}
-#entrance1:not(.bg-in) {
-  opacity: 0;
-}
-#entrance1.bg-in {
-  opacity: 1;
-}
-#entrance1.is-leaving,
-#entrance1.bg-in.is-leaving {
-  opacity: 0;
-  filter: blur(12px) brightness(0.7);
 }
 
 .e1-space {
@@ -133,10 +118,6 @@ button {
   position: absolute;
   border-radius: 50%;
   filter: blur(60px);
-  opacity: 0;
-  transition: opacity 1.4s ease;
-}
-#entrance1.bg-in .e1-glow {
   opacity: 1;
 }
 .e1-glow--a {
@@ -169,10 +150,6 @@ button {
   transform: translateX(-50%) rotateX(72deg);
   transform-origin: center bottom;
   background: radial-gradient(ellipse at 50% 0%, rgba(201, 162, 39, 0.09) 0%, transparent 70%);
-  opacity: 0;
-  transition: opacity 1.2s ease 0.2s;
-}
-#entrance1.bg-in .e1-floor {
   opacity: 1;
 }
 .e1-rays {
@@ -181,10 +158,6 @@ button {
   background:
     radial-gradient(ellipse 40% 60% at 50% 20%, rgba(243, 238, 225, 0.04) 0%, transparent 70%),
     radial-gradient(ellipse 20% 40% at 30% 60%, rgba(200, 16, 46, 0.05) 0%, transparent 70%);
-  opacity: 0;
-  transition: opacity 1.5s ease 0.3s;
-}
-#entrance1.bg-in .e1-rays {
   opacity: 1;
 }
 
@@ -295,34 +268,29 @@ button {
 }
 
 .e1-hint {
-  position: fixed; /* viewport bottom — never overlaps title */
+  position: absolute; /* bottom of Entrance 1's own panel, not the viewport */
   left: 0;
   right: 0;
   bottom: 28px;
-  top: auto;
   width: 100%;
   margin: 0;
   padding: 0 1rem;
   text-align: center;
   z-index: 20;
-  pointer-events: none;
+  display: block;
+  text-decoration: none;
   font-family: var(--font-mono);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   color: var(--parch-faint);
-  opacity: 0;
-  transition: opacity 1s ease;
-  animation: none;
-}
-.e1-hint.is-in {
   opacity: 0.75;
+  cursor: pointer;
   animation: hintPulse 2.6s ease-in-out infinite;
 }
-/* Hide hint when not on entrance 1 */
-#entrance1:not(.is-active) .e1-hint,
-#entrance1[hidden] .e1-hint {
-  display: none !important;
-  opacity: 0 !important;
+.e1-hint:hover,
+.e1-hint:focus-visible {
+  color: var(--gold-bright);
+  outline: none;
 }
 @keyframes hintPulse {
   0%, 100% { opacity: 0.55; }
@@ -349,6 +317,13 @@ button {
   position: relative;
   z-index: 2;
   background: radial-gradient(ellipse at 50% 40%, rgba(31, 26, 20, 0.35) 0%, transparent 70%);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.9s var(--ease-cinema), transform 0.9s var(--ease-cinema);
+}
+.credits.is-in {
+  opacity: 1;
+  transform: none;
 }
 .credits .eyebrow {
   margin-bottom: 1.1rem;
@@ -1284,18 +1259,12 @@ button {
   touch-action: manipulation;
   pointer-events: auto;
 }
-/* Decorative layers must never steal clicks */
+/* Decorative layers must never steal clicks from the scroll-hint link */
 #entrance1 .vignette,
 #entrance1 .flag-wrap,
 #entrance1 #flagCanvas,
-#entrance1 .e1-text,
-#entrance1 .e1-hint {
+#entrance1 .e1-text {
   pointer-events: none !important;
-}
-#entrance1 {
-  pointer-events: auto;
-  cursor: pointer;
-  touch-action: manipulation;
 }
 
 /* -------------------------------------------------------------------- */
@@ -2081,32 +2050,6 @@ button {
   visibility: visible !important;
   opacity: 1;
 }
-/* entrance1 opacity overrides must not keep it interactive when inactive */
-#entrance1:not(.is-active) {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  display: none !important;
-}
-#entrance1.is-active {
-  display: flex !important;
-  pointer-events: auto !important;
-}
-#e1Hit:disabled,
-#entrance1:not(.is-active) #e1Hit {
-  pointer-events: none !important;
-  display: none !important;
-}
-/* CTA on entrance 2 must be clickable */
-#entrance2 .credits,
-#entrance2 #ctaContinue {
-  position: relative;
-  z-index: 5;
-  pointer-events: auto !important;
-}
-#ctaContinue {
-  cursor: pointer;
-}
-
 
 /* Force interactive controls */
 #ctaContinue,
@@ -2118,18 +2061,9 @@ button {
   position: relative;
   z-index: 40 !important;
 }
-#entrance2.is-active,
-#modeSelect.is-active {
-  z-index: 20 !important;
-  pointer-events: auto !important;
+#ctaContinue {
+  cursor: pointer;
 }
-#entrance2 .credits {
-  position: relative;
-  z-index: 30;
-  pointer-events: auto !important;
-}
-/* Hide e1-hit if leftover in old caches */
-.e1-hit { display: none !important; pointer-events: none !important; }
 
 
 /* -------------------------------------------------------------------- */
@@ -2544,319 +2478,56 @@ button {
 
 
 
+
 /* ==========================================================================
-   ENTRANCE 3D — one long page, unified void, flag → team
+   ENTRANCE — real vertical stack (no sticky/3D scroll hijack)
+   Entrance 1 (flag) and Entrance 2 (credits) are two normal full-height
+   sections, one after another in the page flow. The browser's native
+   scroll does all the work; JS only toggles reveal classes and, once the
+   visitor continues, hides the whole wrapper before the app shell
+   (mode select → learn/game) takes over as a fixed-viewport SPA.
    ========================================================================== */
-html.is-c3d,
-body.is-c3d {
+html.is-entrance,
+body.is-entrance {
   overflow-x: hidden !important;
   overflow-y: auto !important;
   height: auto !important;
-  background: #000 !important;
-  overscroll-behavior: none;
+  background: var(--ink) !important;
 }
-body.is-c3d #app {
+body.is-entrance #app {
   height: auto !important;
   min-height: 100vh;
   overflow: visible !important;
-  background: #000 !important;
-}
-body:not(.is-c3d) .cinema-3d {
-  display: none !important;
 }
 
-.cinema-3d {
+#entranceWrap {
   position: relative;
   width: 100%;
-  height: 260vh;
-  z-index: 50;
-  display: block !important;
-  background: #000;
-  pointer-events: auto;
 }
-.cinema-3d.is-done {
+#entranceWrap[hidden] {
   display: none !important;
-  height: 0 !important;
-  pointer-events: none !important;
 }
 
-.cinema-3d__sticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-  background: #000;
-}
-
-.cinema-3d__scene {
-  position: absolute;
-  inset: 0;
-  perspective: 1100px;
-  perspective-origin: 50% 42%;
-  background: #000;
-  overflow: hidden;
-}
-
-/* Unified void atmosphere — same on whole entrance */
-.cinema-3d__void {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(ellipse 70% 55% at 50% 40%, rgba(200, 16, 46, 0.12) 0%, transparent 65%),
-    radial-gradient(ellipse 40% 35% at 50% 55%, rgba(234, 200, 115, 0.06) 0%, transparent 70%),
-    #000;
-}
-.c3d-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(48px);
-  pointer-events: none;
-}
-.c3d-glow--red {
-  width: min(65vw, 480px);
-  height: min(65vw, 480px);
-  left: 50%;
-  top: 38%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(200, 16, 46, 0.2) 0%, transparent 70%);
-}
-.c3d-glow--gold {
-  width: min(40vw, 280px);
-  height: min(40vw, 280px);
-  left: 50%;
-  top: 48%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(234, 200, 115, 0.1) 0%, transparent 70%);
-}
-.c3d-embers {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  transform-style: preserve-3d;
-}
-.c3d-embers span {
-  position: absolute;
-  bottom: -4%;
-  border-radius: 50%;
-  background: #eac873;
-  opacity: 0.4;
-  box-shadow: 0 0 6px rgba(234, 200, 115, 0.4);
-  filter: blur(var(--ember-blur, 0px));
-  animation: c3dEmber linear infinite;
-}
-/* real depth: embers spawned closer to camera (negative --z) drift more,
-   look bigger/brighter; far embers (positive --z) stay hazier — genuine
-   parallax instead of a flat 2D drift */
-@keyframes c3dEmber {
-  0% { transform: translateZ(var(--z, 0px)) translateY(0) translateX(0); opacity: 0; }
-  12% { opacity: var(--ember-peak, 0.5); }
-  100% {
-    transform: translateZ(var(--z, 0px)) translateY(-105vh) translateX(var(--dx, 0px));
-    opacity: 0;
-  }
-}
-
-.cinema-3d__world {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  will-change: transform;
-  z-index: 2;
-}
-
-.cinema-3d__panel {
-  position: absolute;
-  inset: 0;
+.entrance-panel {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transform-style: preserve-3d;
-  padding: 1.5rem 1rem 5rem;
-  will-change: transform, opacity, filter;
-}
-
-.cinema-3d__panel--flag {
-  z-index: 3;
-  pointer-events: none;
-}
-/* rotating light-rig halo beneath the flag — gives the flat pedestal
-   glow an actual sense of a 3D ground plane turning in space */
-.flag-aura {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: min(62vw, 440px);
-  height: min(62vw, 440px);
-  transform: translate(-50%, -50%) translateZ(-60px) rotateX(72deg);
-  transform-origin: center;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    rgba(234, 200, 115, 0.18),
-    rgba(0, 0, 0, 0) 28%,
-    rgba(200, 16, 46, 0.14) 50%,
-    rgba(0, 0, 0, 0) 78%,
-    rgba(234, 200, 115, 0.18)
-  );
-  filter: blur(20px);
-  opacity: 0.85;
-  pointer-events: none;
-  animation: auraSpin 16s linear infinite;
-}
-@keyframes auraSpin {
-  to { transform: translate(-50%, -50%) translateZ(-60px) rotateX(72deg) rotate(360deg); }
-}
-.cinema-3d__panel--flag .flag-wrap {
-  position: relative;
-  width: min(68vw, 460px);
-  height: min(48vw, 330px);
-  max-width: 460px;
-  opacity: 1 !important;
-  filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.6));
-  animation: flagIdleFloat 9s ease-in-out infinite;
-}
-/* subtle continuous 3D drift so the flag never sits dead-still, even
-   before/after the scroll-driven camera move kicks in */
-@keyframes flagIdleFloat {
-  0%, 100% { transform: translateZ(50px) rotateY(-3deg) translateY(0); }
-  50% { transform: translateZ(85px) rotateY(3deg) translateY(-7px); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .flag-aura,
-  .cinema-3d__panel--flag .flag-wrap {
-    animation: none;
-    transform: translate(-50%, -50%) translateZ(-60px) rotateX(72deg);
-  }
-  .cinema-3d__panel--flag .flag-wrap {
-    transform: translateZ(50px);
-  }
-}
-.cinema-3d__panel--flag .flag-pedestal {
-  position: absolute;
-  left: 50%;
-  bottom: -6%;
-  width: 55%;
-  height: 14%;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, transparent 70%);
-  border-radius: 50%;
-}
-.cinema-3d__panel--flag #flagCanvas {
-  position: absolute;
-  inset: 0;
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-}
-.cinema-3d__panel--flag .e1-text {
-  margin-top: 1.5rem;
-  text-align: center;
-  opacity: 1 !important;
-  transform: translateZ(70px);
-  padding: 0 1rem;
-}
-
-.cinema-3d__panel--team {
-  z-index: 4;
-  opacity: 0;
-  transform: translate3d(0, 42%, -60px);
-  pointer-events: none;
-}
-.cinema-3d__panel--team.is-live {
-  pointer-events: auto;
-}
-.cinema-3d__panel--team .lang-search {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 10;
-  /* BUGFIX: this used to be `pointer-events: auto` unconditionally, which
-     re-enabled clicks on this element (and #ctaContinue below) even while
-     the whole team panel was still invisible (opacity 0) during the flag
-     phase. Since the team panel sits centered on top of the flag, an
-     early click landed on this invisible layer instead of passing through
-     to the scroller — instantly skipping straight to Mode Select instead
-     of advancing the flag → team story. Now it only becomes clickable
-     once `.is-live` is added (see rule below), matching what's visible. */
-  pointer-events: none;
-}
-.cinema-3d__panel--team .credits {
-  text-align: center;
-  max-width: 560px;
-  padding: 2rem 1.5rem;
-  transform: translateZ(40px);
-  pointer-events: none;
-}
-.cinema-3d__panel--team.is-live .lang-search,
-.cinema-3d__panel--team.is-live .credits {
-  pointer-events: auto;
-}
-.cinema-3d__panel--team.is-live #ctaContinue {
-  pointer-events: auto;
-  cursor: pointer;
-  position: relative;
-  z-index: 15;
-}
-
-.cinema-3d__hud {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 8;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 28px;
-}
-.cinema-3d__bar {
-  width: min(200px, 42vw);
-  height: 2px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
   overflow: hidden;
+  background: radial-gradient(120% 100% at 50% 30%, var(--ink-2) 0%, var(--ink) 65%, #000 100%);
 }
-.cinema-3d__bar span {
-  display: block;
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #c8102e, #eac873);
-}
-.cinema-3d .e1-hint {
-  position: static;
-  margin: 0;
-  opacity: 0.65;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.45);
-  text-align: center;
-  animation: none;
+
+.entrance-panel--team {
+  padding: 3rem 1rem;
 }
 
 @media (max-width: 640px) {
-  .cinema-3d__panel--flag .flag-wrap {
+  .entrance-panel--flag .flag-wrap {
     width: min(80vw, 320px);
     height: min(56vw, 240px);
   }
-}
-
-/* Team panel text must stay readable on void */
-.cinema-3d__panel--team .credits .eyebrow {
-  color: rgba(255,255,255,0.55);
-}
-.cinema-3d__panel--team .credits h2 {
-  color: #fff;
-}
-.cinema-3d__panel--team .credits .maker {
-  color: rgba(234, 200, 115, 0.9);
-}
-.cinema-3d__panel--team.is-live {
-  pointer-events: auto !important;
 }
