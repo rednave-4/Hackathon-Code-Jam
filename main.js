@@ -186,7 +186,11 @@
     }
 
     // Item: flag reacts to the cursor — small tilt toward pointer position,
-    // scoped to Entrance 1 only, capped to a subtle ±4deg.
+    // scoped to Entrance 1 only, capped to a subtle ±4deg. The same nx/ny
+    // is broadcast as --tiltX/--tiltY custom props on #entrance1 so every
+    // .atm-parallax layer (glow, rays, fog, stars) can react too, each at
+    // its own depth (--px/--py/--pz set per layer in the HTML) — real
+    // parallax instead of the atmosphere sitting dead-still.
     if (entrance1 && window.matchMedia("(pointer: fine)").matches) {
       entrance1.addEventListener("mousemove", (e) => {
         const r = entrance1.getBoundingClientRect();
@@ -195,10 +199,14 @@
         tiltX = clamp(nx * 4, -4, 4);
         tiltY = clamp(-ny * 4, -4, 4);
         applyFlagTransform();
+        entrance1.style.setProperty("--tiltX", nx.toFixed(3));
+        entrance1.style.setProperty("--tiltY", ny.toFixed(3));
       }, { passive: true });
       entrance1.addEventListener("mouseleave", () => {
         tiltX = 0; tiltY = 0;
         applyFlagTransform();
+        entrance1.style.setProperty("--tiltX", "0");
+        entrance1.style.setProperty("--tiltY", "0");
       }, { passive: true });
     }
 

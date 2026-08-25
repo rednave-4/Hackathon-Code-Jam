@@ -123,7 +123,38 @@ PJ.MapController = (function () {
     els.progressFill = document.getElementById("progressFill");
     els.resetBtn = document.getElementById("resetBtn");
     els.mapWrap = document.getElementById("mapWrap");
+    els.mapBody = document.querySelector(".map-body");
     els.embersLayer = document.getElementById("embersLayer");
+  }
+
+  // ---------- diorama: cursor tilt on #mapWrap + camera-dip on .map-body
+  // when a mission panel is open. Two separate elements so the continuous
+  // per-frame tilt (instant, no transition) never fights the discrete
+  // open/close dip (CSS-transitioned) for the same `transform` property. ----------
+  function bindDiorama() {
+    if (!els.mapBody || !els.mapWrap) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    els.mapBody.addEventListener("mousemove", (e) => {
+      const r = els.mapBody.getBoundingClientRect();
+      const nx = ((e.clientX - r.left) / r.width) * 2 - 1;
+      const ny = ((e.clientY - r.top) / r.height) * 2 - 1;
+      const tx = clamp(nx * 2.2, -2.2, 2.2);
+      const ty = clamp(-ny * 2.2, -2.2, 2.2);
+      els.mapWrap.style.transform = `rotateX(${ty.toFixed(2)}deg) rotateY(${tx.toFixed(2)}deg)`;
+    }, { passive: true });
+
+    els.mapBody.addEventListener("mouseleave", () => {
+      els.mapWrap.style.transform = "";
+    }, { passive: true });
+  }
+
+  function setDetailOpen(open) {
+    if (els.mapBody) els.mapBody.classList.toggle("has-detail", !!open);
   }
 
   // ---------- ambient embers (purely decorative, spawned once) ----------
@@ -232,12 +263,14 @@ PJ.MapController = (function () {
     selectedId = id;
     els.panel.hidden = false;
     render(); // rebuilds nodes (aria-pressed) and the panel (selectedId is now set)
+    setDetailOpen(true);
     requestAnimationFrame(() => els.panel.classList.add("is-open"));
   }
 
   function closePanel() {
     selectedId = null;
     els.panel.classList.remove("is-open");
+    setDetailOpen(false);
     setTimeout(() => {
       if (!els.panel.classList.contains("is-open")) els.panel.hidden = true;
     }, 320);
@@ -301,6 +334,7 @@ PJ.MapController = (function () {
   function init() {
     cacheEls();
     spawnEmbers();
+    bindDiorama();
     els.resetBtn.addEventListener("click", confirmReset);
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closePanel();

@@ -114,6 +114,20 @@ button {
   transform-style: preserve-3d;
   perspective: 1400px;
 }
+/* Cursor-reactive depth wrapper. Wraps each atmosphere layer so its own
+   animation (drift/pulse/twinkle, defined further below) stays untouched —
+   this wrapper owns the parallax transform, the child owns its animation.
+   --px/--py control how many px it drifts per unit of cursor tilt (bigger
+   = feels "closer"), --pz is a static depth placement in the 3D space. */
+.atm-parallax {
+  position: absolute;
+  inset: 0;
+  transform: translate3d(
+    calc(var(--tiltX, 0) * var(--px, 4) * 1px),
+    calc(var(--tiltY, 0) * var(--py, 4) * 1px),
+    var(--pz, 0px)
+  );
+}
 .e1-glow {
   position: absolute;
   border-radius: 50%;
@@ -536,11 +550,28 @@ button {
   position: relative;
   flex: 1;
   overflow: hidden;
+  perspective: 1400px;
+  /* only the discrete "detail panel opened" camera-dip animates here;
+     the continuous cursor tilt below lives on #mapWrap itself so the two
+     never fight over the same transition */
+  transition: transform 0.5s var(--ease-cinema);
+}
+.map-body.has-detail {
+  transform: rotateY(-3deg) scale(0.985);
 }
 #mapWrap {
   position: relative;
   width: 100%;
   height: 100%;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-body,
+  .map-body.has-detail {
+    transition: none;
+    transform: none;
+  }
 }
 
 /* Abstract archipelago silhouette + fog layers, ambient only */
@@ -639,11 +670,15 @@ button {
 #nodesLayer {
   position: absolute;
   inset: 0;
+  transform-style: preserve-3d;
 }
 
 .node {
   position: absolute;
-  transform: translate(-50%, -50%);
+  /* elevation per status — kept deliberately small (±10px) because the
+     route line beneath is a flat 2D SVG path; a bigger offset would make
+     the dot visibly drift off the line it's supposed to sit on */
+  transform: translate(-50%, -50%) translateZ(0px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -656,10 +691,21 @@ button {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.2s ease;
+  transition: transform 0.25s ease;
 }
-.node:hover:not(.node--locked) {
-  transform: translate(-50%, -50%) scale(1.06);
+.node--locked { transform: translate(-50%, -50%) translateZ(-14px); }
+.node--available { transform: translate(-50%, -50%) translateZ(10px); }
+.node--completed { transform: translate(-50%, -50%) translateZ(4px); }
+.node--locked:hover { transform: translate(-50%, -50%) translateZ(-14px); }
+.node--available:hover { transform: translate(-50%, -50%) translateZ(10px) scale(1.08); }
+.node--completed:hover { transform: translate(-50%, -50%) translateZ(4px) scale(1.08); }
+@media (prefers-reduced-motion: reduce) {
+  .node,
+  .node--locked,
+  .node--available,
+  .node--completed {
+    transform: translate(-50%, -50%);
+  }
 }
 .node__shadow {
   position: absolute;
@@ -671,7 +717,12 @@ button {
   background: radial-gradient(ellipse, rgba(0, 0, 0, 0.55), transparent 70%);
   transform: translateX(-50%);
   z-index: -1;
+  transition: opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease;
 }
+/* higher elevation → softer, slightly larger shadow, like it's really
+   floating above the board; sunken (locked) nodes get a tighter one */
+.node--available .node__shadow { filter: blur(1.5px); transform: translateX(-50%) scale(1.15); }
+.node--locked .node__shadow { opacity: 0.6; transform: translateX(-50%) scale(0.85); }
 .node__orbit {
   position: absolute;
   inset: -9px;
