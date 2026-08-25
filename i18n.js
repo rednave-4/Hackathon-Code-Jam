@@ -40,6 +40,8 @@ PJ.I18N = (function () {
       reset_progress: "Reset Progres",
       back_modes: "Ganti Mode",
       lang_label: "EN",
+      lang_search_placeholder: "Cari bahasa...",
+      lang_no_match: "Tidak ada hasil",
 
       // Panel / map
       mulai_misi: "MULAI MISI",
@@ -105,6 +107,8 @@ PJ.I18N = (function () {
       reset_progress: "Reset Progress",
       back_modes: "Change Mode",
       lang_label: "ID",
+      lang_search_placeholder: "Search language...",
+      lang_no_match: "No matches",
 
       mulai_misi: "START MISSION",
       terkunci: "LOCKED",
@@ -187,7 +191,33 @@ PJ.I18N = (function () {
     setLang(lang === "id" ? "en" : "id");
   }
 
+  // Metadata for language picker UI (main.js setupLangSearch)
+  const LANG_META = [
+    { code: "id", name: "Bahasa Indonesia", englishName: "Indonesian" },
+    { code: "en", name: "English", englishName: "English" },
+  ];
+
+  function getLanguages() {
+    return LANG_META.slice();
+  }
+
+  function getLanguageMeta(code) {
+    const c = code || lang;
+    for (let i = 0; i < LANG_META.length; i++) {
+      if (LANG_META[i].code === c) return LANG_META[i];
+    }
+    return LANG_META[0];
+  }
+
   init();
 
-  return { t, getLang, setLang, toggle, STR };
+  return {
+    t: t,
+    getLang: getLang,
+    setLang: setLang,
+    toggle: toggle,
+    STR: STR,
+    getLanguages: getLanguages,
+    getLanguageMeta: getLanguageMeta,
+  };
 })();

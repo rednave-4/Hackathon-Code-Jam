@@ -62,7 +62,12 @@
 
     function renderList(filter) {
       const q = (filter || "").trim().toLowerCase();
-      const langs = PJ.I18N.getLanguages();
+      const langs = (typeof PJ.I18N.getLanguages === "function")
+        ? PJ.I18N.getLanguages()
+        : [
+            { code: "id", name: "Bahasa Indonesia", englishName: "Indonesian" },
+            { code: "en", name: "English", englishName: "English" },
+          ];
       list.innerHTML = "";
       let count = 0;
       langs.forEach((l) => {
@@ -111,8 +116,16 @@
       refreshCurrent();
     }
     function refreshCurrent() {
-      const cur = PJ.I18N.getLanguageMeta(PJ.I18N.getLang());
-      if (currentLabel && cur) currentLabel.textContent = cur.name;
+      try {
+        if (typeof PJ.I18N.getLanguageMeta === "function") {
+          const cur = PJ.I18N.getLanguageMeta(PJ.I18N.getLang());
+          if (currentLabel && cur) currentLabel.textContent = cur.name || cur.code || "";
+        } else if (currentLabel) {
+          currentLabel.textContent = (PJ.I18N.getLang() || "id").toUpperCase();
+        }
+      } catch (err) {
+        if (currentLabel) currentLabel.textContent = "ID";
+      }
     }
 
     input.addEventListener("focus", open);
@@ -175,40 +188,6 @@
     }
 
     let ticking = false;
-    let lastPOut = 0;
-    let tiltX = 0, tiltY = 0; // cursor-follow tilt, in degrees
-
-    function applyFlagTransform() {
-      if (!flagWrap) return;
-      flagWrap.style.transform =
-        "translateY(" + (-lastPOut * 70).toFixed(1) + "px) scale(" + (1 - lastPOut * 0.1).toFixed(3) + ")" +
-        " rotateX(" + tiltY.toFixed(2) + "deg) rotateY(" + tiltX.toFixed(2) + "deg)";
-    }
-
-    // Item: flag reacts to the cursor — small tilt toward pointer position,
-    // scoped to Entrance 1 only, capped to a subtle ±4deg. The same nx/ny
-    // is broadcast as --tiltX/--tiltY custom props on #entrance1 so every
-    // .atm-parallax layer (glow, rays, fog, stars) can react too, each at
-    // its own depth (--px/--py/--pz set per layer in the HTML) — real
-    // parallax instead of the atmosphere sitting dead-still.
-    if (entrance1 && window.matchMedia("(pointer: fine)").matches) {
-      entrance1.addEventListener("mousemove", (e) => {
-        const r = entrance1.getBoundingClientRect();
-        const nx = ((e.clientX - r.left) / r.width) * 2 - 1; // -1..1
-        const ny = ((e.clientY - r.top) / r.height) * 2 - 1;
-        tiltX = clamp(nx * 4, -4, 4);
-        tiltY = clamp(-ny * 4, -4, 4);
-        applyFlagTransform();
-        entrance1.style.setProperty("--tiltX", nx.toFixed(3));
-        entrance1.style.setProperty("--tiltY", ny.toFixed(3));
-      }, { passive: true });
-      entrance1.addEventListener("mouseleave", () => {
-        tiltX = 0; tiltY = 0;
-        applyFlagTransform();
-        entrance1.style.setProperty("--tiltX", "0");
-        entrance1.style.setProperty("--tiltY", "0");
-      }, { passive: true });
-    }
 
     function update() {
       ticking = false;
@@ -220,9 +199,11 @@
         // 0 while Entrance 1 still fills the viewport, 1 once it has
         // scrolled most of the way past — the "leaving" progress.
         const pOut = smoothstep(0, vh * 0.85, -r1.top);
-        lastPOut = pOut;
-        applyFlagTransform();
-        if (flagWrap) flagWrap.style.opacity = String(1 - pOut);
+        if (flagWrap) {
+          flagWrap.style.transform =
+            "translateY(" + (-pOut * 70).toFixed(1) + "px) scale(" + (1 - pOut * 0.1).toFixed(3) + ")";
+          flagWrap.style.opacity = String(1 - pOut);
+        }
         if (textBlock) {
           textBlock.style.transform = "translateY(" + (-pOut * 46).toFixed(1) + "px)";
           textBlock.style.opacity = String(1 - pOut);
@@ -231,23 +212,11 @@
 
       if (entrance2 && creditsBlock) {
         const r2 = entrance2.getBoundingClientRect();
-        // Longer fade-in for Entrance 2
-        const pIn = smoothstep(vh * 1.08, vh * 0.1, r2.top);
+        // 0 while Entrance 2 is still below the viewport, 1 once it has
+        // settled into view — the "arriving" progress.
+        const pIn = smoothstep(vh * 0.92, vh * 0.4, r2.top);
+        creditsBlock.style.transform = "translateY(" + ((1 - pIn) * 46).toFixed(1) + "px)";
         creditsBlock.style.opacity = String(pIn);
-        creditsBlock.style.transform =
-          "translate3d(0," + ((1 - pIn) * 70).toFixed(1) + "px,0) scale(" + (0.92 + pIn * 0.08).toFixed(3) + ")";
-        creditsBlock.style.filter =
-          pIn < 0.98 ? "blur(" + ((1 - pIn) * 8).toFixed(1) + "px)" : "none";
-        Array.prototype.forEach.call(creditsBlock.children, function (kid, i) {
-          const delay = 0.08 + i * 0.11;
-          const local = Math.max(0, Math.min(1, (pIn - delay) / Math.max(0.001, 1 - delay)));
-          const eased = local * local * (3 - 2 * local);
-          kid.style.opacity = String(eased);
-          const isDivider = kid.classList.contains("credits-divider");
-          kid.style.transform =
-            "translate3d(0," + ((1 - eased) * 28).toFixed(1) + "px,0)" +
-            (isDivider ? " scaleX(" + eased.toFixed(3) + ")" : "");
-        });
       }
     }
 
@@ -265,21 +234,6 @@
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }
-
-  function spawnEmbersIn(container, count, sizeRange) {
-    if (!container || container.dataset.embersSpawned) return;
-    container.dataset.embersSpawned = "1";
-    for (let i = 0; i < count; i++) {
-      const el = document.createElement("span");
-      el.className = "ember";
-      el.style.left = Math.random() * 100 + "%";
-      el.style.setProperty("--ember-size", (sizeRange[0] + Math.random() * (sizeRange[1] - sizeRange[0])).toFixed(1) + "px");
-      el.style.setProperty("--ember-duration", 9 + Math.random() * 9 + "s");
-      el.style.setProperty("--ember-delay", -Math.random() * 16 + "s");
-      el.style.setProperty("--ember-drift", (Math.random() * 8 - 4).toFixed(1) + "vw");
-      container.appendChild(el);
-    }
   }
 
   /* ---------- Entrance — real stacked scroll (no sticky/3D hijack) ---------- */
@@ -301,11 +255,6 @@
     document.documentElement.classList.add("is-entrance");
     document.body.classList.add("is-entrance");
     wrap.hidden = false;
-
-    // Ambient embers, denser near the flag and fewer/dimmer by the time
-    // Entrance 2 begins — a visual thread carried between the two panels.
-    spawnEmbersIn(entrance1 && entrance1.querySelector(".e1-space"), 12, [2, 4.5]);
-    spawnEmbersIn(entrance2 && entrance2.querySelector(".e2-space"), 6, [1.5, 3]);
 
     try {
       flagInstance = PJ.FlagCloth($("flagCanvas"));
@@ -391,7 +340,6 @@
     finishEntrance();
     goTo("modeSelect");
     applyI18nDOM();
-    if (PJ.UIFx && typeof PJ.UIFx.playModeEnter === "function") PJ.UIFx.playModeEnter();
     console.log("[PERJUANGAN] → mode select");
   };
 
@@ -442,7 +390,6 @@
         e.preventDefault();
         goTo("modeSelect");
         applyI18nDOM();
-        if (PJ.UIFx && typeof PJ.UIFx.playModeEnter === "function") PJ.UIFx.playModeEnter();
       };
     }
     const gameBack = $("gameBackBtn");
@@ -451,7 +398,6 @@
         e.preventDefault();
         goTo("modeSelect");
         applyI18nDOM();
-        if (PJ.UIFx && typeof PJ.UIFx.playModeEnter === "function") PJ.UIFx.playModeEnter();
       };
     }
   }
@@ -488,9 +434,6 @@
     }
     if (PJ.AIGuide && typeof PJ.AIGuide.init === "function") {
       PJ.AIGuide.init();
-    }
-    if (PJ.Audio && typeof PJ.Audio.init === "function") {
-      PJ.Audio.init();
     }
     // Entrance owns the top of the page as real, scrollable content —
     // Entrance 1 then Entrance 2 stacked below it — before the app shell
