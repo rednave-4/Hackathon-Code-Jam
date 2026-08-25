@@ -1,19 +1,16 @@
 /* ==========================================================================
    PERJUANGAN — learn.js
-   Mode Belajar: chapters, interactive timeline, glossary.
+   Mode Belajar: full articles per mission, read progress in localStorage.
    ========================================================================== */
 
 window.PJ = window.PJ || {};
 
 PJ.LearnController = (function () {
   const missions = PJ.MISSIONS;
+  let readSet = loadRead();
   let selectedId = null;
-  let activeTab = "chapters";
 
-  function getReadSet() {
-    if (PJ.Progress && typeof PJ.Progress.getLearnReadSet === "function") {
-      return PJ.Progress.getLearnReadSet();
-    }
+  function loadRead() {
     try {
       const raw = localStorage.getItem(PJ.LEARN_STORAGE_KEY);
       if (!raw) return new Set();
@@ -24,69 +21,48 @@ PJ.LearnController = (function () {
     }
   }
 
+  function saveRead() {
+    try {
+      localStorage.setItem(PJ.LEARN_STORAGE_KEY, JSON.stringify(Array.from(readSet)));
+    } catch (e) {}
+  }
+
   function isRead(id) {
-    return getReadSet().has(id);
+    return readSet.has(id);
   }
 
   function markRead(id) {
-    if (PJ.Progress && typeof PJ.Progress.markLearnRead === "function") {
-      PJ.Progress.markLearnRead(id);
-    } else {
-      try {
-        const set = getReadSet();
-        set.add(id);
-        localStorage.setItem(PJ.LEARN_STORAGE_KEY, JSON.stringify(Array.from(set)));
-      } catch (e) {}
-    }
+    readSet.add(id);
+    saveRead();
     renderList();
-    renderTimeline();
     if (selectedId === id) renderArticle(id);
-    if (PJ.Achievements && typeof PJ.Achievements.evaluate === "function") {
-      PJ.Achievements.evaluate();
-    }
   }
 
   function resetRead() {
-    try {
-      localStorage.removeItem(PJ.LEARN_STORAGE_KEY);
-    } catch (e) {}
-    if (PJ.Progress && typeof PJ.Progress.reset === "function") {
-      PJ.Progress.reset();
-    }
+    readSet = new Set();
+    saveRead();
     renderList();
-    renderTimeline();
     if (selectedId) renderArticle(selectedId);
-  }
-
-  function contentLang() {
-    const lang = (PJ.I18N && PJ.I18N.getLang()) || "id";
-    // Full article/mission text exists only for id + en
-    if (lang === "id" || lang === "en") return lang;
-    return "en";
   }
 
   function tField(obj) {
     if (!obj) return "";
     if (typeof obj === "string") return obj;
-    const lang = contentLang();
-    return obj[lang] || obj.en || obj.id || "";
+    const lang = PJ.I18N.getLang();
+    return obj[lang] || obj.id || "";
   }
 
   function articleFor(id) {
     const pack = PJ.LEARN_ARTICLES[id];
     if (!pack) return null;
-    const lang = contentLang();
-    return pack[lang] || pack.en || pack.id || null;
+    const lang = PJ.I18N.getLang();
+    return pack[lang] || pack.id;
   }
 
   let els = {};
 
   function cache() {
     els.list = document.getElementById("learnList");
-    els.timeline = document.getElementById("learnTimeline");
-    els.glossary = document.getElementById("learnGlossary");
-    els.glossaryList = document.getElementById("glossaryList");
-    els.glossarySearch = document.getElementById("glossarySearch");
     els.article = document.getElementById("learnArticle");
     els.progressLabel = document.getElementById("learnProgressLabel");
     els.progressFill = document.getElementById("learnProgressFill");
@@ -94,7 +70,6 @@ PJ.LearnController = (function () {
 
   function renderProgress() {
     const total = missions.length;
-    const readSet = getReadSet();
     const done = missions.filter((m) => readSet.has(m.id)).length;
     if (els.progressLabel) {
       els.progressLabel.textContent = `${done} / ${total} ${PJ.I18N.t("progress_bab")}`;
@@ -104,29 +79,14 @@ PJ.LearnController = (function () {
     }
   }
 
-  function setTab(tab) {
-    activeTab = tab;
-    document.querySelectorAll(".learn-tab").forEach((btn) => {
-      const on = btn.dataset.tab === tab;
-      btn.classList.toggle("is-active", on);
-      btn.setAttribute("aria-selected", on ? "true" : "false");
-    });
-    if (els.list) els.list.hidden = tab !== "chapters";
-    if (els.timeline) els.timeline.hidden = tab !== "timeline";
-    if (els.glossary) els.glossary.hidden = tab !== "glossary";
-    if (tab === "timeline") renderTimeline();
-    if (tab === "glossary") renderGlossary();
-  }
-
   function renderList() {
     if (!els.list) return;
     els.list.innerHTML = "";
-    missions.forEach((m) => {
+    missions.forEach((m, index) => {
       const read = isRead(m.id);
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className =
-        "learn-item" + (read ? " is-read" : "") + (selectedId === m.id ? " is-active" : "");
+      btn.className = "learn-item" + (read ? " is-read" : "") + (selectedId === m.id ? " is-active" : "");
       btn.innerHTML = `
         <span class="learn-item__order">${String(m.order).padStart(2, "0")}</span>
         <span class="learn-item__body">
@@ -141,74 +101,9 @@ PJ.LearnController = (function () {
     renderProgress();
   }
 
-  function renderTimeline() {
-    if (!els.timeline) return;
-    const nodes = PJ.TIMELINE || missions.map((m, i) => ({ id: m.id, year: 1928 + i * 4 }));
-    els.timeline.innerHTML = "";
-
-    const track = document.createElement("div");
-    track.className = "timeline-track";
-    track.innerHTML = '<div class="timeline-line" aria-hidden="true"></div>';
-
-    nodes.forEach((node, index) => {
-      const m = missions.find((x) => x.id === node.id);
-      if (!m) return;
-      const read = isRead(m.id);
-      const item = document.createElement("button");
-      item.type = "button";
-      item.className =
-        "timeline-node" +
-        (read ? " is-read" : "") +
-        (selectedId === m.id ? " is-active" : "") +
-        (index % 2 === 1 ? " timeline-node--alt" : "");
-      item.innerHTML = `
-        <span class="timeline-node__dot" aria-hidden="true"></span>
-        <span class="timeline-node__card">
-          <span class="timeline-node__year">${node.year}</span>
-          <span class="timeline-node__title">${tField(m.title)}</span>
-          <span class="timeline-node__date">${tField(m.date)}</span>
-          <span class="timeline-node__blurb">${tField(m.blurb)}</span>
-        </span>
-      `;
-      item.addEventListener("click", () => openArticle(m.id));
-      track.appendChild(item);
-    });
-
-    els.timeline.appendChild(track);
-  }
-
-  function renderGlossary(filter) {
-    if (!els.glossaryList) return;
-    const q = (filter || "").trim().toLowerCase();
-    const terms = PJ.GLOSSARY || [];
-    els.glossaryList.innerHTML = "";
-    let count = 0;
-    terms.forEach((entry) => {
-      const term = tField(entry.term);
-      const def = tField(entry.def);
-      const hay = (term + " " + def).toLowerCase();
-      if (q && hay.indexOf(q) === -1) return;
-      const card = document.createElement("div");
-      card.className = "glossary-card";
-      card.innerHTML = `
-        <div class="glossary-card__term">${term}</div>
-        <div class="glossary-card__def">${def}</div>
-      `;
-      els.glossaryList.appendChild(card);
-      count++;
-    });
-    if (count === 0) {
-      const empty = document.createElement("div");
-      empty.className = "glossary-empty";
-      empty.textContent = PJ.I18N.t("glossary_empty");
-      els.glossaryList.appendChild(empty);
-    }
-  }
-
   function openArticle(id) {
     selectedId = id;
     renderList();
-    renderTimeline();
     renderArticle(id);
     const panel = document.getElementById("learnArticleWrap");
     if (panel) {
@@ -227,7 +122,6 @@ PJ.LearnController = (function () {
       }, 320);
     }
     renderList();
-    renderTimeline();
   }
 
   function renderArticle(id) {
@@ -238,7 +132,7 @@ PJ.LearnController = (function () {
     const read = isRead(id);
     const idx = missions.findIndex((x) => x.id === id);
 
-    const sectionsHtml = (art.sections || [])
+    let sectionsHtml = art.sections
       .map(
         (s) => `
       <section class="learn-sec">
@@ -248,20 +142,12 @@ PJ.LearnController = (function () {
       )
       .join("");
 
-    const uiLang = (PJ.I18N && PJ.I18N.getLang()) || "id";
-    const cLang = contentLang();
-    const fallbackNote =
-      uiLang !== cLang
-        ? `<p class="learn-lang-note">${PJ.I18N.t("learn_content_fallback")}</p>`
-        : "";
-
     els.article.innerHTML = `
       <button type="button" class="panel__close" id="learnCloseBtn" aria-label="Close">&times;</button>
       <div class="panel__eyebrow">BAB ${String(m.order).padStart(2, "0")}</div>
       <h2 class="panel__title">${tField(m.title)}</h2>
       <div class="panel__date">${tField(m.date)}</div>
-      ${fallbackNote}
-      <p class="learn-lead">${art.lead || ""}</p>
+      <p class="learn-lead">${art.lead}</p>
       ${sectionsHtml}
       <div class="learn-actions">
         <button type="button" class="btn btn--ghost" id="learnPrevBtn" ${idx <= 0 ? "disabled" : ""}>${PJ.I18N.t("learn_prev")}</button>
@@ -281,21 +167,7 @@ PJ.LearnController = (function () {
   }
 
   function applyI18n() {
-    const tabMap = {
-      tabChapters: "learn_tab_chapters",
-      tabTimeline: "learn_tab_timeline",
-      tabGlossary: "learn_tab_glossary",
-    };
-    Object.keys(tabMap).forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = PJ.I18N.t(tabMap[id]);
-    });
-    if (els.glossarySearch) {
-      els.glossarySearch.placeholder = PJ.I18N.t("glossary_search");
-    }
     renderList();
-    if (activeTab === "timeline") renderTimeline();
-    if (activeTab === "glossary") renderGlossary(els.glossarySearch ? els.glossarySearch.value : "");
     if (selectedId) renderArticle(selectedId);
     const ver = document.getElementById("learnBrandVersion");
     if (ver) ver.textContent = PJ.I18N.t("brand_version_learn");
@@ -307,14 +179,6 @@ PJ.LearnController = (function () {
 
   function init() {
     cache();
-    document.querySelectorAll(".learn-tab").forEach((btn) => {
-      btn.addEventListener("click", () => setTab(btn.dataset.tab));
-    });
-    if (els.glossarySearch) {
-      els.glossarySearch.addEventListener("input", () => {
-        renderGlossary(els.glossarySearch.value);
-      });
-    }
     const resetBtn = document.getElementById("learnResetBtn");
     if (resetBtn) {
       resetBtn.addEventListener("click", () => {

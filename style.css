@@ -114,20 +114,6 @@ button {
   transform-style: preserve-3d;
   perspective: 1400px;
 }
-/* Cursor-reactive depth wrapper. Wraps each atmosphere layer so its own
-   animation (drift/pulse/twinkle, defined further below) stays untouched —
-   this wrapper owns the parallax transform, the child owns its animation.
-   --px/--py control how many px it drifts per unit of cursor tilt (bigger
-   = feels "closer"), --pz is a static depth placement in the 3D space. */
-.atm-parallax {
-  position: absolute;
-  inset: 0;
-  transform: translate3d(
-    calc(var(--tiltX, 0) * var(--px, 4) * 1px),
-    calc(var(--tiltY, 0) * var(--py, 4) * 1px),
-    var(--pz, 0px)
-  );
-}
 .e1-glow {
   position: absolute;
   border-radius: 50%;
@@ -550,28 +536,11 @@ button {
   position: relative;
   flex: 1;
   overflow: hidden;
-  perspective: 1400px;
-  /* only the discrete "detail panel opened" camera-dip animates here;
-     the continuous cursor tilt below lives on #mapWrap itself so the two
-     never fight over the same transition */
-  transition: transform 0.5s var(--ease-cinema);
-}
-.map-body.has-detail {
-  transform: rotateY(-3deg) scale(0.985);
 }
 #mapWrap {
   position: relative;
   width: 100%;
   height: 100%;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-@media (prefers-reduced-motion: reduce) {
-  .map-body,
-  .map-body.has-detail {
-    transition: none;
-    transform: none;
-  }
 }
 
 /* Abstract archipelago silhouette + fog layers, ambient only */
@@ -670,15 +639,11 @@ button {
 #nodesLayer {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
 }
 
 .node {
   position: absolute;
-  /* elevation per status — kept deliberately small (±10px) because the
-     route line beneath is a flat 2D SVG path; a bigger offset would make
-     the dot visibly drift off the line it's supposed to sit on */
-  transform: translate(-50%, -50%) translateZ(0px);
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -691,21 +656,10 @@ button {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.25s ease;
+  transition: transform 0.2s ease;
 }
-.node--locked { transform: translate(-50%, -50%) translateZ(-14px); }
-.node--available { transform: translate(-50%, -50%) translateZ(10px); }
-.node--completed { transform: translate(-50%, -50%) translateZ(4px); }
-.node--locked:hover { transform: translate(-50%, -50%) translateZ(-14px); }
-.node--available:hover { transform: translate(-50%, -50%) translateZ(10px) scale(1.08); }
-.node--completed:hover { transform: translate(-50%, -50%) translateZ(4px) scale(1.08); }
-@media (prefers-reduced-motion: reduce) {
-  .node,
-  .node--locked,
-  .node--available,
-  .node--completed {
-    transform: translate(-50%, -50%);
-  }
+.node:hover:not(.node--locked) {
+  transform: translate(-50%, -50%) scale(1.06);
 }
 .node__shadow {
   position: absolute;
@@ -717,12 +671,7 @@ button {
   background: radial-gradient(ellipse, rgba(0, 0, 0, 0.55), transparent 70%);
   transform: translateX(-50%);
   z-index: -1;
-  transition: opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease;
 }
-/* higher elevation → softer, slightly larger shadow, like it's really
-   floating above the board; sunken (locked) nodes get a tighter one */
-.node--available .node__shadow { filter: blur(1.5px); transform: translateX(-50%) scale(1.15); }
-.node--locked .node__shadow { opacity: 0.6; transform: translateX(-50%) scale(0.85); }
 .node__orbit {
   position: absolute;
   inset: -9px;
@@ -2299,64 +2248,6 @@ button {
 /* -------------------------------------------------------------------- */
 /* AI Historical Guide                                                    */
 /* -------------------------------------------------------------------- */
-/* -------------------------------------------------------------------- */
-/* Sound toggle (bottom-left, mirrors the AI fab bottom-right)           */
-/* -------------------------------------------------------------------- */
-.audio-fab {
-  position: fixed;
-  left: 1.1rem;
-  bottom: 1.1rem;
-  z-index: 180;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  border: 1px solid rgba(201, 162, 39, 0.4);
-  background: linear-gradient(160deg, rgba(28, 24, 18, 0.95), rgba(10, 9, 8, 0.98));
-  color: var(--parch);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 20px rgba(201, 162, 39, 0.15);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-}
-.audio-fab:hover {
-  transform: translateY(-2px) scale(1.04);
-  border-color: rgba(201, 162, 39, 0.7);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(201, 162, 39, 0.25);
-}
-.audio-fab__icon {
-  width: 22px;
-  height: 22px;
-}
-.audio-fab__mute-x {
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-.audio-fab.is-muted .audio-fab__wave1,
-.audio-fab.is-muted .audio-fab__wave2 {
-  opacity: 0;
-}
-.audio-fab.is-muted .audio-fab__mute-x {
-  opacity: 1;
-  stroke: var(--gold-bright);
-}
-.audio-fab.is-muted {
-  border-color: rgba(200, 16, 46, 0.5);
-}
-@media (max-width: 560px) {
-  .audio-fab {
-    left: 0.75rem;
-    bottom: 0.75rem;
-    width: 46px;
-    height: 46px;
-  }
-  .audio-fab__icon {
-    width: 19px;
-    height: 19px;
-  }
-}
-
 .ai-guide {
   position: fixed;
   right: 1.1rem;
@@ -2655,168 +2546,63 @@ body.is-entrance #app {
   }
 }
 
-/* ===== Polish batch: staggered title reveal ===== */
-.entrance-panel--flag .eyebrow,
-.entrance-panel--flag .title-display,
-.entrance-panel--flag .title-accent {
-  opacity: 0;
-  filter: blur(6px);
-  letter-spacing: 0.4em;
-  transform: translateY(10px);
-  transition: opacity 0.7s var(--ease-cinema), filter 0.7s var(--ease-cinema),
-    letter-spacing 0.7s var(--ease-cinema), transform 0.7s var(--ease-cinema);
-}
-.entrance-panel--flag.is-in .eyebrow { transition-delay: 0.15s; }
-.entrance-panel--flag.is-in .title-display { transition-delay: 0.32s; }
-.entrance-panel--flag.is-in .title-accent { transition-delay: 0.5s; }
-.entrance-panel--flag.is-in .eyebrow,
-.entrance-panel--flag.is-in .title-display,
-.entrance-panel--flag.is-in .title-accent {
-  opacity: 1;
-  filter: blur(0);
-  transform: translateY(0);
-}
-.title-display.is-in,
-.eyebrow.is-in,
-.title-accent.is-in { letter-spacing: inherit; }
-.entrance-panel--flag.is-in .eyebrow { letter-spacing: 0.32em; }
-.entrance-panel--flag.is-in .title-accent { letter-spacing: 0.14em; }
 
-/* ===== Polish batch: scroll-hint chevron ===== */
-.e1-hint {
-  display: flex !important;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-.e1-hint__chevron {
-  width: 14px;
-  height: 8px;
-  color: var(--gold);
-  animation: chevronBreathe 2.6s ease-in-out infinite;
-}
-@keyframes chevronBreathe {
-  0%, 100% { transform: translateY(0); opacity: 0.5; }
-  50% { transform: translateY(3px); opacity: 1; }
-}
+/* ==========================================================================
+   CINEMATIC MERGE v6 — Evolution techniques × PERJUANGAN identity
+   ========================================================================== */
 
-/* ===== Polish batch: credits divider "draws in" ===== */
-.credits-divider { transform-origin: center; }
-
-/* ===== Polish batch: entrance embers (reuses .ember from map) ===== */
-.e1-space .ember,
-.e2-space .ember { opacity: 0; }
-
-/* ===== Polish batch: mode cards stagger entrance ===== */
-#modeSelect .mode-card {
-  opacity: 0;
-  transform: translateY(22px) rotateX(4deg);
-}
-#modeSelect.mode-enter .mode-card {
-  animation: modeCardIn 0.65s var(--ease-cinema) forwards;
-}
-#modeSelect.mode-enter .mode-card:nth-child(1) { animation-delay: 0.05s; }
-#modeSelect.mode-enter .mode-card:nth-child(2) { animation-delay: 0.18s; }
-@keyframes modeCardIn {
-  to { opacity: 1; transform: translateY(0) rotateX(2deg); }
-}
-
-/* ===== Polish batch: traveling spark along the completed route ===== */
-.route-spark {
-  fill: var(--gold-bright);
-  filter: drop-shadow(0 0 4px rgba(234, 200, 115, 0.9)) drop-shadow(0 0 10px rgba(234, 200, 115, 0.5));
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-.route-spark.is-active { opacity: 1; }
-
-/* ===== Polish batch: detail panel — a thin gold seam draws in on open ===== */
-.detail-panel::before {
-  content: "";
+/* Side silhouettes (history abstract — NOT gears) */
+.side-sil {
   position: absolute;
-  top: 0; left: 0;
-  width: 2px; height: 100%;
-  background: linear-gradient(180deg, transparent, var(--gold-bright), transparent);
-  opacity: 0;
-  transform: scaleY(0);
-  transform-origin: top;
-  transition: transform 0.55s var(--ease-cinema) 0.1s, opacity 0.3s ease 0.1s;
-}
-.detail-panel.is-open::before {
-  opacity: 0.8;
-  transform: scaleY(1);
-}
-
-/* ===== Polish batch: click-burst overlay (fed by ui-fx.js) ===== */
-.fx-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
+  top: 0;
+  bottom: 0;
+  width: min(28vw, 340px);
   pointer-events: none;
-  opacity: 0;
+  z-index: 0;
+  opacity: 0.22;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 50%, rgba(201, 162, 39, 0.08), transparent 70%),
+    linear-gradient(180deg, transparent 0%, rgba(200, 16, 46, 0.06) 40%, rgba(201, 162, 39, 0.05) 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, black, transparent);
+  mask-image: linear-gradient(90deg, black, transparent);
 }
-.fx-overlay.is-active { opacity: 1; }
-.fx-flash {
-  position: absolute;
-  width: 18px; height: 18px;
-  margin: -9px 0 0 -9px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(234, 200, 115, 0.9), transparent 70%);
-  animation: fxFlash 0.3s ease-out forwards;
+.side-sil--left {
+  left: 0;
+  -webkit-mask-image: linear-gradient(90deg, black 20%, transparent 95%);
+  mask-image: linear-gradient(90deg, black 20%, transparent 95%);
+  background:
+    radial-gradient(ellipse 70% 40% at 30% 35%, rgba(200, 16, 46, 0.18), transparent 65%),
+    radial-gradient(ellipse 50% 55% at 20% 70%, rgba(201, 162, 39, 0.12), transparent 70%);
+  animation: sideFloat 18s ease-in-out infinite alternate;
 }
-.fx-ring {
-  position: absolute;
-  width: 10px; height: 10px;
-  margin: -5px 0 0 -5px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(234, 200, 115, 0.7);
-  animation: fxRing 0.42s ease-out forwards;
+.side-sil--right {
+  right: 0;
+  -webkit-mask-image: linear-gradient(270deg, black 20%, transparent 95%);
+  mask-image: linear-gradient(270deg, black 20%, transparent 95%);
+  background:
+    radial-gradient(ellipse 70% 40% at 70% 40%, rgba(201, 162, 39, 0.16), transparent 65%),
+    radial-gradient(ellipse 50% 55% at 80% 75%, rgba(200, 16, 46, 0.1), transparent 70%);
+  animation: sideFloat 22s ease-in-out infinite alternate-reverse;
 }
-.fx-spark {
-  position: absolute;
-  border-radius: 50%;
-  background: var(--gold-bright);
-  transform: translate(0, 0);
-  animation-name: fxSpark;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
-}
-.fx-veil { position: absolute; inset: 0; }
-@keyframes fxFlash {
-  from { transform: scale(0.4); opacity: 1; }
-  to { transform: scale(2.2); opacity: 0; }
-}
-@keyframes fxRing {
-  from { transform: scale(0.6); opacity: 0.9; }
-  to { transform: scale(4.5); opacity: 0; }
-}
-@keyframes fxSpark {
-  from { transform: translate(0, 0); opacity: 1; }
-  to { transform: translate(var(--dx), var(--dy)); opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .fx-overlay { display: none; }
-  #modeSelect .mode-card { opacity: 1 !important; transform: none !important; animation: none !important; }
-  .entrance-panel--flag .eyebrow,
-  .entrance-panel--flag .title-display,
-  .entrance-panel--flag .title-accent { transition: none !important; filter: none !important; }
+@keyframes sideFloat {
+  0% { transform: translateY(0) scale(1); opacity: 0.18; }
+  100% { transform: translateY(-2%) scale(1.04); opacity: 0.28; }
 }
 
-/* ===== Atmosphere entrance (no JS required) ===== */
 .atm-fog {
   position: absolute;
   inset: -15%;
   pointer-events: none;
+  z-index: 0;
   background:
     radial-gradient(ellipse 50% 40% at 18% 72%, rgba(122, 10, 30, 0.16), transparent 70%),
     radial-gradient(ellipse 45% 35% at 82% 28%, rgba(201, 162, 39, 0.09), transparent 65%);
   animation: atmFogDrift 24s ease-in-out infinite alternate;
-  z-index: 0;
 }
 .atm-fog--2 {
   background:
     radial-gradient(ellipse 42% 48% at 62% 78%, rgba(200, 16, 46, 0.1), transparent 70%),
-    radial-gradient(ellipse 55% 30% at 28% 18%, rgba(243, 238, 225, 0.035), transparent 70%);
+    radial-gradient(ellipse 55% 30% at 28% 18%, rgba(243, 238, 225, 0.04), transparent 70%);
   animation-duration: 30s;
   animation-direction: alternate-reverse;
   opacity: 0.85;
@@ -2830,9 +2616,8 @@ body.is-entrance #app {
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  background: radial-gradient(ellipse at 50% 42%, transparent 28%, rgba(0, 0, 0, 0.75) 100%);
+  background: radial-gradient(ellipse at 50% 42%, transparent 28%, rgba(0, 0, 0, 0.78) 100%);
 }
-/* CSS-only star field */
 .atm-stars {
   position: absolute;
   inset: 0;
@@ -2855,25 +2640,21 @@ body.is-entrance #app {
     82vw 66vh #eac873, 94vw 38vh #eac873, 6vw 80vh #f3eee1, 22vw 22vh #eac873,
     48vw 12vh #eac873, 62vw 30vh #f3eee1, 78vw 78vh #eac873, 90vw 52vh #eac873,
     15vw 40vh #eac873, 35vw 82vh #f3eee1, 55vw 5vh #eac873, 75vw 25vh #eac873,
-    5vw 35vh #f3eee1, 28vw 15vh #eac873, 50vw 60vh #eac873, 70vw 8vh #f3eee1,
-    88vw 70vh #eac873, 42vw 22vh #eac873, 60vw 48vh #f3eee1, 33vw 55vh #eac873;
+    5vw 35vh #f3eee1, 28vw 15vh #eac873, 50vw 60vh #eac873, 70vw 8vh #f3eee1;
   animation: atmTwinkle 4.5s ease-in-out infinite;
   opacity: 0.85;
 }
 .atm-stars::after {
-  width: 1px;
-  height: 1px;
+  width: 1px; height: 1px;
   box-shadow:
     10vw 20vh #eac873, 20vw 45vh #f3eee1, 30vw 70vh #eac873, 45vw 25vh #eac873,
     55vw 55vh #f3eee1, 65vw 15vh #eac873, 80vw 40vh #eac873, 92vw 60vh #f3eee1,
-    14vw 75vh #eac873, 38vw 10vh #eac873, 52vw 80vh #f3eee1, 74vw 50vh #eac873,
-    3vw 50vh #eac873, 25vw 35vh #f3eee1, 47vw 42vh #eac873, 85vw 22vh #eac873;
+    14vw 75vh #eac873, 38vw 10vh #eac873, 52vw 80vh #f3eee1, 74vw 50vh #eac873;
   animation-duration: 6s;
   animation-direction: alternate-reverse;
-  opacity: 0.65;
+  opacity: 0.6;
 }
-.atm-stars--dim::before,
-.atm-stars--dim::after { opacity: 0.5; }
+.atm-stars--dim::before, .atm-stars--dim::after { opacity: 0.45; }
 @keyframes atmTwinkle {
   0%, 100% { opacity: 0.35; }
   50% { opacity: 0.95; }
@@ -2886,8 +2667,7 @@ body.is-entrance #app {
 }
 .e2-glow {
   position: absolute;
-  left: 50%;
-  top: 42%;
+  left: 50%; top: 42%;
   width: min(72vw, 520px);
   height: min(72vw, 520px);
   transform: translate(-50%, -50%);
@@ -2896,19 +2676,171 @@ body.is-entrance #app {
   filter: blur(18px);
   animation: e1GlowPulse 7s ease-in-out infinite;
 }
-.entrance-panel--team .credits,
-.entrance-panel--team .lang-search {
-  position: relative;
-  z-index: 2;
-}
-#langSearchE2 {
+.entrance-panel--team { position: relative; }
+.entrance-panel--team .credits { position: relative; z-index: 2; }
+
+/* Language top-right */
+#langSearchE2,
+#langSearchMode {
   position: absolute !important;
   top: 1.1rem !important;
   right: 1.2rem !important;
+  left: auto !important;
   z-index: 60 !important;
+  margin: 0 !important;
+}
+
+/* Mute button */
+.audio-mute-btn {
+  position: fixed !important;
+  left: 16px !important;
+  bottom: 16px !important;
+  z-index: 300 !important;
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid rgba(201, 162, 39, 0.55) !important;
+  background: rgba(18, 15, 12, 0.96) !important;
+  color: #f3eee1 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.5) !important;
+  pointer-events: auto !important;
+  font-size: 1.3rem !important;
+  padding: 0 !important;
+}
+.audio-mute-btn__slash {
+  display: none;
+  position: absolute;
+  width: 2px; height: 26px;
+  background: #c8102e;
+  transform: rotate(45deg);
+}
+.audio-mute-btn.is-muted .audio-mute-btn__slash { display: block; }
+.audio-mute-btn.is-muted { color: rgba(243,238,225,0.4) !important; }
+
+/* Star burst FX */
+.fx-overlay {
+  position: fixed; inset: 0; z-index: 280;
+  pointer-events: none; overflow: hidden; opacity: 0;
+}
+.fx-overlay.is-active { opacity: 1; }
+.fx-flash {
+  position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8e0 0%, #eac873 45%, transparent 70%);
+  box-shadow: 0 0 36px 10px rgba(234,200,115,0.5);
+  animation: fxFlash 0.4s ease-out forwards;
+}
+@keyframes fxFlash {
+  0% { transform: scale(0.3); opacity: 1; }
+  100% { transform: scale(16); opacity: 0; }
+}
+.fx-ring {
+  position: absolute; width: 28px; height: 28px; margin: -14px 0 0 -14px;
+  border-radius: 50%; border: 2px solid rgba(234,200,115,0.7);
+  animation: fxRing 0.4s ease-out forwards;
+}
+@keyframes fxRing {
+  0% { transform: scale(0.4); opacity: 1; }
+  100% { transform: scale(18); opacity: 0; }
+}
+.fx-spark {
+  position: absolute; margin: -2px 0 0 -2px; border-radius: 50%;
+  background: #eac873; box-shadow: 0 0 8px 2px rgba(200,16,46,0.35);
+  animation: fxSpark ease-out forwards;
+}
+@keyframes fxSpark {
+  0% { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.15); opacity: 0; }
+}
+.fx-veil {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.35);
+  animation: fxVeil 0.4s ease forwards;
+}
+@keyframes fxVeil {
+  0% { opacity: 0; } 35% { opacity: 1; } 100% { opacity: 0; }
+}
+
+/* Mode select full viewport */
+#modeSelect.screen,
+#modeSelect.mode-stage {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(31, 26, 20, 0.55) 0%, transparent 70%),
+    radial-gradient(120% 100% at 50% 30%, var(--ink-2) 0%, var(--ink) 65%, #000 100%) !important;
+}
+#modeSelect .mode-select {
+  flex: 0 1 auto;
+  width: min(920px, 94vw) !important;
+  max-width: 920px !important;
+  margin: 0 auto !important;
+  padding: 1.5rem 1rem 2rem !important;
+  position: relative;
+  z-index: 2;
+  transform: translateY(-2vh);
+}
+#modeSelect .mode-cards {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 1.4rem !important;
+  width: 100% !important;
+}
+#modeSelect .mode-card {
+  min-height: 200px;
+  padding: 1.9rem 1.65rem 1.65rem !important;
+  transition:
+    border-color 0.35s var(--ease-cinema),
+    transform 0.4s var(--ease-cinema),
+    box-shadow 0.4s var(--ease-cinema) !important;
+}
+#modeSelect .mode-card:hover {
+  transform: translateY(-10px) rotateX(0deg) scale(1.02) !important;
+}
+#modeSelect .mode-card:hover .mode-card__shine {
+  opacity: 1;
+  background: linear-gradient(115deg, transparent 20%, rgba(234, 200, 115, 0.14) 45%, transparent 70%);
+  transform: translateX(10%);
+}
+#modeSelect .mode-glow--a {
+  width: min(70vw, 520px); height: min(70vw, 520px); opacity: 1;
+}
+#modeSelect .mode-glow--b {
+  width: min(60vw, 460px); height: min(60vw, 460px); opacity: 1;
+}
+#modeSelect .mode-floor {
+  height: 35%; bottom: 0; opacity: 1;
+  background: radial-gradient(ellipse at 50% 0%, rgba(201, 162, 39, 0.14) 0%, transparent 70%);
+}
+#modeSelect.mode-enter .mode-card {
+  animation: modeCardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+#modeSelect.mode-enter .mode-card:nth-child(1) { animation-delay: 0.05s; }
+#modeSelect.mode-enter .mode-card:nth-child(2) { animation-delay: 0.12s; }
+@keyframes modeCardIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 640px) {
+  #modeSelect .mode-cards { grid-template-columns: 1fr !important; }
+  #modeSelect .mode-select { transform: none; padding-top: 3.5rem !important; }
+  .side-sil { opacity: 0.12; width: min(40vw, 200px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .atm-fog, .atm-stars::before, .atm-stars::after, .e2-glow {
+  .atm-fog, .atm-stars::before, .atm-stars::after, .side-sil, .e2-glow,
+  .fx-flash, .fx-ring, .fx-spark, .fx-veil,
+  #modeSelect.mode-enter .mode-card {
     animation: none !important;
   }
 }

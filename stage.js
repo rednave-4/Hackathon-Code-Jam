@@ -179,7 +179,6 @@ PJ.Stages["sumpah-pemuda"] = (function () {
 
     if (connectedCount() === ORB_COUNT) {
       completed = true;
-      try { if (window.PJ && PJ.Audio) PJ.Audio.playSfx("success"); } catch (e) {}
       setTimeout(triggerCompletion, 700);
     } else {
       const next = orbs.find((o) => !o.connected);
