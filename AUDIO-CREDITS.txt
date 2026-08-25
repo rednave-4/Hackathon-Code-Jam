@@ -1,0 +1,4 @@
+Music: "Dark Ambience Loop" by Iwan Gabovitch (qubodup)
+https://opengameart.org/content/dark-ambience-loop
+License: CC-BY 3.0 — credit the author.
+Files: bg-entrance.mp3, bg-map.mp3 (same track, flat in project root)

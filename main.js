@@ -327,13 +327,7 @@
     finishEntrance();
     goTo("modeSelect");
     applyI18nDOM();
-    try {
-      if (PJ.Audio) {
-        PJ.Audio.unlock();
-        PJ.Audio.playSfx("open");
-        PJ.Audio.playAmbient("map");
-      }
-    } catch (err) {}
+    try { if (PJ.Audio) { PJ.Audio.unlock(); PJ.Audio.playSfx("open"); PJ.Audio.playAmbient("map"); } } catch (e) {}
     console.log("[PERJUANGAN] → mode select");
   };
 
@@ -350,12 +344,7 @@
       PJ.LearnController.applyI18n();
     }
     applyI18nDOM();
-    try {
-      if (PJ.Audio) {
-        PJ.Audio.playSfx("click");
-        PJ.Audio.playAmbient("learn");
-      }
-    } catch (err) {}
+    try { if (PJ.Audio) { PJ.Audio.playSfx("click"); PJ.Audio.playAmbient("learn"); } } catch (e) {}
     console.log("[PERJUANGAN] → learn");
   };
 
@@ -372,12 +361,7 @@
       PJ.MapController.applyI18n();
     }
     applyI18nDOM();
-    try {
-      if (PJ.Audio) {
-        PJ.Audio.playSfx("whoosh");
-        PJ.Audio.playAmbient("map");
-      }
-    } catch (err) {}
+    try { if (PJ.Audio) { PJ.Audio.playSfx("whoosh"); PJ.Audio.playAmbient("map"); } } catch (e) {}
     console.log("[PERJUANGAN] → game");
   };
 
@@ -428,10 +412,7 @@
       }
     }
 
-    if (PJ.Audio && typeof PJ.Audio.init === "function") {
-      try { PJ.Audio.init(); } catch (err) { console.warn("[PERJUANGAN] Audio init error:", err); }
-    }
-
+    if (PJ.Audio && PJ.Audio.init) { try { PJ.Audio.init(); } catch (e) {} }
     applyI18nDOM();
     bindLangButtons();
     initButtons();
