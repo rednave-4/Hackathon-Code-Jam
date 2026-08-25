@@ -23,6 +23,10 @@
           <div class="e1-glow e1-glow--b"></div>
           <div class="e1-floor"></div>
           <div class="e1-rays"></div>
+          <div class="atm-fog atm-fog--1"></div>
+          <div class="atm-fog atm-fog--2"></div>
+          <div class="atm-stars" id="e1Stars"></div>
+          <div class="atm-vignette"></div>
         </div>
         <div class="e1-stage-inner">
           <div class="flag-wrap" id="flagWrap">
@@ -38,7 +42,14 @@
         <a href="#entrance2" class="e1-hint" id="e1Hint" data-i18n="e1_hint">Gulir untuk melanjutkan</a>
       </section>
 
-      <section id="entrance2" class="entrance-panel entrance-panel--team" aria-label="Tim">
+            <section id="entrance2" class="entrance-panel entrance-panel--team" aria-label="Tim">
+        <div class="e2-space" aria-hidden="true">
+          <div class="atm-fog atm-fog--1"></div>
+          <div class="atm-fog atm-fog--2"></div>
+          <div class="atm-stars atm-stars--dim" id="e2Stars"></div>
+          <div class="e2-glow"></div>
+          <div class="atm-vignette"></div>
+        </div>
         <div class="lang-search" id="langSearchE2" role="combobox" aria-haspopup="listbox" aria-expanded="false">
           <div class="lang-search-box">
             <span class="lang-search-icon" aria-hidden="true">&#9906;</span>
@@ -207,7 +218,6 @@
     </section>
 
     
-    <button type="button" id="audioMuteBtn" class="audio-mute-btn" data-audio-mute title="Mute"><span class="audio-mute-btn__icon">♪</span><span class="audio-mute-btn__slash"></span></button>
     <!-- AI Historical Guide -->
     <div id="aiGuide" class="ai-guide" aria-live="polite">
       <button type="button" id="aiFab" class="ai-fab" title="AI Guide" aria-label="Open AI Historical Guide">
@@ -234,6 +244,7 @@
       </div>
     </div>
 
+    <div id="fxOverlay" class="fx-overlay" aria-hidden="true"></div>
     <div id="modalRoot"></div>
 
     <!-- STAGE OVERLAY -->
@@ -263,7 +274,6 @@
 
   <script src="i18n.js"></script>
   <script src="data.js"></script>
-  <script src="audio.js"></script>
   <script src="firebase-init.js"></script>
   <script src="progress.js"></script>
   <script src="achievements.js"></script>
@@ -275,6 +285,7 @@
   <script src="flag.js"></script>
   <script src="map.js"></script>
   <script src="learn.js"></script>
+  <script src="ui-fx.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

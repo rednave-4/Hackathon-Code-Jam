@@ -199,20 +199,11 @@
 
       if (entrance2 && creditsBlock) {
         const r2 = entrance2.getBoundingClientRect();
-        const pIn = smoothstep(vh * 0.98, vh * 0.25, r2.top);
-        entrance2.style.setProperty("--e2-in", pIn.toFixed(3));
+        // 0 while Entrance 2 is still below the viewport, 1 once it has
+        // settled into view — the "arriving" progress.
+        const pIn = smoothstep(vh * 0.92, vh * 0.4, r2.top);
+        creditsBlock.style.transform = "translateY(" + ((1 - pIn) * 46).toFixed(1) + "px)";
         creditsBlock.style.opacity = String(pIn);
-        creditsBlock.style.transform =
-          "translate3d(0," + ((1 - pIn) * 56).toFixed(1) + "px,0) scale(" + (0.94 + pIn * 0.06).toFixed(3) + ")";
-        creditsBlock.style.filter =
-          pIn < 0.97 ? "blur(" + ((1 - pIn) * 6).toFixed(1) + "px)" : "none";
-        Array.prototype.forEach.call(creditsBlock.children, function (kid, i) {
-          const delay = 0.06 + i * 0.09;
-          const local = Math.max(0, Math.min(1, (pIn - delay) / Math.max(0.001, 1 - delay)));
-          const eased = local * local * (3 - 2 * local);
-          kid.style.opacity = String(eased);
-          kid.style.transform = "translate3d(0," + ((1 - eased) * 24).toFixed(1) + "px,0)";
-        });
       }
     }
 
@@ -333,11 +324,27 @@
       e.preventDefault();
       e.stopPropagation();
     }
-    finishEntrance();
-    goTo("modeSelect");
-    applyI18nDOM();
-    try { if (PJ.Audio) { PJ.Audio.unlock(); PJ.Audio.playSfx("open"); PJ.Audio.playAmbient("map"); } } catch (e) {}
-    console.log("[PERJUANGAN] → mode select");
+    var ev = e;
+    function proceed() {
+      finishEntrance();
+      goTo("modeSelect");
+      applyI18nDOM();
+      try {
+        if (PJ.Audio) {
+          PJ.Audio.unlock();
+          PJ.Audio.playSfx("open");
+          PJ.Audio.playAmbient("map");
+        }
+      } catch (err) {}
+      if (PJ.UIFx && PJ.UIFx.playModeEnter) PJ.UIFx.playModeEnter();
+      console.log("[PERJUANGAN] → mode select");
+    }
+    if (PJ.UIFx && PJ.UIFx.burstFromEvent) {
+      try { if (PJ.Audio) PJ.Audio.playSfx("whoosh"); } catch (err) {}
+      PJ.UIFx.burstFromEvent(ev, { duration: 780, onDone: proceed });
+    } else {
+      proceed();
+    }
   };
 
   window.__pjGoLearn = function (e) {
@@ -353,7 +360,6 @@
       PJ.LearnController.applyI18n();
     }
     applyI18nDOM();
-    try { if (PJ.Audio) { PJ.Audio.playSfx("click"); PJ.Audio.playAmbient("learn"); } } catch (e) {}
     console.log("[PERJUANGAN] → learn");
   };
 
@@ -370,7 +376,6 @@
       PJ.MapController.applyI18n();
     }
     applyI18nDOM();
-    try { if (PJ.Audio) { PJ.Audio.playSfx("whoosh"); PJ.Audio.playAmbient("map"); } } catch (e) {}
     console.log("[PERJUANGAN] → game");
   };
 
@@ -421,7 +426,6 @@
       }
     }
 
-    if (PJ.Audio && PJ.Audio.init) { try { PJ.Audio.init(); } catch (e) {} }
     applyI18nDOM();
     bindLangButtons();
     initButtons();
@@ -438,6 +442,7 @@
     // Entrance owns the top of the page as real, scrollable content —
     // Entrance 1 then Entrance 2 stacked below it — before the app shell
     // (mode select → learn/game) takes over as a fixed-viewport SPA.
+    if (PJ.UIFx && PJ.UIFx.init) { try { PJ.UIFx.init(); } catch (e) {} }
     initEntrance();
     applyI18nDOM();
   });
