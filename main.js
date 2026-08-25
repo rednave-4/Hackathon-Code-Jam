@@ -159,6 +159,70 @@
     });
   }
 
+  /* ---------- Scroll-linked transition, Entrance 1 → Entrance 2 ----------
+     Purely reactive: reads element position on scroll (passive listener,
+     rAF-throttled) and writes inline transform/opacity. Never calls
+     preventDefault, never touches scrollTop — the browser's native scroll
+     stays in full control, so this can't reintroduce the old hijack bug. */
+  function bindEntranceScrollFX(entrance1, entrance2, flagWrap, textBlock, creditsBlock) {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return null;
+
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function smoothstep(e0, e1, v) {
+      const x = clamp((v - e0) / (e1 - e0), 0, 1);
+      return x * x * (3 - 2 * x);
+    }
+
+    let ticking = false;
+
+    function update() {
+      ticking = false;
+      if (entranceDone) return;
+      const vh = window.innerHeight;
+
+      if (entrance1) {
+        const r1 = entrance1.getBoundingClientRect();
+        // 0 while Entrance 1 still fills the viewport, 1 once it has
+        // scrolled most of the way past — the "leaving" progress.
+        const pOut = smoothstep(0, vh * 0.85, -r1.top);
+        if (flagWrap) {
+          flagWrap.style.transform =
+            "translateY(" + (-pOut * 70).toFixed(1) + "px) scale(" + (1 - pOut * 0.1).toFixed(3) + ")";
+          flagWrap.style.opacity = String(1 - pOut);
+        }
+        if (textBlock) {
+          textBlock.style.transform = "translateY(" + (-pOut * 46).toFixed(1) + "px)";
+          textBlock.style.opacity = String(1 - pOut);
+        }
+      }
+
+      if (entrance2 && creditsBlock) {
+        const r2 = entrance2.getBoundingClientRect();
+        // 0 while Entrance 2 is still below the viewport, 1 once it has
+        // settled into view — the "arriving" progress.
+        const pIn = smoothstep(vh * 0.92, vh * 0.4, r2.top);
+        creditsBlock.style.transform = "translateY(" + ((1 - pIn) * 46).toFixed(1) + "px)";
+        creditsBlock.style.opacity = String(pIn);
+      }
+    }
+
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    update();
+
+    return function cleanup() {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }
+
   /* ---------- Entrance — real stacked scroll (no sticky/3D hijack) ---------- */
   function initEntrance() {
     const wrap = $("entranceWrap");
@@ -185,43 +249,41 @@
       console.warn("[PERJUANGAN] flag failed:", err);
     }
 
-    // Reveal Entrance 1's content on load (native page scroll handles the
-    // rest — there's nothing to hijack or paint per-frame).
+    // One-time load fade for the whole flag panel (decoupled from scroll —
+    // this just softens the very first paint).
     requestAnimationFrame(() => {
       if (flagInstance) {
         flagInstance.configure();
         flagInstance.start();
       }
-      if (flagWrap) flagWrap.classList.add("is-in");
-      if (textBlock) textBlock.classList.add("is-in");
+      if (entrance1) entrance1.classList.add("is-in");
     });
     setTimeout(() => flagInstance && flagInstance.configure(), 250);
     setTimeout(() => flagInstance && flagInstance.configure(), 700);
 
-    // Reveal Entrance 2's credits, and pause the flag canvas, purely based
-    // on what's actually visible — a plain IntersectionObserver instead of
-    // a scroll-progress paint loop.
+    // Pause the flag canvas when it's fully offscreen, purely for
+    // performance — this never touches opacity/transform, that's the
+    // scroll-linked function's job below.
     if ("IntersectionObserver" in window) {
       const io = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.target === entrance2 && creditsBlock) {
-              if (entry.isIntersecting) creditsBlock.classList.add("is-in");
-            }
             if (entry.target === entrance1 && flagInstance) {
               if (entry.isIntersecting) flagInstance.start();
               else flagInstance.stop();
             }
           });
         },
-        { threshold: 0.3 }
+        { threshold: 0.05 }
       );
       if (entrance1) io.observe(entrance1);
-      if (entrance2) io.observe(entrance2);
       initEntrance._io = io;
-    } else if (creditsBlock) {
-      creditsBlock.classList.add("is-in");
     }
+
+    // Scroll-linked Entrance 1 → Entrance 2 transition.
+    initEntrance._scrollFxCleanup = bindEntranceScrollFX(
+      entrance1, entrance2, flagWrap, textBlock, creditsBlock
+    );
 
     if (cta) {
       cta.addEventListener("click", (e) => {
@@ -247,6 +309,9 @@
     }
     if (initEntrance._io) {
       try { initEntrance._io.disconnect(); } catch (e) {}
+    }
+    if (typeof initEntrance._scrollFxCleanup === "function") {
+      try { initEntrance._scrollFxCleanup(); } catch (e) {}
     }
     window.scrollTo(0, 0);
   }

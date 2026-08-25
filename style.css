@@ -190,16 +190,9 @@ button {
   max-height: 390px;
   min-width: 220px;
   min-height: 165px;
-  opacity: 0;
-  transform: scale(0.92) translateY(18px) rotateX(8deg);
   transform-style: preserve-3d;
-  transition: opacity 1.1s var(--ease-cinema), transform 1.2s var(--ease-cinema);
   margin-bottom: 0.25rem;
   filter: drop-shadow(0 28px 40px rgba(0, 0, 0, 0.55));
-}
-.flag-wrap.is-in {
-  opacity: 1 !important;
-  transform: scale(1) translateY(0) rotateX(0deg);
 }
 .flag-pedestal {
   position: absolute;
@@ -226,15 +219,8 @@ button {
 .e1-text {
   margin-top: 2.4rem;
   text-align: center;
-  opacity: 0;
-  transform: translateY(22px) translateZ(40px);
-  transition: opacity 1s var(--ease-cinema), transform 1s var(--ease-cinema);
   position: relative;
   z-index: 4;
-}
-.e1-text.is-in {
-  opacity: 1;
-  transform: translateY(0) translateZ(40px);
 }
 .eyebrow {
   font-family: var(--font-mono);
@@ -318,12 +304,7 @@ button {
   z-index: 2;
   background: radial-gradient(ellipse at 50% 40%, rgba(31, 26, 20, 0.35) 0%, transparent 70%);
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.9s var(--ease-cinema), transform 0.9s var(--ease-cinema);
-}
-.credits.is-in {
-  opacity: 1;
-  transform: none;
+  transform: translateY(40px);
 }
 .credits .eyebrow {
   margin-bottom: 1.1rem;
@@ -2523,6 +2504,25 @@ body.is-entrance #app {
 
 .entrance-panel--team {
   padding: 3rem 1rem;
+}
+
+.entrance-panel--flag {
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+.entrance-panel--flag.is-in {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entrance-panel--flag,
+  .flag-wrap,
+  .e1-text,
+  .credits {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 @media (max-width: 640px) {
