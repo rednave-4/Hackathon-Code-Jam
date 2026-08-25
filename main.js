@@ -175,6 +175,32 @@
     }
 
     let ticking = false;
+    let lastPOut = 0;
+    let tiltX = 0, tiltY = 0; // cursor-follow tilt, in degrees
+
+    function applyFlagTransform() {
+      if (!flagWrap) return;
+      flagWrap.style.transform =
+        "translateY(" + (-lastPOut * 70).toFixed(1) + "px) scale(" + (1 - lastPOut * 0.1).toFixed(3) + ")" +
+        " rotateX(" + tiltY.toFixed(2) + "deg) rotateY(" + tiltX.toFixed(2) + "deg)";
+    }
+
+    // Item: flag reacts to the cursor — small tilt toward pointer position,
+    // scoped to Entrance 1 only, capped to a subtle ±4deg.
+    if (entrance1 && window.matchMedia("(pointer: fine)").matches) {
+      entrance1.addEventListener("mousemove", (e) => {
+        const r = entrance1.getBoundingClientRect();
+        const nx = ((e.clientX - r.left) / r.width) * 2 - 1; // -1..1
+        const ny = ((e.clientY - r.top) / r.height) * 2 - 1;
+        tiltX = clamp(nx * 4, -4, 4);
+        tiltY = clamp(-ny * 4, -4, 4);
+        applyFlagTransform();
+      }, { passive: true });
+      entrance1.addEventListener("mouseleave", () => {
+        tiltX = 0; tiltY = 0;
+        applyFlagTransform();
+      }, { passive: true });
+    }
 
     function update() {
       ticking = false;
@@ -186,11 +212,9 @@
         // 0 while Entrance 1 still fills the viewport, 1 once it has
         // scrolled most of the way past — the "leaving" progress.
         const pOut = smoothstep(0, vh * 0.85, -r1.top);
-        if (flagWrap) {
-          flagWrap.style.transform =
-            "translateY(" + (-pOut * 70).toFixed(1) + "px) scale(" + (1 - pOut * 0.1).toFixed(3) + ")";
-          flagWrap.style.opacity = String(1 - pOut);
-        }
+        lastPOut = pOut;
+        applyFlagTransform();
+        if (flagWrap) flagWrap.style.opacity = String(1 - pOut);
         if (textBlock) {
           textBlock.style.transform = "translateY(" + (-pOut * 46).toFixed(1) + "px)";
           textBlock.style.opacity = String(1 - pOut);
@@ -211,7 +235,10 @@
           const local = Math.max(0, Math.min(1, (pIn - delay) / Math.max(0.001, 1 - delay)));
           const eased = local * local * (3 - 2 * local);
           kid.style.opacity = String(eased);
-          kid.style.transform = "translate3d(0," + ((1 - eased) * 28).toFixed(1) + "px,0)";
+          const isDivider = kid.classList.contains("credits-divider");
+          kid.style.transform =
+            "translate3d(0," + ((1 - eased) * 28).toFixed(1) + "px,0)" +
+            (isDivider ? " scaleX(" + eased.toFixed(3) + ")" : "");
         });
       }
     }
@@ -230,6 +257,21 @@
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
+  }
+
+  function spawnEmbersIn(container, count, sizeRange) {
+    if (!container || container.dataset.embersSpawned) return;
+    container.dataset.embersSpawned = "1";
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement("span");
+      el.className = "ember";
+      el.style.left = Math.random() * 100 + "%";
+      el.style.setProperty("--ember-size", (sizeRange[0] + Math.random() * (sizeRange[1] - sizeRange[0])).toFixed(1) + "px");
+      el.style.setProperty("--ember-duration", 9 + Math.random() * 9 + "s");
+      el.style.setProperty("--ember-delay", -Math.random() * 16 + "s");
+      el.style.setProperty("--ember-drift", (Math.random() * 8 - 4).toFixed(1) + "vw");
+      container.appendChild(el);
+    }
   }
 
   /* ---------- Entrance — real stacked scroll (no sticky/3D hijack) ---------- */
@@ -251,6 +293,11 @@
     document.documentElement.classList.add("is-entrance");
     document.body.classList.add("is-entrance");
     wrap.hidden = false;
+
+    // Ambient embers, denser near the flag and fewer/dimmer by the time
+    // Entrance 2 begins — a visual thread carried between the two panels.
+    spawnEmbersIn(entrance1 && entrance1.querySelector(".e1-space"), 12, [2, 4.5]);
+    spawnEmbersIn(entrance2 && entrance2.querySelector(".e2-space"), 6, [1.5, 3]);
 
     try {
       flagInstance = PJ.FlagCloth($("flagCanvas"));
@@ -336,6 +383,7 @@
     finishEntrance();
     goTo("modeSelect");
     applyI18nDOM();
+    if (PJ.UIFx && typeof PJ.UIFx.playModeEnter === "function") PJ.UIFx.playModeEnter();
     console.log("[PERJUANGAN] → mode select");
   };
 
@@ -386,6 +434,7 @@
         e.preventDefault();
         goTo("modeSelect");
         applyI18nDOM();
+        if (PJ.UIFx && typeof PJ.UIFx.playModeEnter === "function") PJ.UIFx.playModeEnter();
       };
     }
     const gameBack = $("gameBackBtn");
@@ -394,6 +443,7 @@
         e.preventDefault();
         goTo("modeSelect");
         applyI18nDOM();
+        if (PJ.UIFx && typeof PJ.UIFx.playModeEnter === "function") PJ.UIFx.playModeEnter();
       };
     }
   }

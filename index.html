@@ -39,7 +39,12 @@
             <p class="title-accent" data-i18n="e1_accent">Bangsa Indonesia</p>
           </div>
         </div>
-        <a href="#entrance2" class="e1-hint" id="e1Hint" data-i18n="e1_hint">Gulir untuk melanjutkan</a>
+        <a href="#entrance2" class="e1-hint" id="e1Hint">
+          <span data-i18n="e1_hint">Gulir untuk melanjutkan</span>
+          <svg class="e1-hint__chevron" viewBox="0 0 20 10" aria-hidden="true">
+            <path d="M2 2l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
       </section>
 
       <section id="entrance2" class="entrance-panel entrance-panel--team" aria-label="Tim">
@@ -209,6 +214,11 @@
             <path id="routeBase" class="route-base" vector-effect="non-scaling-stroke" />
             <path id="routeNext" class="route-next" vector-effect="non-scaling-stroke" />
             <path id="routeProgress" class="route-progress" vector-effect="non-scaling-stroke" />
+            <circle id="routeSpark" class="route-spark" r="0.9">
+              <animateMotion dur="3.4s" repeatCount="indefinite" rotate="auto">
+                <mpath href="#routeProgress" />
+              </animateMotion>
+            </circle>
           </svg>
           <div id="nodesLayer" aria-label="Missions"></div>
           <div class="map-vignette" aria-hidden="true"></div>
@@ -263,6 +273,7 @@
     </div>
 
     <div id="modalRoot"></div>
+    <div id="fxOverlay" class="fx-overlay" aria-hidden="true"></div>
 
     <!-- STAGE OVERLAY -->
     <div id="stageOverlay" class="stage-overlay grain" hidden aria-label="Stage">
@@ -303,6 +314,7 @@
   <script src="map.js"></script>
   <script src="learn.js"></script>
   <script src="audio.js"></script>
+  <script src="ui-fx.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

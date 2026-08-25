@@ -115,6 +115,7 @@ PJ.MapController = (function () {
     els.routeBase = document.getElementById("routeBase");
     els.routeNext = document.getElementById("routeNext");
     els.routeProgress = document.getElementById("routeProgress");
+    els.routeSpark = document.getElementById("routeSpark");
     els.nodesLayer = document.getElementById("nodesLayer");
     els.panel = document.getElementById("detailPanel");
     els.panelClose = document.getElementById("panelClose");
@@ -166,8 +167,10 @@ PJ.MapController = (function () {
       const donePts = points.slice(0, lastCompletedIdx + 1);
       els.routeProgress.setAttribute("d", buildSmoothPath(donePts));
       els.routeProgress.style.opacity = 1;
+      if (els.routeSpark) els.routeSpark.classList.add("is-active");
     } else {
       els.routeProgress.style.opacity = 0;
+      if (els.routeSpark) els.routeSpark.classList.remove("is-active");
     }
 
     // highlight the single next segment leading to the currently available
@@ -206,7 +209,12 @@ PJ.MapController = (function () {
         </span>
         <span class="node__label">${tField(mission.title)}</span>
       `;
-      btn.addEventListener("click", () => selectMission(mission.id));
+      btn.addEventListener("click", (e) => {
+        if (window.PJ && PJ.UIFx && typeof PJ.UIFx.burstFromEvent === "function") {
+          PJ.UIFx.burstFromEvent(e, { count: 14, duration: 360 });
+        }
+        selectMission(mission.id);
+      });
       els.nodesLayer.appendChild(btn);
     });
 

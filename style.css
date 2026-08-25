@@ -2604,6 +2604,153 @@ body.is-entrance #app {
   }
 }
 
+/* ===== Polish batch: staggered title reveal ===== */
+.entrance-panel--flag .eyebrow,
+.entrance-panel--flag .title-display,
+.entrance-panel--flag .title-accent {
+  opacity: 0;
+  filter: blur(6px);
+  letter-spacing: 0.4em;
+  transform: translateY(10px);
+  transition: opacity 0.7s var(--ease-cinema), filter 0.7s var(--ease-cinema),
+    letter-spacing 0.7s var(--ease-cinema), transform 0.7s var(--ease-cinema);
+}
+.entrance-panel--flag.is-in .eyebrow { transition-delay: 0.15s; }
+.entrance-panel--flag.is-in .title-display { transition-delay: 0.32s; }
+.entrance-panel--flag.is-in .title-accent { transition-delay: 0.5s; }
+.entrance-panel--flag.is-in .eyebrow,
+.entrance-panel--flag.is-in .title-display,
+.entrance-panel--flag.is-in .title-accent {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+}
+.title-display.is-in,
+.eyebrow.is-in,
+.title-accent.is-in { letter-spacing: inherit; }
+.entrance-panel--flag.is-in .eyebrow { letter-spacing: 0.32em; }
+.entrance-panel--flag.is-in .title-accent { letter-spacing: 0.14em; }
+
+/* ===== Polish batch: scroll-hint chevron ===== */
+.e1-hint {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.e1-hint__chevron {
+  width: 14px;
+  height: 8px;
+  color: var(--gold);
+  animation: chevronBreathe 2.6s ease-in-out infinite;
+}
+@keyframes chevronBreathe {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(3px); opacity: 1; }
+}
+
+/* ===== Polish batch: credits divider "draws in" ===== */
+.credits-divider { transform-origin: center; }
+
+/* ===== Polish batch: entrance embers (reuses .ember from map) ===== */
+.e1-space .ember,
+.e2-space .ember { opacity: 0; }
+
+/* ===== Polish batch: mode cards stagger entrance ===== */
+#modeSelect .mode-card {
+  opacity: 0;
+  transform: translateY(22px) rotateX(4deg);
+}
+#modeSelect.mode-enter .mode-card {
+  animation: modeCardIn 0.65s var(--ease-cinema) forwards;
+}
+#modeSelect.mode-enter .mode-card:nth-child(1) { animation-delay: 0.05s; }
+#modeSelect.mode-enter .mode-card:nth-child(2) { animation-delay: 0.18s; }
+@keyframes modeCardIn {
+  to { opacity: 1; transform: translateY(0) rotateX(2deg); }
+}
+
+/* ===== Polish batch: traveling spark along the completed route ===== */
+.route-spark {
+  fill: var(--gold-bright);
+  filter: drop-shadow(0 0 4px rgba(234, 200, 115, 0.9)) drop-shadow(0 0 10px rgba(234, 200, 115, 0.5));
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.route-spark.is-active { opacity: 1; }
+
+/* ===== Polish batch: detail panel — a thin gold seam draws in on open ===== */
+.detail-panel::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 2px; height: 100%;
+  background: linear-gradient(180deg, transparent, var(--gold-bright), transparent);
+  opacity: 0;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.55s var(--ease-cinema) 0.1s, opacity 0.3s ease 0.1s;
+}
+.detail-panel.is-open::before {
+  opacity: 0.8;
+  transform: scaleY(1);
+}
+
+/* ===== Polish batch: click-burst overlay (fed by ui-fx.js) ===== */
+.fx-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  pointer-events: none;
+  opacity: 0;
+}
+.fx-overlay.is-active { opacity: 1; }
+.fx-flash {
+  position: absolute;
+  width: 18px; height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(234, 200, 115, 0.9), transparent 70%);
+  animation: fxFlash 0.3s ease-out forwards;
+}
+.fx-ring {
+  position: absolute;
+  width: 10px; height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(234, 200, 115, 0.7);
+  animation: fxRing 0.42s ease-out forwards;
+}
+.fx-spark {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  transform: translate(0, 0);
+  animation-name: fxSpark;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+.fx-veil { position: absolute; inset: 0; }
+@keyframes fxFlash {
+  from { transform: scale(0.4); opacity: 1; }
+  to { transform: scale(2.2); opacity: 0; }
+}
+@keyframes fxRing {
+  from { transform: scale(0.6); opacity: 0.9; }
+  to { transform: scale(4.5); opacity: 0; }
+}
+@keyframes fxSpark {
+  from { transform: translate(0, 0); opacity: 1; }
+  to { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx-overlay { display: none; }
+  #modeSelect .mode-card { opacity: 1 !important; transform: none !important; animation: none !important; }
+  .entrance-panel--flag .eyebrow,
+  .entrance-panel--flag .title-display,
+  .entrance-panel--flag .title-accent { transition: none !important; filter: none !important; }
+}
+
 /* ===== Atmosphere entrance (no JS required) ===== */
 .atm-fog {
   position: absolute;
