@@ -304,7 +304,13 @@ button {
   z-index: 2;
   background: radial-gradient(ellipse at 50% 40%, rgba(31, 26, 20, 0.35) 0%, transparent 70%);
   opacity: 0;
-  transform: translateY(40px);
+  transform: translateY(56px) scale(0.94);
+  will-change: transform, opacity, filter;
+}
+.credits > * {
+  opacity: 0;
+  transform: translateY(26px);
+  will-change: transform, opacity;
 }
 .credits .eyebrow {
   margin-bottom: 1.1rem;
@@ -2504,6 +2510,31 @@ body.is-entrance #app {
 
 .entrance-panel--team {
   padding: 3rem 1rem;
+  --e2-in: 0;
+}
+/* Dark veil over Entrance 2 — fades out as the section arrives */
+.e2-fade-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 50%, rgba(10, 9, 8, 0.55) 0%, rgba(0, 0, 0, 0.92) 100%);
+  opacity: 1;
+  will-change: opacity;
+  transition: none;
+}
+.entrance-panel--team .lang-search {
+  position: relative;
+  z-index: 3;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.entrance-panel--team .credits {
+  z-index: 2;
+}
+.entrance-panel--team.is-in-view .e2-fade-veil {
+  /* JS drives opacity; class is a marker for optional CSS hooks */
 }
 
 .entrance-panel--flag {
