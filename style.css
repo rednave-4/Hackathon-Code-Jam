@@ -1325,23 +1325,9 @@ button {
   position: absolute;
   top: 1.1rem;
   right: 1.2rem;
-  left: auto;
-  bottom: auto;
   z-index: 40;
   width: 188px;
   font-family: var(--font-mono);
-  margin: 0;
-}
-/* Entrance 2 + Mode Select: always pin to top-right of their panel */
-#langSearchE2,
-#langSearchMode {
-  position: absolute !important;
-  top: 1.1rem !important;
-  right: 1.2rem !important;
-  left: auto !important;
-  bottom: auto !important;
-  z-index: 50 !important;
-  width: min(188px, calc(100vw - 2rem));
 }
 .lang-search--inline {
   position: static;
@@ -1454,12 +1440,6 @@ button {
     top: 0.7rem;
     right: 0.7rem;
     width: 148px;
-  }
-  #langSearchE2,
-  #langSearchMode {
-    top: 0.7rem !important;
-    right: 0.7rem !important;
-    width: min(148px, calc(100vw - 1.4rem));
   }
   .lang-search-current {
     display: none;
@@ -2252,6 +2232,73 @@ button {
 
 
 /* -------------------------------------------------------------------- */
+/* Audio mute                                                            */
+/* -------------------------------------------------------------------- */
+.audio-mute-btn {
+  position: fixed;
+  left: 1.1rem;
+  bottom: 1.1rem;
+  z-index: 180;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  background: rgba(18, 15, 12, 0.92);
+  color: var(--parch);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.audio-mute-btn:hover {
+  border-color: var(--gold);
+  transform: translateY(-1px);
+}
+.audio-mute-btn__icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+.audio-mute-btn__slash {
+  display: none;
+  position: absolute;
+  width: 2px;
+  height: 22px;
+  background: var(--red);
+  transform: rotate(45deg);
+  border-radius: 1px;
+}
+.audio-mute-btn.is-muted .audio-mute-btn__slash {
+  display: block;
+}
+.audio-mute-btn.is-muted {
+  color: var(--parch-faint);
+  border-color: rgba(201, 162, 39, 0.18);
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 480px) {
+  .audio-mute-btn {
+    left: 0.75rem;
+    bottom: 0.75rem;
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* -------------------------------------------------------------------- */
 /* AI Historical Guide                                                    */
 /* -------------------------------------------------------------------- */
 .ai-guide {
@@ -2524,7 +2571,6 @@ body.is-entrance #app {
 
 .entrance-panel--team {
   padding: 3rem 1rem;
-  position: relative;
 }
 
 .entrance-panel--flag {

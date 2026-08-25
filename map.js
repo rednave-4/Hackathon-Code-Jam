@@ -16,50 +16,56 @@ PJ.MapController = (function () {
     if (!obj) return "";
     if (typeof obj === "string") return obj;
     const lang = (PJ.I18N && PJ.I18N.getLang()) || "id";
-    if (obj[lang]) return obj[lang];
-    if (lang !== "id" && obj.en) return obj.en;
-    return obj.id || obj.en || "";
+    return obj[lang] || obj.id || "";
   }
 
+  let progress = loadProgress(); // Set of completed ids
   let selectedId = null;
 
-  // ---------- progress helpers (delegates to PJ.Progress) ----------
-  function getProgressSet() {
-    if (PJ.Progress && typeof PJ.Progress.getCompletedSet === "function") {
-      return PJ.Progress.getCompletedSet();
-    }
+  // ---------- persistence ----------
+  function loadProgress() {
     try {
-      const raw = localStorage.getItem(PJ.STORAGE_KEY || "perjuangan_v2_progress");
+      const raw = localStorage.getItem(PJ.STORAGE_KEY);
       if (!raw) return new Set();
       const data = JSON.parse(raw);
-      if (Array.isArray(data)) return new Set(data);
-      if (data && Array.isArray(data.completed)) return new Set(data.completed);
-    } catch (e) {}
-    return new Set();
+      // Support both formats:
+      //   ["sumpah-pemuda", "proklamasi"]
+      //   { "completed": ["sumpah-pemuda", "proklamasi"] }
+      let arr = [];
+      if (Array.isArray(data)) arr = data;
+      else if (data && Array.isArray(data.completed)) arr = data.completed;
+      return new Set(arr.filter((x) => typeof x === "string"));
+    } catch (e) {
+      console.warn("PERJUANGAN: gagal membaca progres, mulai baru.", e);
+      return new Set();
+    }
+  }
+
+  function saveProgress() {
+    try {
+      // Always save as plain array (canonical format)
+      localStorage.setItem(PJ.STORAGE_KEY, JSON.stringify(Array.from(progress)));
+    } catch (e) {
+      console.warn("PERJUANGAN: gagal menyimpan progres.", e);
+    }
   }
 
   function resetProgress() {
-    if (PJ.Progress && typeof PJ.Progress.reset === "function") {
-      PJ.Progress.reset();
-    }
+    progress = new Set();
+    saveProgress();
     render();
     closePanel();
   }
 
   // ---------- state helpers ----------
   function stateOf(mission, index) {
-    const progress = getProgressSet();
     if (progress.has(mission.id)) return "completed";
     if (index === 0) return "available";
-    if (PJ.Difficulty && typeof PJ.Difficulty.isUnlocked === "function") {
-      return PJ.Difficulty.isUnlocked(index, progress) ? "available" : "locked";
-    }
     const prev = missions[index - 1];
     return progress.has(prev.id) ? "available" : "locked";
   }
 
   function completedCount() {
-    const progress = getProgressSet();
     return missions.filter((m) => progress.has(m.id)).length;
   }
 
@@ -151,7 +157,6 @@ PJ.MapController = (function () {
     els.routeBase.setAttribute("d", fullPath);
 
     // "progress" route only spans completed contiguous segments
-    const progress = getProgressSet();
     let lastCompletedIdx = -1;
     for (let i = 0; i < missions.length; i++) {
       if (progress.has(missions[i].id)) lastCompletedIdx = i;
@@ -247,15 +252,6 @@ PJ.MapController = (function () {
       <div class="panel__subtitle">${tField(mission.subtitle)}</div>
       <div class="panel__date">${tField(mission.date)}</div>
       <p class="panel__blurb">${tField(mission.blurb)}</p>
-      ${
-        !locked
-          ? `<p class="panel__diff-hint">${
-              PJ.Difficulty && PJ.Difficulty.hintFor
-                ? PJ.Difficulty.hintFor(mission.id)
-                : ""
-            }</p>`
-          : ""
-      }
       <button class="btn btn--primary panel__cta" id="startBtn" ${locked ? "disabled" : ""}>
         ${locked ? (PJ.I18N ? PJ.I18N.t("terkunci") : "TERKUNCI") : (PJ.I18N ? PJ.I18N.t("mulai_misi") : "MULAI MISI")}
       </button>
@@ -304,54 +300,38 @@ PJ.MapController = (function () {
     document.addEventListener("pj:devmodechange", () => {
       if (selectedId) renderPanel(selectedId);
     });
-    if (PJ.Progress && typeof PJ.Progress.onChange === "function") {
-      PJ.Progress.onChange(() => {
-        render();
-        if (selectedId) renderPanel(selectedId);
-      });
-    }
     render();
   }
 
   // ---------- public hooks (stage integration) ----------
+  // External HTML minigames (same folder as index.html on GitHub Pages)
   const EXTERNAL_STAGES = {
-    "proklamasi": "last_typing.html",
-    "surabaya": "suara_perlawanan.html",
-    "agresi-gerilya": "Dutch_Aggression.html",
+    "proklamasi": "revisi.html",
+    "surabaya": "tes.html",
+    "agresi-gerilya": "agresi.html",
   };
 
   window.startMission = function (stageId) {
     const mission = missions.find((m) => m.id === stageId);
 
-    if (PJ.Difficulty && typeof PJ.Difficulty.recordAttempt === "function") {
-      PJ.Difficulty.recordAttempt(stageId);
-    }
-    try {
-      sessionStorage.setItem("pj_difficulty", PJ.Difficulty ? PJ.Difficulty.effective() : "normal");
-      sessionStorage.setItem("pj_diff_mode", PJ.Difficulty ? PJ.Difficulty.getMode() : "normal");
-    } catch (e) {}
-
+    // 1) External HTML game → navigate away
     if (EXTERNAL_STAGES[stageId]) {
-      let url = EXTERNAL_STAGES[stageId];
-      if (PJ.Difficulty && typeof PJ.Difficulty.appendQuery === "function") {
-        url = PJ.Difficulty.appendQuery(url);
-      }
+      const url = EXTERNAL_STAGES[stageId];
       console.log(`[PERJUANGAN] startMission("${stageId}") → ${url}`);
-      try {
-        sessionStorage.setItem("pj_last_mission", stageId);
-      } catch (e) {}
       window.location.href = url;
       return;
     }
 
+    // 2) In-app registered stage (e.g. Sumpah Pemuda)
     if (PJ.Stages && PJ.Stages[stageId] && typeof PJ.Stages[stageId].open === "function") {
       PJ.Stages[stageId].open({
         onComplete: () => window.markMissionComplete(stageId),
-        difficulty: PJ.Difficulty ? PJ.Difficulty.effective() : "normal",
       });
       console.log(`[PERJUANGAN] startMission("${stageId}") — launching registered stage.`);
       return;
     }
+
+    // 3) Placeholder
 
     PJ.Modal.info({
       title: mission ? tField(mission.title) : (PJ.I18N ? PJ.I18N.t("coming_title") : "Misi"),
@@ -367,17 +347,13 @@ PJ.MapController = (function () {
       console.warn(`[PERJUANGAN] markMissionComplete: unknown stageId "${stageId}"`);
       return;
     }
-    if (PJ.Progress && typeof PJ.Progress.markComplete === "function") {
-      PJ.Progress.markComplete(stageId);
-    }
-    if (PJ.Difficulty && typeof PJ.Difficulty.clearAttempt === "function") {
-      PJ.Difficulty.clearAttempt(stageId);
-    }
-    if (PJ.Achievements && typeof PJ.Achievements.evaluate === "function") {
-      PJ.Achievements.evaluate();
-    }
+    progress.add(stageId);
+    saveProgress();
     render();
     if (selectedId === stageId) renderPanel(stageId);
+    try {
+      if (window.PJ && PJ.Audio) PJ.Audio.playSfx("complete");
+    } catch (e) {}
     console.log(`[PERJUANGAN] markMissionComplete("${stageId}")`);
   };
 
@@ -391,5 +367,5 @@ PJ.MapController = (function () {
     if (bb && PJ.I18N) bb.textContent = PJ.I18N.t("back_modes");
   }
 
-  return { init, resetProgress, applyI18n, render };
+  return { init, resetProgress, applyI18n };
 })();

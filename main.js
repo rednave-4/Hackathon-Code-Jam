@@ -168,121 +168,42 @@
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion) return null;
 
-    function clamp(v, a, b) {
-      return Math.max(a, Math.min(b, v));
-    }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
     function smoothstep(e0, e1, v) {
       const x = clamp((v - e0) / (e1 - e0), 0, 1);
       return x * x * (3 - 2 * x);
     }
-
-    const space = entrance1 && entrance1.querySelector(".e1-space");
-    const glowA = entrance1 && entrance1.querySelector(".e1-glow--a");
-    const glowB = entrance1 && entrance1.querySelector(".e1-glow--b");
-    const floor = entrance1 && entrance1.querySelector(".e1-floor");
-    const rays = entrance1 && entrance1.querySelector(".e1-rays");
-    const hint = $("e1Hint");
-    const stageInner = entrance1 && entrance1.querySelector(".e1-stage-inner");
-    const e2Veil = entrance2 && entrance2.querySelector(".e2-fade-veil");
-    const e2Lang = entrance2 && entrance2.querySelector(".lang-search");
-    const creditKids = creditsBlock
-      ? Array.prototype.slice.call(creditsBlock.children)
-      : [];
 
     let ticking = false;
 
     function update() {
       ticking = false;
       if (entranceDone) return;
-      const vh = window.innerHeight || 1;
+      const vh = window.innerHeight;
 
-      /* ---- Entrance 1 leave ---- */
       if (entrance1) {
         const r1 = entrance1.getBoundingClientRect();
-        const pOut = smoothstep(0, vh * 0.9, -r1.top);
-
+        // 0 while Entrance 1 still fills the viewport, 1 once it has
+        // scrolled most of the way past — the "leaving" progress.
+        const pOut = smoothstep(0, vh * 0.85, -r1.top);
         if (flagWrap) {
           flagWrap.style.transform =
-            "translate3d(0," +
-            (-pOut * 120).toFixed(1) +
-            "px,0) scale(" +
-            (1 - pOut * 0.18).toFixed(3) +
-            ") rotateX(" +
-            (pOut * 12).toFixed(2) +
-            "deg)";
-          flagWrap.style.opacity = String(1 - pOut * 0.95);
-          flagWrap.style.filter = pOut > 0.05 ? "blur(" + (pOut * 8).toFixed(1) + "px)" : "";
+            "translateY(" + (-pOut * 70).toFixed(1) + "px) scale(" + (1 - pOut * 0.1).toFixed(3) + ")";
+          flagWrap.style.opacity = String(1 - pOut);
         }
         if (textBlock) {
-          textBlock.style.transform =
-            "translate3d(0," + (-pOut * 80).toFixed(1) + "px,0)";
+          textBlock.style.transform = "translateY(" + (-pOut * 46).toFixed(1) + "px)";
           textBlock.style.opacity = String(1 - pOut);
         }
-        if (hint) {
-          hint.style.opacity = String(Math.max(0, 0.85 - pOut * 1.4));
-          hint.style.transform = "translateY(" + (pOut * 24).toFixed(1) + "px)";
-        }
-        if (stageInner) {
-          stageInner.style.transform =
-            "translate3d(0," + (-pOut * 36).toFixed(1) + "px,0)";
-        }
-        if (space) space.style.opacity = String(1 - pOut * 0.85);
-        if (glowA) {
-          glowA.style.transform =
-            "translate(-50%, -50%) scale(" + (1 + pOut * 0.35).toFixed(3) + ")";
-          glowA.style.opacity = String(1 - pOut * 0.7);
-        }
-        if (glowB) {
-          glowB.style.opacity = String(0.85 - pOut * 0.75);
-        }
-        if (floor) floor.style.opacity = String(Math.max(0, 1 - pOut * 1.1));
-        if (rays) rays.style.opacity = String(1 - pOut * 0.9);
       }
 
-      /* ---- Entrance 2 fade-in ---- */
-      if (entrance2) {
+      if (entrance2 && creditsBlock) {
         const r2 = entrance2.getBoundingClientRect();
-        // Longer, softer arrival curve for a clear fade-in
-        const pIn = smoothstep(vh * 0.98, vh * 0.22, r2.top);
-
-        entrance2.style.setProperty("--e2-in", pIn.toFixed(3));
-        entrance2.classList.toggle("is-fading-in", pIn > 0.02 && pIn < 0.98);
-        entrance2.classList.toggle("is-in-view", pIn >= 0.55);
-
-        // Full-panel veil: black → transparent
-        if (e2Veil) {
-          e2Veil.style.opacity = String(1 - pIn);
-        }
-
-        // Language picker fades slightly after content starts
-        if (e2Lang) {
-          const langP = clamp((pIn - 0.25) / 0.55, 0, 1);
-          e2Lang.style.opacity = String(langP);
-          e2Lang.style.transform =
-            "translateY(" + ((1 - langP) * 16).toFixed(1) + "px)";
-        }
-
-        if (creditsBlock) {
-          creditsBlock.style.opacity = String(pIn);
-          creditsBlock.style.transform =
-            "translate3d(0," +
-            ((1 - pIn) * 56).toFixed(1) +
-            "px,0) scale(" +
-            (0.94 + pIn * 0.06).toFixed(3) +
-            ")";
-          creditsBlock.style.filter =
-            pIn < 0.97 ? "blur(" + ((1 - pIn) * 7).toFixed(1) + "px)" : "none";
-
-          // Stagger children for layered fade-in
-          creditKids.forEach(function (kid, i) {
-            const delay = 0.08 + i * 0.1;
-            const local = clamp((pIn - delay) / Math.max(0.001, 1 - delay), 0, 1);
-            const eased = local * local * (3 - 2 * local);
-            kid.style.opacity = String(eased);
-            kid.style.transform =
-              "translate3d(0," + ((1 - eased) * 26).toFixed(1) + "px,0)";
-          });
-        }
+        // 0 while Entrance 2 is still below the viewport, 1 once it has
+        // settled into view — the "arriving" progress.
+        const pIn = smoothstep(vh * 0.92, vh * 0.4, r2.top);
+        creditsBlock.style.transform = "translateY(" + ((1 - pIn) * 46).toFixed(1) + "px)";
+        creditsBlock.style.opacity = String(pIn);
       }
     }
 
@@ -406,6 +327,13 @@
     finishEntrance();
     goTo("modeSelect");
     applyI18nDOM();
+    try {
+      if (PJ.Audio) {
+        PJ.Audio.unlock();
+        PJ.Audio.playSfx("open");
+        PJ.Audio.playAmbient("map");
+      }
+    } catch (err) {}
     console.log("[PERJUANGAN] → mode select");
   };
 
@@ -422,6 +350,12 @@
       PJ.LearnController.applyI18n();
     }
     applyI18nDOM();
+    try {
+      if (PJ.Audio) {
+        PJ.Audio.playSfx("click");
+        PJ.Audio.playAmbient("learn");
+      }
+    } catch (err) {}
     console.log("[PERJUANGAN] → learn");
   };
 
@@ -438,6 +372,12 @@
       PJ.MapController.applyI18n();
     }
     applyI18nDOM();
+    try {
+      if (PJ.Audio) {
+        PJ.Audio.playSfx("whoosh");
+        PJ.Audio.playAmbient("map");
+      }
+    } catch (err) {}
     console.log("[PERJUANGAN] → game");
   };
 
@@ -485,6 +425,14 @@
         await PJ.Progress.init();
       } catch (err) {
         console.warn("[PERJUANGAN] Progress init error:", err);
+      }
+    }
+
+    if (PJ.Audio && typeof PJ.Audio.init === "function") {
+      try {
+        PJ.Audio.init();
+      } catch (err) {
+        console.warn("[PERJUANGAN] Audio init error:", err);
       }
     }
 

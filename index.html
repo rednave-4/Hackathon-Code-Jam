@@ -39,7 +39,6 @@
       </section>
 
       <section id="entrance2" class="entrance-panel entrance-panel--team" aria-label="Tim">
-        <div class="e2-fade-veil" aria-hidden="true"></div>
         <div class="lang-search" id="langSearchE2" role="combobox" aria-haspopup="listbox" aria-expanded="false">
           <div class="lang-search-box">
             <span class="lang-search-icon" aria-hidden="true">&#9906;</span>
@@ -208,6 +207,13 @@
     </section>
 
     
+    <!-- Audio mute (fixed, opposite corner from AI) -->
+    <button type="button" id="audioMuteBtn" class="audio-mute-btn" data-audio-mute aria-pressed="false" title="Mute">
+      <span class="audio-mute-btn__icon" aria-hidden="true">♪</span>
+      <span class="audio-mute-btn__slash" aria-hidden="true"></span>
+      <span class="visually-hidden" data-audio-mute-label>Mute</span>
+    </button>
+
     <!-- AI Historical Guide -->
     <div id="aiGuide" class="ai-guide" aria-live="polite">
       <button type="button" id="aiFab" class="ai-fab" title="AI Guide" aria-label="Open AI Historical Guide">
@@ -263,6 +269,7 @@
 
   <script src="i18n.js"></script>
   <script src="data.js"></script>
+  <script src="audio.js"></script>
   <script src="firebase-init.js"></script>
   <script src="progress.js"></script>
   <script src="achievements.js"></script>
