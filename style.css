@@ -231,6 +231,15 @@ button {
   height: 100% !important;
   display: block;
   z-index: 1;
+  /* Museum-pedestal reflection: mirrors the live canvas below itself with
+     a built-in fade, no second canvas/render loop needed. WebKit-only
+     (Chrome/Edge/Safari) — on Firefox it's simply absent, no breakage. */
+  -webkit-box-reflect: below 2px linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.25) 45%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
 }
 
 /* Orbiting motes — real 3D circular paths around the flag/pedestal,
@@ -2908,14 +2917,6 @@ body.is-entrance #app {
 #entranceWrap {
   position: relative;
   width: 100%;
-  /* One continuous gradient spanning BOTH panels' combined height, instead
-     of each panel painting its own independent radial-gradient anchored
-     to its own box. That per-panel approach is what caused the hard seam
-     line at the Entrance 1 → Entrance 2 boundary: two unrelated gradients
-     never line up at the edge where they meet. Anchoring this one to the
-     wrapper's full natural height (~200vh) makes it read as one unbroken
-     atmosphere the whole way down. */
-  background: radial-gradient(160% 55% at 50% 16%, var(--ink-2) 0%, var(--ink) 45%, #000 100%);
 }
 #entranceWrap[hidden] {
   display: none !important;
@@ -2931,7 +2932,7 @@ body.is-entrance #app {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: transparent;
+  background: radial-gradient(120% 100% at 50% 30%, var(--ink-2) 0%, var(--ink) 65%, #000 100%);
 }
 
 .entrance-panel--team {
